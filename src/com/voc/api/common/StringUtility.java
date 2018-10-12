@@ -1,4 +1,4 @@
-package more;
+package com.voc.api.common;
 
 public abstract class StringUtility
 {
