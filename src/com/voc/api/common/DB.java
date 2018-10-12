@@ -71,8 +71,8 @@ public class DB {
 	        if (closeConnOnReturn) {
 	            closeConn(conn);
 	        }
-	        return status;
 	    }
+	    return status;
 	}
 	
 }
