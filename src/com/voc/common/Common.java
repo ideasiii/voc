@@ -1,4 +1,4 @@
-package com.voc.api.common;
+package com.voc.common;
 import java.util.Calendar;
 import java.util.Date;
 import java.text.SimpleDateFormat;

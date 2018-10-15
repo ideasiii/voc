@@ -4,8 +4,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONObject;
 
-public interface RootAPI {
+public abstract class RootAPI {
 
-	public JSONObject processRequest(HttpServletRequest request);
+	public abstract JSONObject processRequest(HttpServletRequest request);
 
 }
