@@ -7,7 +7,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-public class APIUtil {
+public class ApiUtil {
 	private static final SimpleDateFormat SDF_DAILY = new SimpleDateFormat("yyyy-MM-dd");
 	private static final SimpleDateFormat SDF_MONTHLY = new SimpleDateFormat("yyyy-MM");
 	
@@ -79,14 +79,14 @@ public class APIUtil {
 	}
 	
 	public static void test_1() {
-		List<String> dateList = getDailyList("2018-12-16", "2019-03-17");
+		List<String> dateList = ApiUtil.getDailyList("2018-12-16", "2019-03-17");
 		for(String dateStr : dateList) {
 			System.out.println(dateStr);
 		}
 	}
 	
 	public static void test_2() {
-		List<String> monthlyList = getMonthlyList("2018-12", "2019-03");
+		List<String> monthlyList = ApiUtil.getMonthlyList("2018-12", "2019-03");
 		for(String yearMonth : monthlyList) {
 			System.out.println(yearMonth);
 		}
