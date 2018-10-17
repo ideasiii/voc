@@ -12,23 +12,23 @@ public class ApiUtil {
 	private static final SimpleDateFormat SDF_MONTHLY = new SimpleDateFormat("yyyy-MM");
 	
 	/**
-	 * Get daily Date String List
+	 * Get Daily Date String List
 	 * 
 	 * @param startDate yyyy-MM-dd
 	 * @param endDate yyyy-MM-dd
 	 * @return dailyList yyyy-MM-dd
 	 */
 	public static List<String> getDailyList(String startDate, String endDate) {
-		String[] startDateArr = startDate.split("-");
-		String[] endDateArr = endDate.split("-");
+		String[] startArr = startDate.split("-");
+		String[] endArr = endDate.split("-");
 		
 		List<String> datesInRange = new ArrayList<>();
 		
 		Calendar calendar = new GregorianCalendar();
-		calendar.set(Integer.parseInt(startDateArr[0]), (Integer.parseInt(startDateArr[1])-1), Integer.parseInt(startDateArr[2]));
+		calendar.set(Integer.parseInt(startArr[0]), (Integer.parseInt(startArr[1])-1), Integer.parseInt(startArr[2]));
 		
 		Calendar endCalendar = new GregorianCalendar();
-		endCalendar.set(Integer.parseInt(endDateArr[0]), (Integer.parseInt(endDateArr[1])-1), Integer.parseInt(endDateArr[2]));
+		endCalendar.set(Integer.parseInt(endArr[0]), (Integer.parseInt(endArr[1])-1), Integer.parseInt(endArr[2]));
 		
 		while (calendar.before(endCalendar) || calendar.equals(endCalendar)) {
 			Date result = calendar.getTime();
@@ -39,25 +39,25 @@ public class ApiUtil {
 	}
 
 	/**
-	 * Get daily Date String List
+	 * Get Monthly Date String List
 	 * 
 	 * @param startYearMonth yyyy-MM
 	 * @param endYearMonth yyyy-MM
 	 * @return monthlyList yyyy-MM
 	 */
 	public static List<String> getMonthlyList(String startYearMonth, String endYearMonth) {
-		String[] startDateArr = startYearMonth.split("-");
-		String[] endDateArr = endYearMonth.split("-");
+		String[] startArr = startYearMonth.split("-");
+		String[] endArr = endYearMonth.split("-");
 		
 		List<String> datesInRange = new ArrayList<>();
 		
 		Calendar calendar = new GregorianCalendar();
-		calendar.set(Calendar.YEAR, Integer.parseInt(startDateArr[0]));
-		calendar.set(Calendar.MONTH, Integer.parseInt(startDateArr[1]) - 1);
+		calendar.set(Calendar.YEAR, Integer.parseInt(startArr[0]));
+		calendar.set(Calendar.MONTH, Integer.parseInt(startArr[1]) - 1);
 		
 		Calendar endCalendar = new GregorianCalendar();
-		endCalendar.set(Calendar.YEAR, Integer.parseInt(endDateArr[0]));
-		endCalendar.set(Calendar.MONTH, Integer.parseInt(endDateArr[1]) - 1);
+		endCalendar.set(Calendar.YEAR, Integer.parseInt(endArr[0]));
+		endCalendar.set(Calendar.MONTH, Integer.parseInt(endArr[1]) - 1);
 		
 		while (calendar.before(endCalendar) || calendar.equals(endCalendar)) {
 			Date result = calendar.getTime();
@@ -79,8 +79,8 @@ public class ApiUtil {
 	}
 	
 	public static void test_1() {
-		List<String> dateList = ApiUtil.getDailyList("2018-12-16", "2019-03-17");
-		for(String dateStr : dateList) {
+		List<String> dailyList = ApiUtil.getDailyList("2018-12-16", "2019-03-17");
+		for(String dateStr : dailyList) {
 			System.out.println(dateStr);
 		}
 	}
