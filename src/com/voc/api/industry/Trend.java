@@ -1,5 +1,6 @@
 package com.voc.api.industry;
 
+import java.sql.Connection;
 import java.util.Iterator;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -10,20 +11,23 @@ import org.json.JSONObject;
 import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
+import com.voc.common.DBUtil;
 
 public class Trend extends RootAPI {
 
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
 		
-		if (!hasRequiredParameters(request)) {
+		Map<String, String[]> paramMap = request.getParameterMap();
+		
+		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
 		
 		final String strStartDate = request.getParameter("start_date");
 		final String strEndDate = request.getParameter("end_date");
+		final String strTableName = this.getTableName(paramMap);
 		String strInterval;
-		String strTableName;
 		
 		if (!Common.isValidDate(strStartDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
@@ -37,12 +41,19 @@ public class Trend extends RootAPI {
 				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
 		}
 		
-		if (!hasInterval(request)) {
+		if (!hasInterval(paramMap)) {
 			strInterval = "daily";
 		} else {
 			strInterval = request.getParameter("interval");
 		}
 
+		String strSelectClause = genSelectClause(strTableName);
+		String strWhereClause = genWhereClause(paramMap);
+		
+		
+		
+		
+		
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
 		
@@ -52,26 +63,27 @@ public class Trend extends RootAPI {
 		return jobj;
 	}
 
-	private int queryByBrand( , final JSONArray out) {
+	private int queryByBrand(final String strSelectClause,   final JSONArray out) {
+		final Connection conn = DBUtil.getConn();
+		int status = 0;
 		
-		
-		
+		return status;
 	}
 	
 private String genSelectClause(String strTableName) {
 		
-		StringBuilder query= new StringBuilder();
-		query.append("SELECT ");
-		query.append("date, SUM(reputation)reputation");
-		query.append(" From " + strTableName);
+		StringBuilder sql= new StringBuilder();
+		sql.append("SELECT ");
+		sql.append("date, SUM(reputation)reputation");
+		sql.append(" From " + strTableName);
 		
-		return query.toString();
+		return sql.toString();
 	}
 	
 	private String genWhereClause(Map<String, String[]> paramMap) {
 		
-		StringBuilder query= new StringBuilder();
-		query.append(" where ");
+		StringBuilder sql= new StringBuilder();
+		sql.append(" where ");
 		
 		Iterator<String> itPM = paramMap.keySet().iterator();
 		int nCount = 0;
@@ -92,26 +104,19 @@ private String genSelectClause(String strTableName) {
 				columnName = paramName;
 			}
 			if (nCount < paramMap.size()) {
-				query.append(" and ");
+				sql.append(" and ");
 			}
 		}
-		return query.toString();
+		return sql.toString();
 	}
 	
 	
-private boolean hasRequiredParameters(final HttpServletRequest request) {
-	Map<String, String[]> paramMap = request.getParameterMap();
+private boolean hasRequiredParameters(Map<String, String[]> paramMap) {
 	return paramMap.containsKey("start_date") && paramMap.containsKey("end_date");
 }
 
-private boolean hasInterval(final HttpServletRequest request) {
-	Map<String, String[]> paramMap = request.getParameterMap();
+private boolean hasInterval(Map<String, String[]> paramMap) {
 	return paramMap.containsKey("interval");
-}
-
-private boolean hasProduct(final HttpServletRequest request) {
-	Map<String, String[]> paramMap = request.getParameterMap();
-	return paramMap.containsKey("product") || paramMap.containsKey("series");
 }
 
 

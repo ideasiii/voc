@@ -17,7 +17,7 @@ public abstract class RootAPI {
 		paramColumnMap.put("source", "source");
 		paramColumnMap.put("website", "website_id");
 		paramColumnMap.put("channel", "channel_id");
-		paramColumnMap.put("feature", "feature");
+		paramColumnMap.put("features", "features");
 		paramColumnMap.put("start_date", "date");
 		paramColumnMap.put("end_date", "date");
 	}
