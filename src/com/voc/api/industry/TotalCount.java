@@ -81,22 +81,13 @@ public class TotalCount extends RootAPI {
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();			
-			String columnStr = paramName;
-			if (paramName.equals("product_name")) {
-				columnStr = "product";
-			} else if (paramName.equals("website")) {
-				columnStr = "website_id";
-			} else if (paramName.equals("channel")) {
-				columnStr = "channel_id";
-			}  else if (paramName.equals("start_date") || paramName.equals("end_date")) {
-				columnStr = "date";
-			}
+			String columnName = this.getColumnName(paramName);
 			if (i == 0) {
 				whereClauseSB.append("WHERE ");
 			} else {
 				whereClauseSB.append("AND ");
 			}
-			whereClauseSB.append(columnStr);
+			whereClauseSB.append(columnName);
 			if (paramName.equals("start_date")) {
 				whereClauseSB.append(" >= ? ");
 			} else if (paramName.equals("end_date")) {
