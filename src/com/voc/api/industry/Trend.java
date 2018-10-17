@@ -1,6 +1,7 @@
 package com.voc.api.industry;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.util.Iterator;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -37,10 +38,10 @@ public class Trend extends RootAPI {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
 		}
 
-		if (!strStartDate.equals(strEndDate)) {
-				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
-		}
-		
+	if (!Common.isValidStartDate(strStartDate, strEndDate, "yyyy-MM-dd")) {
+		return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
+	}
+	
 		if (!hasInterval(paramMap)) {
 			strInterval = "daily";
 		} else {
@@ -50,65 +51,97 @@ public class Trend extends RootAPI {
 		String strSelectClause = genSelectClause(strTableName);
 		String strWhereClause = genWhereClause(paramMap);
 		
-		
-		
-		
+		System.out.println("**************SQL: " + strSelectClause + strWhereClause); 
 		
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
+		int nCount = query(strSelectClause, strWhereClause, strInterval, resArray);
 		
-		
-		
-		
+		if (0 < nCount) {
+			jobj = ApiResponse.successTemplate();
+			jobj.put("result", resArray);
+
+		} else {
+			switch (nCount) {
+			case 0:
+				jobj = ApiResponse.dataNotFound();
+				break;
+			default:
+				jobj = ApiResponse.byReturnStatus(nCount);
+			}
+		}
 		return jobj;
 	}
 
-	private int queryByBrand(final String strSelectClause,   final JSONArray out) {
-		final Connection conn = DBUtil.getConn();
+	private int query(final String strSelectClause, final String strWhereClause, final String strInterval, final JSONArray out) {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		StringBuffer querySQL = new StringBuffer();
 		int status = 0;
-		
+		try {
+			conn = DBUtil.getConn();
+			querySQL.append(strSelectClause);
+			querySQL.append(strWhereClause);
+			
+			
+			
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			if (conn != null) {
+				DBUtil.closeConn(conn);
+			}
+		}
 		return status;
 	}
 	
 private String genSelectClause(String strTableName) {
 		
-		StringBuilder sql= new StringBuilder();
-		sql.append("SELECT ");
-		sql.append("date, SUM(reputation)reputation");
-		sql.append(" From " + strTableName);
-		
+		StringBuffer sql= new StringBuffer();
+		sql.append("SELECT date, SUM(reputation) AS count FROM ");
+		sql.append(strTableName).append(" ");
 		return sql.toString();
 	}
 	
 	private String genWhereClause(Map<String, String[]> paramMap) {
 		
-		StringBuilder sql= new StringBuilder();
-		sql.append(" where ");
-		
+		StringBuffer sql= new StringBuffer();
 		Iterator<String> itPM = paramMap.keySet().iterator();
-		int nCount = 0;
+		int i = 0;
 		
 		while(itPM.hasNext()) {
-			nCount++;
 			String paramName = itPM.next();
-			String columnName;
-			if (paramName.equals("website")) {
-				columnName = "website_name";
-			} else
-			if (paramName.equals("channel")) {
-				columnName = "channel_name";
-			} else	
-			if (paramName.equals("start_date") || paramName.equals("end_date")) {
-				columnName = "date";
+			if (paramName.equals("interval"))
+			{
+				continue;
+			}
+			String columnName = this.getColumnName(paramName);
+	
+			if (0 == i)
+			{
+				sql.append("WHERE ");
 			} else {
-				columnName = paramName;
+				sql.append("AND ");
 			}
-			if (nCount < paramMap.size()) {
-				sql.append(" and ");
+			
+			sql.append(columnName);
+			if (paramName.equals("start_date")) {
+				sql.append(" >= ? ");
+			} else if (paramName.equals("end_date")) {
+				sql.append(" <= ? ");
+			} else {
+				sql.append(" = ? ");
 			}
+			i++;
 		}
 		return sql.toString();
 	}
+	
+	
+	
+	
 	
 	
 private boolean hasRequiredParameters(Map<String, String[]> paramMap) {
