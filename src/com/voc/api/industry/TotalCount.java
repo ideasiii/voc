@@ -51,9 +51,10 @@ public class TotalCount extends RootAPI {
 		PreparedStatement preparedStatement = null;
 		StringBuffer selectSQL = new StringBuffer();
 		try {
-			String tableName = this.getTableName(parameterMap);
-			selectSQL.append("SELECT SUM(reputation) AS count FROM ").append(tableName).append(" ");
-			selectSQL.append(this.getWhereClause(parameterMap));
+//			String tableName = this.getTableName(parameterMap);
+//			selectSQL.append("SELECT SUM(reputation) AS count FROM ").append(tableName).append(" ");
+			selectSQL.append(this.genSelectClause(parameterMap));
+			selectSQL.append(this.genWhereClause(parameterMap));
 			System.out.println("debug:==>" + selectSQL.toString()); // debug
 			
 			conn = DBUtil.getConn();
@@ -62,6 +63,9 @@ public class TotalCount extends RootAPI {
 			
 			ResultSet rs = preparedStatement.executeQuery();
 			if (rs.next()) {
+				
+				// TODO: 
+				
 				int count = rs.getInt("count");
 				System.out.println("debug:==>count=" + count); // debug
 				JSONObject resultObject = new JSONObject();
@@ -82,7 +86,29 @@ public class TotalCount extends RootAPI {
 		return null;
 	}
 	
-	private String getWhereClause(Map<String, String[]> parameterMap) {
+	private String genSelectClause(Map<String, String[]> parameterMap) {
+		StringBuffer selectClauseSB = new StringBuffer();
+		
+		selectClauseSB.append("SELECT ");
+		int i = 0;
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			String paramName = entry.getKey();
+			if (this.isItemParamName(paramName)) {
+				String columnName = this.getColumnName(paramName);
+				if (i == 0) {
+					selectClauseSB.append(columnName);
+				} else {
+					selectClauseSB.append(" ,").append(columnName);
+				}
+				i++;
+			}
+		}
+		String tableName = this.getTableName(parameterMap);
+		selectClauseSB.append(" ,").append("SUM(reputation) AS count FROM ").append(tableName).append(" ");
+		return selectClauseSB.toString();
+	}
+	
+	private String genWhereClause(Map<String, String[]> parameterMap) {
 		StringBuffer whereClauseSB = new StringBuffer();
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {

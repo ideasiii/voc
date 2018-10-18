@@ -28,9 +28,12 @@ public abstract class RootAPI {
 	}
 	private static final List<String> VALID_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
 			"source", "website", "channel", "features", "start_date", "end_date", "interval");
+	
+	private static final List<String> ITEM_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
+			"source", "website", "channel", "features");
 
 	public abstract JSONObject processRequest(HttpServletRequest request);
-	
+
 	protected String getTableName(Map<String, String[]> parameterMap) {
 		if (parameterMap.containsKey("product") || parameterMap.containsKey("series")) {
 			return TABLE_PRODUCT_REPUTATION;
@@ -38,13 +41,17 @@ public abstract class RootAPI {
 			return TABLE_BRAND_REPUTATION;
 		}
 	}
-	
+
 	protected String getColumnName(String paramName) {
 		return PARAM_COLUMN_MAP.get(paramName);
 	}
-	
-	protected static boolean isValidParamName(String paramName) {
+
+	protected boolean isValidParamName(String paramName) {
 		return VALID_PARAM_NAMES.contains(paramName);
+	}
+
+	protected boolean isItemParamName(String paramName) {
+		return ITEM_PARAM_NAMES.contains(paramName);
 	}
 
 }
