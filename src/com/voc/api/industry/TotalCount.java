@@ -136,7 +136,7 @@ public class TotalCount extends RootAPI {
 					System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
 					i++;
 				} else {
-					String[] valueArr = entry.getValue()[0].split(";");
+					String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 					for (String v : valueArr) {
 						int parameterIndex = i + 1;
 						preparedStatement.setObject(parameterIndex, v);
