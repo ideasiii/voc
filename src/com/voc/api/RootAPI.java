@@ -1,6 +1,8 @@
 package com.voc.api;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -8,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.json.JSONObject;
 
 public abstract class RootAPI {
+	protected static final String PARAM_VALUES_SEPARATOR = ";";
 	private static final String TABLE_PRODUCT_REPUTATION = "ibuzz_voc.product_reputation";
 	private static final String TABLE_BRAND_REPUTATION = "ibuzz_voc.brand_reputation";
 	private static final Map<String, String> PARAM_COLUMN_MAP = new HashMap<String, String>();
@@ -23,7 +26,8 @@ public abstract class RootAPI {
 		PARAM_COLUMN_MAP.put("start_date", "date");
 		PARAM_COLUMN_MAP.put("end_date", "date");
 	}
-	protected static final String PARAM_VALUES_SEPARATOR = ";";
+	private static final List<String> VALID_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
+			"source", "website", "channel", "features", "start_date", "end_date", "interval");
 
 	public abstract JSONObject processRequest(HttpServletRequest request);
 	
@@ -39,5 +43,8 @@ public abstract class RootAPI {
 		return PARAM_COLUMN_MAP.get(paramName);
 	}
 	
+	protected static boolean isValidParamName(String paramName) {
+		return VALID_PARAM_NAMES.contains(paramName);
+	}
 
 }
