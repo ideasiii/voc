@@ -2,6 +2,7 @@ package com.voc.api.industry;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Iterator;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -90,8 +91,13 @@ public class Trend extends RootAPI {
 			pst = conn.prepareStatement(querySQL.toString());
 			setWhereClauseValues(pst, paramMap);
 			
-			
-			
+			ResultSet rs = pst.executeQuery();
+			while (rs.next()) {
+				JSONObject jobj = new JSONObject();
+				int count = rs.getInt("count");
+				jobj.put("count", count);
+				out.put(jobj);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -106,9 +112,9 @@ private String genSelectClause(String strTableName, String strInterval) {
 		
 		StringBuffer sql= new StringBuffer();
 		if (strInterval.equals(Common.INTERVAL_DAILY)) {
-		sql.append("SELECT DATE_FORMAT(date, '%Y-%m-%d') as dailyStr, SUM(reputation) AS count FROM ");
+		sql.append("SELECT DATE_FORMAT(date, '%Y-%m-%d') AS dailyStr, SUM(reputation) AS count FROM ");
 		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-			sql.append("SELECT DATE_FORMAT(date, '%Y-%m') as monthlyStr, SUM(reputation) AS count FROM ");
+			sql.append("SELECT DATE_FORMAT(date, '%Y-%m') AS monthlyStr, SUM(reputation) AS count FROM ");
 		}
 		sql.append(strTableName).append(" ");
 		return sql.toString();
