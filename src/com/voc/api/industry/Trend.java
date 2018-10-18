@@ -160,8 +160,11 @@ private String genSelectClause(String strTableName, String strInterval) {
 	}
 	
 	
-	private void setWhereClauseValues(PreparedStatement preparedStatement, Map<String, String[]> parameterMap) throws Exception {
-		
+	private void setWhereClauseValues(PreparedStatement pst, Map<String, String[]> paramMap) throws Exception {
+		int i =0;
+		if (hasInterval(paramMap)) {
+			paramMap.remove("interval");
+		}
 		
 	}
 	
