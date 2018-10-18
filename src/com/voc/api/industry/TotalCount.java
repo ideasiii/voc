@@ -33,6 +33,11 @@ public class TotalCount extends RootAPI {
 	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ&website=5b29c824a85d0a7df5c40080&start_date=2018-05-01 00:00:00&end_date=2018-05-02 23:59:59
 	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ&website=5b29c824a85d0a7df5c40080&start_date=2018-05-01&end_date=2018-05-02
 	 * 
+	 * SELECT SUM(reputation) FROM ibuzz_voc.brand_reputation where brand in ('BENZ', 'BMW') and website_id = '5b29c824a85d0a7df5c40080' and date >= '2018-05-01 00:00:00' AND date <= '2018-05-02 23:59:59';
+	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=5b29c824a85d0a7df5c40080&start_date=2018-05-01&end_date=2018-05-02
+	 * 
+	 * SELECT SUM(reputation) FROM ibuzz_voc.brand_reputation where brand in ('BENZ', 'BMW') and website_id in ( '5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') and date >= '2018-05-01 00:00:00' AND date <= '2018-05-02 23:59:59';
+	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
 	 * 
 	 * Note: 呼叫API時所下的參數若包含 product 或 series, 就使用 ibuzz_voc.product_reputation (產品表格), 否則就使用 ibuzz_voc.brand_reputation (品牌表格)
 	 *       ==>See RootAPI.java
@@ -49,7 +54,7 @@ public class TotalCount extends RootAPI {
 			String tableName = this.getTableName(parameterMap);
 			selectSQL.append("SELECT SUM(reputation) AS count FROM ").append(tableName).append(" ");
 			selectSQL.append(this.getWhereClause(parameterMap));
-			System.out.println("debug:==>\r\n" + selectSQL.toString()); // debug
+			System.out.println("debug:==>" + selectSQL.toString()); // debug
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
@@ -58,6 +63,7 @@ public class TotalCount extends RootAPI {
 			ResultSet rs = preparedStatement.executeQuery();
 			if (rs.next()) {
 				int count = rs.getInt("count");
+				System.out.println("debug:==>count=" + count); // debug
 				JSONObject resultObject = new JSONObject();
 				resultObject.put("count", count);
 				
@@ -93,7 +99,16 @@ public class TotalCount extends RootAPI {
 			} else if (paramName.equals("end_date")) {
 				whereClauseSB.append(" <= ? ");
 			} else {
-				whereClauseSB.append(" = ? ");
+				whereClauseSB.append(" in (");
+				String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
+				for (int cnt = 0; cnt < valueArr.length; cnt++) {
+					if (cnt == 0) {
+						whereClauseSB.append("?");
+					} else {
+						whereClauseSB.append(",?");
+					}
+				}
+				whereClauseSB.append(") ");
 			}
 			i++;
 		}
@@ -110,14 +125,26 @@ public class TotalCount extends RootAPI {
 				value = values[0];
 				if (paramName.equals("start_date")) {
 					value += " 00:00:00";
+					int parameterIndex = i + 1;
+					preparedStatement.setObject(parameterIndex, value);
+					System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
+					i++;
 				} else if (paramName.equals("end_date")) {
 					value += " 23:59:59";
+					int parameterIndex = i + 1;
+					preparedStatement.setObject(parameterIndex, value);
+					System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
+					i++;
+				} else {
+					String[] valueArr = entry.getValue()[0].split(";");
+					for (String v : valueArr) {
+						int parameterIndex = i + 1;
+						preparedStatement.setObject(parameterIndex, v);
+						System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
+						i++;
+					}
 				}
 			}
-			int parameterIndex = i + 1;
-			preparedStatement.setObject(parameterIndex, value);
-			System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
-			i++;
 		}
 	}
 
