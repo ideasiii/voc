@@ -43,19 +43,22 @@ public class Trend extends RootAPI {
 	}
 	
 		if (!hasInterval(paramMap)) {
-			strInterval = "daily";
+			strInterval = Common.INTERVAL_DAILY;
 		} else {
 			strInterval = request.getParameter("interval");
+			if (!Common.isValidInterval(strInterval)) {
+				return  ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid interval.");
+			}
 		}
 
-		String strSelectClause = genSelectClause(strTableName);
-		String strWhereClause = genWhereClause(paramMap);
+		String strSelectClause = genSelectClause(strTableName, strInterval);
+		String strWhereClause = genWhereClause(paramMap, strInterval);
 		
 		System.out.println("**************SQL: " + strSelectClause + strWhereClause); 
 		
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		int nCount = query(strSelectClause, strWhereClause, strInterval, resArray);
+		int nCount = query(paramMap, strSelectClause, strWhereClause, resArray);
 		
 		if (0 < nCount) {
 			jobj = ApiResponse.successTemplate();
@@ -73,17 +76,19 @@ public class Trend extends RootAPI {
 		return jobj;
 	}
 
-	private int query(final String strSelectClause, final String strWhereClause, final String strInterval, final JSONArray out) {
+	private int query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final JSONArray out) {
 		Connection conn = null;
-		PreparedStatement preparedStatement = null;
+		PreparedStatement pst = null;
 		StringBuffer querySQL = new StringBuffer();
 		int status = 0;
 		try {
-			conn = DBUtil.getConn();
 			querySQL.append(strSelectClause);
 			querySQL.append(strWhereClause);
+			System.out.println("****************" + querySQL.toString()); 
 			
-			
+			conn = DBUtil.getConn();
+			pst = conn.prepareStatement(querySQL.toString());
+			setWhereClauseValues(pst, paramMap);
 			
 			
 			
@@ -97,15 +102,19 @@ public class Trend extends RootAPI {
 		return status;
 	}
 	
-private String genSelectClause(String strTableName) {
+private String genSelectClause(String strTableName, String strInterval) {
 		
 		StringBuffer sql= new StringBuffer();
-		sql.append("SELECT date, SUM(reputation) AS count FROM ");
+		if (strInterval.equals(Common.INTERVAL_DAILY)) {
+		sql.append("SELECT DATE_FORMAT(date, '%Y-%m-%d') as dailyStr, SUM(reputation) AS count FROM ");
+		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+			sql.append("SELECT DATE_FORMAT(date, '%Y-%m') as monthlyStr, SUM(reputation) AS count FROM ");
+		}
 		sql.append(strTableName).append(" ");
 		return sql.toString();
 	}
 	
-	private String genWhereClause(Map<String, String[]> paramMap) {
+	private String genWhereClause(Map<String, String[]> paramMap, String strInterval) {
 		
 		StringBuffer sql= new StringBuffer();
 		Iterator<String> itPM = paramMap.keySet().iterator();
@@ -136,11 +145,19 @@ private String genSelectClause(String strTableName) {
 			}
 			i++;
 		}
+		if (strInterval.equals(Common.INTERVAL_DAILY)) {
+			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m-%d')");
+		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m')");
+		}
 		return sql.toString();
 	}
 	
 	
-	
+	private void setWhereClauseValues(PreparedStatement preparedStatement, Map<String, String[]> parameterMap) throws Exception {
+		
+		
+	}
 	
 	
 	

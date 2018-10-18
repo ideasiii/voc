@@ -16,11 +16,17 @@ public class Common {
 	public static final String DB_USER_RDS = "ibuzz_voc";
 	public static final String DB_PASS_RDS = "ibuzz_voc123!";
 	
-	
+	public static final String INTERVAL_DAILY = "daily";
+	public static final String INTERVAL_MONTHLY = "monthly";
 	
 	
 	
 	/** VALIDATIONS **/
+	
+	public static boolean isValidInterval(String interval) {
+		return interval.equals(INTERVAL_DAILY) || interval.equals(INTERVAL_MONTHLY);
+	}
+	
 	
 	public static boolean isValidDate(String dateToValidate, String dateFromat) {
 
