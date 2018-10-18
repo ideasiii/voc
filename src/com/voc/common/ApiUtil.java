@@ -2,6 +2,7 @@ package com.voc.common;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -10,7 +11,9 @@ import java.util.List;
 public class ApiUtil {
 	private static final SimpleDateFormat SDF_DAILY = new SimpleDateFormat("yyyy-MM-dd");
 	private static final SimpleDateFormat SDF_MONTHLY = new SimpleDateFormat("yyyy-MM");
-	
+	private static final List<String> VALID_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
+			"source", "website", "channel", "features", "start_date", "end_date", "interval");
+
 	/**
 	 * Get Daily Date String List
 	 * 
@@ -66,7 +69,11 @@ public class ApiUtil {
 		}
 		return datesInRange;
 	}
-	
+
+	public static boolean isValidParamName(String paramName) {
+		return VALID_PARAM_NAMES.contains(paramName);
+	}
+
 	//*************************************************************
 
 	/**
@@ -76,6 +83,8 @@ public class ApiUtil {
 		test_1();
 		System.out.println("================================");
 		test_2();
+		System.out.println("================================");
+		test_3();
 	}
 	
 	public static void test_1() {
@@ -90,6 +99,13 @@ public class ApiUtil {
 		for(String yearMonth : monthlyList) {
 			System.out.println(yearMonth);
 		}
+	}
+	
+	public static void test_3() {
+		boolean b1 = ApiUtil.isValidParamName("website");
+		System.out.println("b1="+b1);
+		boolean b2 = ApiUtil.isValidParamName("websiteA");
+		System.out.println("b2="+b2);
 	}
 
 }
