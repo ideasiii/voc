@@ -61,7 +61,7 @@ public class TotalCount extends RootAPI {
 		try {
 			selectSQL.append(this.genSelectClause(parameterMap));
 			selectSQL.append(this.genWhereClause(parameterMap));
-			selectSQL.append(this.genGroupByClause(parameterMap));
+			selectSQL.append(this.genGroupByOrderByClause(parameterMap));
 			System.out.println("debug:==>" + selectSQL.toString()); // debug
 			
 			conn = DBUtil.getConn();
@@ -175,23 +175,25 @@ public class TotalCount extends RootAPI {
 		return whereClauseSB.toString();
 	}
 	
-	private String genGroupByClause(Map<String, String[]> parameterMap) {
-		StringBuffer groupByClauseSB = new StringBuffer();
-		groupByClauseSB.append("GROUP BY ");
+	private String genGroupByOrderByClause(Map<String, String[]> parameterMap) {
+		StringBuffer groupByOrderByClauseSB = new StringBuffer();
+		StringBuffer columnsSB = new StringBuffer();
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();			
 			String columnName = this.getColumnName(paramName);
 			if (!"date".equals(columnName)) {
 				if (i == 0) {
-					groupByClauseSB.append(columnName);
+					columnsSB.append(columnName);
 				} else {
-					groupByClauseSB.append(", ").append(columnName);
+					columnsSB.append(", ").append(columnName);
 				}
 			}
 			i++;
 		}
-		return groupByClauseSB.toString();
+		groupByOrderByClauseSB.append("GROUP BY ").append(columnsSB.toString()).append(" ");
+		groupByOrderByClauseSB.append("ORDER BY ").append(columnsSB.toString());
+		return groupByOrderByClauseSB.toString();
 	}
 
 	private void setWhereClauseValues(PreparedStatement preparedStatement, Map<String, String[]> parameterMap) throws Exception {
