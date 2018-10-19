@@ -3,7 +3,6 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.Iterator;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
@@ -19,48 +18,47 @@ public class Trend extends RootAPI {
 
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
-		
+
 		Map<String, String[]> paramMap = request.getParameterMap();
-		
+
 		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
-		
+
 		final String strStartDate = request.getParameter("start_date");
 		final String strEndDate = request.getParameter("end_date");
-		final String strTableName = this.getTableName(paramMap);
 		String strInterval;
-		
+
 		if (!Common.isValidDate(strStartDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
 		}
-		
+
 		if (!Common.isValidDate(strEndDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
 		}
 
-	if (!Common.isValidStartDate(strStartDate, strEndDate, "yyyy-MM-dd")) {
-		return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
-	}
-	
+		if (!Common.isValidStartDate(strStartDate, strEndDate, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
+		}
+
 		if (!hasInterval(paramMap)) {
 			strInterval = Common.INTERVAL_DAILY;
 		} else {
 			strInterval = request.getParameter("interval");
 			if (!Common.isValidInterval(strInterval)) {
-				return  ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid interval.");
+				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid interval.");
 			}
 		}
 
-		String strSelectClause = genSelectClause(strTableName, strInterval);
+		String strSelectClause = genSelectClause(paramMap, strInterval);
 		String strWhereClause = genWhereClause(paramMap, strInterval);
-		
-		System.out.println("**************SQL: " + strSelectClause + strWhereClause); 
-		
+
+		System.out.println("**************SQL: " + strSelectClause + strWhereClause);
+
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
 		int nCount = query(paramMap, strSelectClause, strWhereClause, resArray);
-		
+
 		if (0 < nCount) {
 			jobj = ApiResponse.successTemplate();
 			jobj.put("result", resArray);
@@ -77,7 +75,8 @@ public class Trend extends RootAPI {
 		return jobj;
 	}
 
-	private int query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final JSONArray out) {
+	private int query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause,
+			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		StringBuffer querySQL = new StringBuffer();
@@ -85,12 +84,12 @@ public class Trend extends RootAPI {
 		try {
 			querySQL.append(strSelectClause);
 			querySQL.append(strWhereClause);
-			System.out.println("****************" + querySQL.toString()); 
-			
+			System.out.println("****************" + querySQL.toString());
+
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(querySQL.toString());
 			setWhereClauseValues(pst, paramMap);
-			
+
 			ResultSet rs = pst.executeQuery();
 			while (rs.next()) {
 				JSONObject jobj = new JSONObject();
@@ -107,47 +106,75 @@ public class Trend extends RootAPI {
 		}
 		return status;
 	}
-	
-private String genSelectClause(String strTableName, String strInterval) {
-		
-		StringBuffer sql= new StringBuffer();
-		if (strInterval.equals(Common.INTERVAL_DAILY)) {
-		sql.append("SELECT DATE_FORMAT(date, '%Y-%m-%d') AS dailyStr, SUM(reputation) AS count FROM ");
-		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-			sql.append("SELECT DATE_FORMAT(date, '%Y-%m') AS monthlyStr, SUM(reputation) AS count FROM ");
+
+	private String genSelectClause(Map<String, String[]> paramMap, String strInterval) {
+
+		if (hasInterval(paramMap)) {
+			paramMap.remove("interval");
 		}
-		sql.append(strTableName).append(" ");
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT ");
+		int i = 0;
+		for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+			String paramName = entry.getKey();
+			if (isItemParamName(paramName)) {
+				String columnName = this.getColumnName(paramName);
+				if ("website_id".equals(columnName)) {
+					columnName = "website_name";
+				} else if ("channel_id".equals(columnName)) {
+					columnName = "channel_name";
+				}
+				if (0 == i) {
+					sql.append(columnName);
+				} else {
+					sql.append(" ,").append(columnName);
+				}
+				i++;
+			}
+		}
+		String strTableName = getTableName(paramMap);
+		if (strInterval.equals(Common.INTERVAL_DAILY)) {
+			sql.append(" ,").append("DATE_FORMAT(date, '%Y-%m-%d') AS dailyStr");
+		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+			sql.append(" ,").append("DATE_FORMAT(date, '%Y-%m') AS monthlyStr");
+		}
+		sql.append(" ,").append("SUM(reputation) AS count FROM ").append(strTableName).append(" ");
+
 		return sql.toString();
 	}
-	
+
 	private String genWhereClause(Map<String, String[]> paramMap, String strInterval) {
-		
-		StringBuffer sql= new StringBuffer();
-		Iterator<String> itPM = paramMap.keySet().iterator();
+		if (hasInterval(paramMap)) {
+			paramMap.remove("interval");
+		}
+		StringBuffer sql = new StringBuffer();
 		int i = 0;
-		
-		while(itPM.hasNext()) {
-			String paramName = itPM.next();
-			if (paramName.equals("interval"))
-			{
-				continue;
-			}
+		for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+			String paramName = entry.getKey();
 			String columnName = this.getColumnName(paramName);
-	
-			if (0 == i)
-			{
+
+			if (0 == i) {
 				sql.append("WHERE ");
 			} else {
 				sql.append("AND ");
 			}
-			
-			sql.append(columnName);
+
 			if (paramName.equals("start_date")) {
-				sql.append(" >= ? ");
+				sql.append(" DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 			} else if (paramName.equals("end_date")) {
-				sql.append(" <= ? ");
+				sql.append(" DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 			} else {
-				sql.append(" = ? ");
+				sql.append(columnName);
+				sql.append(" IN (");
+				String[] arrValue = entry.getValue();
+				for (int c = 0; c < arrValue.length; c++) {
+					if (0 == c) {
+						sql.append(" ?");
+					} else {
+						sql.append(" ,?");
+					}
+				}
+				sql.append(") ");
 			}
 			i++;
 		}
@@ -158,32 +185,43 @@ private String genSelectClause(String strTableName, String strInterval) {
 		}
 		return sql.toString();
 	}
-	
-	
+
 	private void setWhereClauseValues(PreparedStatement pst, Map<String, String[]> paramMap) throws Exception {
-		int i =0;
 		if (hasInterval(paramMap)) {
 			paramMap.remove("interval");
 		}
-		
+		int i = 0;
+		for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+			String paramName = entry.getKey();
+			String[] arrValue = entry.getValue();
+			String value = "";
+			if (arrValue != null && arrValue.length > 0) {
+				value = arrValue[0];
+				if (paramName.equals("start_date") || paramName.equals("end_date")) {
+					int parameterIndex = i + 1;
+					pst.setObject(parameterIndex, value);
+					System.out.println("*********" + parameterIndex + ":" + value); 
+					i++;
+				} else {
+					String[] valueArr = entry.getValue();
+					for (String v : valueArr) {
+						int parameterIndex = i + 1;
+						pst.setObject(parameterIndex, v);
+						System.out.println("*********" + parameterIndex + ":" + v);
+						i++;
+					}
+				}
+			}
+		}
+
 	}
-	
-	
-	
-private boolean hasRequiredParameters(Map<String, String[]> paramMap) {
-	return paramMap.containsKey("start_date") && paramMap.containsKey("end_date");
-}
 
-private boolean hasInterval(Map<String, String[]> paramMap) {
-	return paramMap.containsKey("interval");
-}
+	private boolean hasRequiredParameters(Map<String, String[]> paramMap) {
+		return paramMap.containsKey("start_date") && paramMap.containsKey("end_date");
+	}
 
-
-
-
-
-
-
-
+	private boolean hasInterval(Map<String, String[]> paramMap) {
+		return paramMap.containsKey("interval");
+	}
 
 }
