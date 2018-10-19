@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.voc.api.RootAPI;
@@ -27,6 +28,9 @@ public class TotalCount extends RootAPI {
 	 * http://localhost:8080/voc/industry/total-count.jsp?series=掀背車&website=5b29c821a85d0a7df5c3ff22&start_date=2018-05-01 00:00:00&end_date=2018-05-30 23:59:59
 	 * http://localhost:8080/voc/industry/total-count.jsp?series=掀背車&website=5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-30
 	 * 
+	 * SELECT brand, series, SUM(reputation) AS count FROM ibuzz_voc.product_reputation where brand in ('BENZ', 'BMW') and series in('掀背車', '轎車') and DATE_FORMAT(date, '%Y-%m-%d') >= '2018-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-10-31' GROUP BY  brand, series;
+	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&series=掀背車;轎車&start_date=2018-01-01&end_date=2018-10-31
+	 * 
 	 * 
 	 * EX-2: ibuzz_voc.brand_reputation (品牌表格)
 	 * SELECT SUM(reputation) FROM ibuzz_voc.brand_reputation where brand = 'BENZ' and website_id = '5b29c824a85d0a7df5c40080' and date >= '2018-05-01 00:00:00' AND date <= '2018-05-02 23:59:59';
@@ -38,6 +42,10 @@ public class TotalCount extends RootAPI {
 	 * 
 	 * SELECT SUM(reputation) FROM ibuzz_voc.brand_reputation where brand in ('BENZ', 'BMW') and website_id in ( '5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') and date >= '2018-05-01 00:00:00' AND date <= '2018-05-02 23:59:59';
 	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
+	 * 
+	 * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation where brand in ('BENZ', 'BMW') and website_id in('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') and DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
+	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
+	 * 
 	 * 
 	 * Note: 呼叫API時所下的參數若包含 product 或 series, 就使用 ibuzz_voc.product_reputation (產品表格), 否則就使用 ibuzz_voc.brand_reputation (品牌表格)
 	 *       ==>See RootAPI.java
@@ -51,31 +59,53 @@ public class TotalCount extends RootAPI {
 		PreparedStatement preparedStatement = null;
 		StringBuffer selectSQL = new StringBuffer();
 		try {
-//			String tableName = this.getTableName(parameterMap);
-//			selectSQL.append("SELECT SUM(reputation) AS count FROM ").append(tableName).append(" ");
 			selectSQL.append(this.genSelectClause(parameterMap));
 			selectSQL.append(this.genWhereClause(parameterMap));
+			selectSQL.append(this.genGroupByClause(parameterMap));
 			System.out.println("debug:==>" + selectSQL.toString()); // debug
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
 			this.setWhereClauseValues(preparedStatement, parameterMap);
 			
+			System.out.println("debug:=================================" ); // debug
 			ResultSet rs = preparedStatement.executeQuery();
-			if (rs.next()) {
-				
-				// TODO: 
-				
+			JSONArray itemArray = new JSONArray();
+			while (rs.next()) {
+				StringBuffer item = new StringBuffer();
+				int i = 0;
+				for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+					String paramName = entry.getKey();			
+					String columnName = this.getColumnName(paramName);
+					if ("website_id".equals(columnName)) {
+						columnName = "website_name";
+					} else if ("channel_id".equals(columnName)) {
+						columnName = "channel_name";
+					}
+					if (!"date".equals(columnName)) {
+						String s = rs.getString(columnName);;
+						if (i == 0) {
+							item.append(s);
+						} else {
+							item.append("-").append(s);
+						}
+					}
+					i++;
+				}
 				int count = rs.getInt("count");
-				System.out.println("debug:==>count=" + count); // debug
-				JSONObject resultObject = new JSONObject();
-				resultObject.put("count", count);
+				System.out.println("debug:==>item=" + item.toString() + ", count=" + count); // debug
 				
-				JSONObject responseObject = new JSONObject();
-				responseObject.put("success", true);
-				responseObject.put("result", resultObject);
-				return responseObject;
+				JSONObject itemObject = new JSONObject();
+				itemObject.put("item", item.toString());
+				itemObject.put("count", count);
+				
+				itemArray.put(itemObject);
 			}
+			
+			JSONObject responseObject = new JSONObject();
+			responseObject.put("success", true);
+			responseObject.put("result", itemArray);
+			return responseObject;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
@@ -88,13 +118,17 @@ public class TotalCount extends RootAPI {
 	
 	private String genSelectClause(Map<String, String[]> parameterMap) {
 		StringBuffer selectClauseSB = new StringBuffer();
-		
 		selectClauseSB.append("SELECT ");
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
 			if (this.isItemParamName(paramName)) {
 				String columnName = this.getColumnName(paramName);
+				if ("website_id".equals(columnName)) {
+					columnName = "website_name";
+				} else if ("channel_id".equals(columnName)) {
+					columnName = "channel_name";
+				}
 				if (i == 0) {
 					selectClauseSB.append(columnName);
 				} else {
@@ -119,12 +153,12 @@ public class TotalCount extends RootAPI {
 			} else {
 				whereClauseSB.append("AND ");
 			}
-			whereClauseSB.append(columnName);
 			if (paramName.equals("start_date")) {
-				whereClauseSB.append(" >= ? ");
+				whereClauseSB.append("DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 			} else if (paramName.equals("end_date")) {
-				whereClauseSB.append(" <= ? ");
+				whereClauseSB.append("DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 			} else {
+				whereClauseSB.append(columnName);
 				whereClauseSB.append(" in (");
 				String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 				for (int cnt = 0; cnt < valueArr.length; cnt++) {
@@ -140,6 +174,25 @@ public class TotalCount extends RootAPI {
 		}
 		return whereClauseSB.toString();
 	}
+	
+	private String genGroupByClause(Map<String, String[]> parameterMap) {
+		StringBuffer groupByClauseSB = new StringBuffer();
+		groupByClauseSB.append("GROUP BY ");
+		int i = 0;
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			String paramName = entry.getKey();			
+			String columnName = this.getColumnName(paramName);
+			if (!"date".equals(columnName)) {
+				if (i == 0) {
+					groupByClauseSB.append(columnName);
+				} else {
+					groupByClauseSB.append(", ").append(columnName);
+				}
+			}
+			i++;
+		}
+		return groupByClauseSB.toString();
+	}
 
 	private void setWhereClauseValues(PreparedStatement preparedStatement, Map<String, String[]> parameterMap) throws Exception {
 		int i = 0;
@@ -149,14 +202,7 @@ public class TotalCount extends RootAPI {
 			String value = "";
 			if (values != null && values.length > 0) {
 				value = values[0];
-				if (paramName.equals("start_date")) {
-					value += " 00:00:00";
-					int parameterIndex = i + 1;
-					preparedStatement.setObject(parameterIndex, value);
-					System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
-					i++;
-				} else if (paramName.equals("end_date")) {
-					value += " 23:59:59";
+				if (paramName.equals("start_date") || paramName.equals("end_date")) {
 					int parameterIndex = i + 1;
 					preparedStatement.setObject(parameterIndex, value);
 					System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
