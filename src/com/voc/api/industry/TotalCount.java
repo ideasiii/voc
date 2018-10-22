@@ -3,15 +3,18 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.catalina.util.ParameterMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.voc.api.RootAPI;
 import com.voc.common.DBUtil;
+import com.voc.enums.industry.EnumTotalCount;
 
 /**
  * 查詢產業分析口碑總數
@@ -45,7 +48,7 @@ public class TotalCount extends RootAPI {
 	 * 
 	 * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation where brand in ('BENZ', 'BMW') and website_id in('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') and DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
 	 * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
-	 * 
+	 * http://localhost:8080/voc/industry/total-count.jsp?website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&brand=BENZ;BMW&start_date=2018-05-01&end_date=2018-05-02
 	 * 
 	 * Note: 呼叫API時所下的參數若包含 product 或 series, 就使用 ibuzz_voc.product_reputation (產品表格), 否則就使用 ibuzz_voc.brand_reputation (品牌表格)
 	 *       ==>See RootAPI.java
@@ -54,6 +57,7 @@ public class TotalCount extends RootAPI {
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
 		Map<String, String[]> parameterMap = request.getParameterMap();
+		parameterMap = this.adjustParameterOrder(parameterMap);
 		
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
@@ -114,6 +118,104 @@ public class TotalCount extends RootAPI {
 			}
 		}
 		return null;
+	}
+	
+	private Map<String, String[]> adjustParameterOrder(Map<String, String[]> parameterMap) {
+		Map<String, String[]> orderedParameterMap = new ParameterMap<>();
+		
+		String[] paramValues_industry = null;
+		String[] paramValues_brand = null;
+		String[] paramValues_series = null;
+		String[] paramValues_product = null;
+		String[] paramValues_source = null;
+		String[] paramValues_website = null;
+		String[] paramValues_channel = null;
+		String[] paramValues_features = null;
+		String[] paramValues_startDate = null;
+		String[] paramValues_endDate = null;
+		
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			String paramName = entry.getKey();
+			String[] values = entry.getValue();
+			EnumTotalCount enumTotalCount = EnumTotalCount.getEnum(paramName);
+			if (enumTotalCount == null) continue; 
+			switch (enumTotalCount) {
+			case PARAM_COLUMN_INDUSTRY:
+				paramValues_industry = values;
+				break;
+			case PARAM_COLUMN_BRAND:
+				paramValues_brand = values;
+				break;
+			case PARAM_COLUMN_SERIES:
+				paramValues_series = values;
+				break;
+			case PARAM_COLUMN_PRODUCT:
+				paramValues_product = values;
+				break;
+			case PARAM_COLUMN_SOURCE:
+				paramValues_source = values;
+				break;
+			case PARAM_COLUMN_WEBSITE:
+				paramValues_website = values;
+				break;
+			case PARAM_COLUMN_CHANNEL:
+				paramValues_channel = values;
+				break;
+			case PARAM_COLUMN_FEATURES:
+				paramValues_features = values;
+				break;
+			case PARAM_COLUMN_START_DATE:
+				paramValues_startDate = values;
+				break;
+			case PARAM_COLUMN_END_DATE:
+				paramValues_endDate = values;
+				break;
+			default:
+				// Do nothing
+				break;
+			}
+		}
+		if (paramValues_industry != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_INDUSTRY.getParamName();
+			orderedParameterMap.put(paramName, paramValues_industry);
+		}
+		if (paramValues_brand != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_BRAND.getParamName();
+			orderedParameterMap.put(paramName, paramValues_brand);
+		}
+		if (paramValues_series != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_SERIES.getParamName();
+			orderedParameterMap.put(paramName, paramValues_series);
+		}
+		if (paramValues_product != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_PRODUCT.getParamName();
+			orderedParameterMap.put(paramName, paramValues_product);
+		}
+		if (paramValues_source != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_SOURCE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_source);
+		}
+		if (paramValues_website != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_WEBSITE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_website);
+		}
+		if (paramValues_channel != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_CHANNEL.getParamName();
+			orderedParameterMap.put(paramName, paramValues_channel);
+		}
+		if (paramValues_features != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_FEATURES.getParamName();
+			orderedParameterMap.put(paramName, paramValues_features);
+		}
+		if (paramValues_startDate != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_START_DATE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_startDate);
+		}
+		if (paramValues_endDate != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_END_DATE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_endDate);
+		}
+		return orderedParameterMap;
 	}
 	
 	private String genSelectClause(Map<String, String[]> parameterMap) {
