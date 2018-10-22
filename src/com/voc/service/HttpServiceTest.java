@@ -26,9 +26,9 @@ public class HttpServiceTest {
 		
 		HttpServiceTest httpServiceTest = new HttpServiceTest();
 		if (httpServiceTest.checkToken(token)) {
-			System.out.println("The token is valiad.");
+			System.out.println("The token is valid.");
 		} else {
-			System.out.println("The token is invaliad!!!");
+			System.out.println("The token is invalid!!!");
 		}
 	}
 
