@@ -43,7 +43,7 @@ public class ApiFilter implements Filter {
 			System.out.println("debug: Invalide token=" + token);
 			PrintWriter out = servletResponse.getWriter();
 			String jsonStr = ApiResponse.unauthorizedError().toString();
-			out.println(jsonStr);
+			out.print(jsonStr);
 		} else {
 			filterChain.doFilter(servletRequest, servletResponse);
 		}
