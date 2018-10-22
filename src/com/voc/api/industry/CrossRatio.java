@@ -71,16 +71,22 @@ public class CrossRatio extends RootAPI {
 			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, startDate, endDate);
 			System.out.println("debug:=================================" ); // debug
 			
+			JSONObject responseObj = new JSONObject();
 			ResultSet rs = preparedStatement.executeQuery();
+			int i = 1;
 			while (rs.next()) {
 				
 				// TODO: 
 				
 				int count = rs.getInt("count");
 				System.out.println("debug:==>count=" + count); // debug
+				
+				responseObj.put("still_working_" + i, count);
+				i++;
 			}
 			
 			// TODO: 
+			return responseObj;
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -89,7 +95,6 @@ public class CrossRatio extends RootAPI {
 				DBUtil.closeConn(conn);
 			}
 		}
-		
 		return null;
 	}
 	
