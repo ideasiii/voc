@@ -41,6 +41,14 @@ public abstract class RootAPI {
 			return TABLE_BRAND_REPUTATION;
 		}
 	}
+	
+	protected String getTableName(List<String> paramNameList) {
+		if (paramNameList.contains("product") || paramNameList.contains("series")) {
+			return TABLE_PRODUCT_REPUTATION;
+		} else {
+			return TABLE_BRAND_REPUTATION;
+		}
+	}
 
 	protected String getColumnName(String paramName) {
 		return PARAM_COLUMN_MAP.get(paramName);
