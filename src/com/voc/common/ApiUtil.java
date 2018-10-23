@@ -84,6 +84,19 @@ public class ApiUtil {
 		return dailyArray;
 	}
 
+	public static JSONArray getMonthlyArray(String startDate, String endDate) {
+		JSONArray monthlyArray = new JSONArray();
+		List<String> monthlyList = getMonthlyList(startDate, startDate);
+		for (String dateStr : monthlyList) {
+			JSONObject monthlyObject = new JSONObject();
+			monthlyObject.put("date", dateStr);
+			monthlyObject.put("count", 0);
+			monthlyArray.put(monthlyObject);
+		}
+		return monthlyArray;
+	}
+	
+	
 	//*************************************************************
 
 	/**

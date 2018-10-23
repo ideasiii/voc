@@ -3,16 +3,21 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.catalina.util.ParameterMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
+import com.voc.common.ApiUtil;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+import com.voc.enums.industry.EnumTrend;
 
 public class Trend extends RootAPI {
 
@@ -57,30 +62,36 @@ public class Trend extends RootAPI {
 
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		int nCount = query(paramMap, strSelectClause, strWhereClause, resArray);
+		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, resArray);
 
-		if (0 < nCount) {
+		if (querySuccess) {
+			
+			
+			if (strInterval.equals(Common.INTERVAL_DAILY)) {
+				JSONArray dailyArray = new JSONArray();
+				dailyArray = ApiUtil.getDailyArray(strStartDate,strEndDate);
+				
+				
+			}
+			
+			
+			
+			
 			jobj = ApiResponse.successTemplate();
 			jobj.put("result", resArray);
 
 		} else {
-			switch (nCount) {
-			case 0:
-				jobj = ApiResponse.dataNotFound();
-				break;
-			default:
-				jobj = ApiResponse.byReturnStatus(nCount);
-			}
+				jobj = ApiResponse.unknownError();
 		}
 		return jobj;
 	}
 
-	private int query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause,
+	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause,
 			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
+		ResultSet rs = null;
 		StringBuffer querySQL = new StringBuffer();
-		int status = 0;
 		try {
 			querySQL.append(strSelectClause);
 			querySQL.append(strWhereClause);
@@ -90,21 +101,29 @@ public class Trend extends RootAPI {
 			pst = conn.prepareStatement(querySQL.toString());
 			setWhereClauseValues(pst, paramMap);
 
-			ResultSet rs = pst.executeQuery();
+			rs = pst.executeQuery();
+			 
 			while (rs.next()) {
 				JSONObject jobj = new JSONObject();
 				int count = rs.getInt("count");
 				jobj.put("count", count);
 				out.put(jobj);
 			}
+			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
+			if (rs != null) {
+				DBUtil.closeResultSet(rs);
+			}
+			if (pst != null) {
+				DBUtil.closePreparedStatement(pst);
+			}
 			if (conn != null) {
 				DBUtil.closeConn(conn);
 			}
 		}
-		return status;
+		return false;
 	}
 
 	private String genSelectClause(Map<String, String[]> paramMap, String strInterval) {
@@ -222,6 +241,104 @@ public class Trend extends RootAPI {
 
 	private boolean hasInterval(Map<String, String[]> paramMap) {
 		return paramMap.containsKey("interval");
+	}
+	
+	private Map<String, String[]> adjustParameterOrder(Map<String, String[]> parameterMap) {
+		Map<String, String[]> orderedParameterMap = new ParameterMap<>();
+		
+		String[] paramValues_industry = null;
+		String[] paramValues_brand = null;
+		String[] paramValues_series = null;
+		String[] paramValues_product = null;
+		String[] paramValues_source = null;
+		String[] paramValues_website = null;
+		String[] paramValues_channel = null;
+		String[] paramValues_features = null;
+		String[] paramValues_startDate = null;
+		String[] paramValues_endDate = null;
+		
+		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+			String paramName = entry.getKey();
+			String[] values = entry.getValue();
+			EnumTrend enumTrend = EnumTrend.getEnum(paramName);
+			if (enumTrend == null) continue; 
+			switch (enumTrend) {
+			case PARAM_COLUMN_INDUSTRY:
+				paramValues_industry = values;
+				break;
+			case PARAM_COLUMN_BRAND:
+				paramValues_brand = values;
+				break;
+			case PARAM_COLUMN_SERIES:
+				paramValues_series = values;
+				break;
+			case PARAM_COLUMN_PRODUCT:
+				paramValues_product = values;
+				break;
+			case PARAM_COLUMN_SOURCE:
+				paramValues_source = values;
+				break;
+			case PARAM_COLUMN_WEBSITE:
+				paramValues_website = values;
+				break;
+			case PARAM_COLUMN_CHANNEL:
+				paramValues_channel = values;
+				break;
+			case PARAM_COLUMN_FEATURES:
+				paramValues_features = values;
+				break;
+			case PARAM_COLUMN_START_DATE:
+				paramValues_startDate = values;
+				break;
+			case PARAM_COLUMN_END_DATE:
+				paramValues_endDate = values;
+				break;
+			default:
+				// Do nothing
+				break;
+			}
+		}
+		if (paramValues_industry != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_INDUSTRY.getParamName();
+			orderedParameterMap.put(paramName, paramValues_industry);
+		}
+		if (paramValues_brand != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_BRAND.getParamName();
+			orderedParameterMap.put(paramName, paramValues_brand);
+		}
+		if (paramValues_series != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_SERIES.getParamName();
+			orderedParameterMap.put(paramName, paramValues_series);
+		}
+		if (paramValues_product != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_PRODUCT.getParamName();
+			orderedParameterMap.put(paramName, paramValues_product);
+		}
+		if (paramValues_source != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_SOURCE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_source);
+		}
+		if (paramValues_website != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_WEBSITE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_website);
+		}
+		if (paramValues_channel != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_CHANNEL.getParamName();
+			orderedParameterMap.put(paramName, paramValues_channel);
+		}
+		if (paramValues_features != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_FEATURES.getParamName();
+			orderedParameterMap.put(paramName, paramValues_features);
+		}
+		if (paramValues_startDate != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_START_DATE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_startDate);
+		}
+		if (paramValues_endDate != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_END_DATE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_endDate);
+		}
+		return orderedParameterMap;
 	}
 
 }
