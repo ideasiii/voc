@@ -4,10 +4,27 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
+import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
+
 public class DBUtil extends DB {
+	private static BasicDataSource datasource = null;
+	static {
+		try {
+			System.out.println("debug: datasource init...");
+			Context initialContext = new InitialContext();
+			datasource = (BasicDataSource)initialContext.lookup("java:comp/env/jdbc/voc");
+		} catch (NamingException e) {
+			e.printStackTrace();
+		}
+	}
 	
-	public static Connection getConn() {
-		Connection conn = connect(Common.DB_URL_VOC, Common.DB_USER_RDS, Common.DB_PASS_RDS);
+	public static Connection getConn() throws Exception {
+		// Connection conn = connect(Common.DB_URL_VOC, Common.DB_USER_RDS, Common.DB_PASS_RDS);
+		Connection conn = datasource.getConnection();
 		return conn;
 	}
 	
