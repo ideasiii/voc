@@ -7,6 +7,9 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public class ApiUtil {
 	private static final SimpleDateFormat SDF_DAILY = new SimpleDateFormat("yyyy-MM-dd");
 	private static final SimpleDateFormat SDF_MONTHLY = new SimpleDateFormat("yyyy-MM");
@@ -37,7 +40,7 @@ public class ApiUtil {
 		}
 		return datesInRange;
 	}
-
+	
 	/**
 	 * Get Monthly Date String List
 	 * 
@@ -65,6 +68,20 @@ public class ApiUtil {
 			calendar.add(Calendar.MONTH, 1);
 		}
 		return datesInRange;
+	}
+	
+	// --------------------------------------------------------------------
+	
+	public static JSONArray getDailyArray(String startDate, String endDate) {
+		JSONArray dailyArray = new JSONArray();
+		List<String> dailyList = getDailyList(startDate, startDate);
+		for (String dateStr : dailyList) {
+			JSONObject dailyObject = new JSONObject();
+			dailyObject.put("date", dateStr);
+			dailyObject.put("count", 0);
+			dailyArray.put(dailyObject);
+		}
+		return dailyArray;
 	}
 
 	//*************************************************************

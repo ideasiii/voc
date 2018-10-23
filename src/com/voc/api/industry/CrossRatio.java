@@ -4,10 +4,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.voc.api.RootAPI;
@@ -20,6 +23,8 @@ import com.voc.common.DBUtil;
  *
  */
 public class CrossRatio extends RootAPI {
+	private String mainSelectCol = null;
+	private String secSelectCol = null;
 
 	/**
 	 * 查詢時間區間內各項目交叉分析的口碑總數及比例:
@@ -33,7 +38,7 @@ public class CrossRatio extends RootAPI {
 	 * query	*end_date		string	欲查詢結束日期
 	 * 
 	 * 
-	 * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand in ('BENZ', 'BMW') and website_id in('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') and DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
+	 * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand IN ('BENZ', 'BMW') AND website_id IN('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
 	 * http://localhost:8080/voc/industry/cross-ratio.jsp?main-filter=brand&main-value=BENZ;BMW&sec-filter=website&sec-value=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
 	 * 
 	 * 
@@ -59,6 +64,7 @@ public class CrossRatio extends RootAPI {
 		
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
 		StringBuffer selectSQL = new StringBuffer();
 		try {
 			String[] mainValueArr = mainValue.split(PARAM_VALUES_SEPARATOR);
@@ -71,26 +77,52 @@ public class CrossRatio extends RootAPI {
 			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, startDate, endDate);
 			System.out.println("debug:=================================" ); // debug
 			
-			JSONObject responseObj = new JSONObject();
-			ResultSet rs = preparedStatement.executeQuery();
-			int i = 1;
+			Map<String, JSONArray> mainItem_secItemArray_map = new HashMap<>();
+			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
-				
-				// TODO: 
-				
+				String main_item = rs.getString(this.mainSelectCol);
+				String sec_item = rs.getString(this.secSelectCol);
 				int count = rs.getInt("count");
-				System.out.println("debug:==>count=" + count); // debug
+				System.out.println("debug:==>main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count); // debug
 				
-				responseObj.put("still_working_" + i, count);
-				i++;
+				JSONObject secItemObj = new JSONObject();
+				secItemObj.put("sec_item", sec_item);
+				secItemObj.put("count", count);
+				
+				if (mainItem_secItemArray_map.get(main_item) == null) {
+					mainItem_secItemArray_map.put(main_item, new JSONArray());
+				}
+				JSONArray secItemArray = mainItem_secItemArray_map.get(main_item);
+				secItemArray.put(secItemObj);
+				mainItem_secItemArray_map.put(main_item, secItemArray);
 			}
 			
-			// TODO: 
-			return responseObj;
+			JSONArray resultArray = new JSONArray();
+			for (Map.Entry<String, JSONArray> entry : mainItem_secItemArray_map.entrySet()) {
+				String main_item = entry.getKey();
+				JSONArray secItemArray = entry.getValue();
+				
+				JSONObject resultObj = new JSONObject();
+				resultObj.put("main_item", main_item);
+				resultObj.put("data", secItemArray);
+
+				resultArray.put(resultObj);
+			}
 			
+			JSONObject responseObj = new JSONObject();
+			responseObj.put("success", true);
+			responseObj.put("result", resultArray);
+			
+			return responseObj;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
+			if (rs != null) {
+				DBUtil.closeResultSet(rs);
+			}
+			if (preparedStatement != null) {
+				DBUtil.closePreparedStatement(preparedStatement);
+			}
 			if (conn != null) {
 				DBUtil.closeConn(conn);
 			}
@@ -100,7 +132,19 @@ public class CrossRatio extends RootAPI {
 	
 	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT ").append(mainFilterColumn).append(", ").append(secFilterColumn).append(", ").append("SUM(reputation) AS count ");
+		this.mainSelectCol = mainFilterColumn;
+		if ("website_id".equals(mainFilterColumn)) {
+			this.mainSelectCol = "website_name";
+		} else if ("channel_id".equals(mainFilterColumn)) {
+			this.mainSelectCol = "channel_name";
+		}
+		this.secSelectCol = secFilterColumn;
+		if ("website_id".equals(secFilterColumn)) {
+			this.secSelectCol = "website_name";
+		} else if ("channel_id".equals(secFilterColumn)) {
+			this.secSelectCol = "channel_name";
+		}
+		selectSQL.append("SELECT ").append(this.mainSelectCol).append(", ").append(this.secSelectCol).append(", ").append("SUM(reputation) AS count ");
 		selectSQL.append("FROM ").append(tableName).append(" ");
 		selectSQL.append("WHERE ").append(mainFilterColumn).append(" IN (");
 		for(int i = 0 ; i < mainValueArr.length ; i++ ) {

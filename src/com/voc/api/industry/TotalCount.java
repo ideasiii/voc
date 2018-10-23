@@ -60,6 +60,7 @@ public class TotalCount extends RootAPI {
 		
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
 		StringBuffer selectSQL = new StringBuffer();
 		try {
 			selectSQL.append(this.genSelectClause(parameterMap));
@@ -72,7 +73,7 @@ public class TotalCount extends RootAPI {
 			this.setWhereClauseValues(preparedStatement, parameterMap);
 			
 			System.out.println("debug:=================================" ); // debug
-			ResultSet rs = preparedStatement.executeQuery();
+			rs = preparedStatement.executeQuery();
 			JSONArray itemArray = new JSONArray();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
@@ -112,6 +113,12 @@ public class TotalCount extends RootAPI {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
+			if (rs != null) {
+				DBUtil.closeResultSet(rs);
+			}
+			if (preparedStatement != null) {
+				DBUtil.closePreparedStatement(preparedStatement);
+			}
 			if (conn != null) {
 				DBUtil.closeConn(conn);
 			}
