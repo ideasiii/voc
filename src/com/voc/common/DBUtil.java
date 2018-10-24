@@ -10,6 +10,8 @@ import javax.naming.NamingException;
 
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 
+import com.voc.tool.AesEncryptor;
+
 public class DBUtil extends DB {
 	private static BasicDataSource datasource = null;
 	static {
@@ -17,6 +19,11 @@ public class DBUtil extends DB {
 			System.out.println("debug: datasource init...");
 			Context initialContext = new InitialContext();
 			datasource = (BasicDataSource)initialContext.lookup("java:comp/env/jdbc/voc");
+			
+			String username = AesEncryptor.decrypt(datasource.getUsername());
+			String password = AesEncryptor.decrypt(datasource.getPassword());
+			datasource.setUsername(username);
+			datasource.setPassword(password);
 		} catch (NamingException e) {
 			e.printStackTrace();
 		}
