@@ -4,8 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.catalina.util.ParameterMap;
@@ -55,6 +59,7 @@ public class Trend extends RootAPI {
 			}
 		}
 
+		paramMap = this.adjustParameterOrder(paramMap);
 		String strSelectClause = genSelectClause(paramMap, strInterval);
 		String strWhereClause = genWhereClause(paramMap, strInterval);
 
@@ -62,15 +67,19 @@ public class Trend extends RootAPI {
 
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, resArray);
+		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, strInterval, resArray);
 
 		if (querySuccess) {
 			
-			
 			if (strInterval.equals(Common.INTERVAL_DAILY)) {
-				JSONArray dailyArray = new JSONArray();
-				dailyArray = ApiUtil.getDailyArray(strStartDate,strEndDate);
+				List<String> dailyList = ApiUtil.getDailyList(strStartDate, strEndDate);
+				System.out.println("******DailyList: " + dailyList);
 				
+				
+				
+			
+					
+					
 				
 			}
 			
@@ -86,11 +95,12 @@ public class Trend extends RootAPI {
 		return jobj;
 	}
 
-	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause,
+	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final String strInterval,
 			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
+		String date = null;
 		StringBuffer querySQL = new StringBuffer();
 		try {
 			querySQL.append(strSelectClause);
@@ -101,15 +111,61 @@ public class Trend extends RootAPI {
 			pst = conn.prepareStatement(querySQL.toString());
 			setWhereClauseValues(pst, paramMap);
 
+			Map<String, JSONArray> itemMap = new HashMap<>();
 			rs = pst.executeQuery();
-			 
+			
 			while (rs.next()) {
-				JSONObject jobj = new JSONObject();
-				int count = rs.getInt("count");
-				jobj.put("count", count);
-				out.put(jobj);
+				StringBuffer item = new StringBuffer();
+				int i = 0;
+				for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+					String paramName = entry.getKey();			
+					String columnName = getColumnName(paramName);
+					if ("website_id".equals(columnName)) {
+						columnName = "website_name";
+					} else if ("channel_id".equals(columnName)) {
+						columnName = "channel_name";
+					}
+					if (!"date".equals(columnName)) {
+						String str = rs.getString(columnName);;
+						if (i == 0) {
+							item.append(str);
+						} else {
+							item.append("-").append(str);
+						}
+					}
+					i++;
+				}
+				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+					date = rs.getString("monthlyStr");
+				} else {
+					date = rs.getString("dailyStr");
+				}
+				int count = rs.getInt("count"); 
+				System.out.println("************** date: "+ date+ " count: "+ count );
+				
+				JSONObject dataObj = new JSONObject();
+				dataObj.put("date", date);
+				dataObj.put("count", count);
+				
+				if (itemMap.get(item.toString()) == null) {
+					itemMap.put(item.toString(), new JSONArray());
+				}
+				JSONArray dataArray = itemMap.get(item.toString());
+				dataArray.put(dataObj);
+				itemMap.put(item.toString(), dataArray);
+			}
+			
+			for (Map.Entry<String, JSONArray> entry : itemMap.entrySet()) {
+			String strItem = entry.getKey();
+			JSONArray dataArray = entry.getValue();	
+			
+			JSONObject resultObj = new JSONObject();
+			resultObj.put("item", strItem);
+			resultObj.put("data", dataArray);
+			out.put(resultObj);
 			}
 			return true;
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
