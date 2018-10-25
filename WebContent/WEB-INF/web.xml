@@ -15,14 +15,14 @@
 		<filter-name>ApiFilter</filter-name>
 		<filter-class>com.voc.filter.ApiFilter</filter-class>
 		<init-param>
-			<param-name>my-param</param-name>
-			<param-value>my-param-value</param-value>
+			<param-name>api_url_token_validation</param-name>
+			<param-value>https://ser.kong.srm.pw/dashboard/token/validation</param-value>
 		</init-param>
 	</filter>
 	<filter-mapping>
 		<filter-name>ApiFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
-	 -->
+	-->
   
 </web-app>

@@ -18,14 +18,13 @@ import com.voc.service.HttpService;
 import com.voc.service.impl.HttpServiceImpl;
 
 public class ApiFilter implements Filter {
-	private FilterConfig filterConfig = null;
-	
 	private static final HttpService HTTP_SERVICE = new HttpServiceImpl();
-	private static final String API_URL_TOKEN_VALIDATION = "https://ser.kong.srm.pw/dashboard/token/validation";
-
+	private String api_url_token_validation; // https://ser.kong.srm.pw/dashboard/token/validation
+	
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
-		this.filterConfig = filterConfig;
+		this.api_url_token_validation = filterConfig.getInitParameter("api_url_token_validation");
+		System.out.println("debug: ******* ApiFilter init: api_url_token_validation=" + api_url_token_validation);
 	}
 
 	@Override
@@ -35,7 +34,6 @@ public class ApiFilter implements Filter {
 		System.out.println("debug: ******* Before doFilter ******* ");
 		servletResponse.setContentType("application/json");
 		servletResponse.setCharacterEncoding("UTF-8");
-		String initParameter = this.filterConfig.getInitParameter("my-param"); // Not used so far!
 		
 		// Validate the token:
 		String token = servletRequest.getParameter("token");
@@ -62,7 +60,7 @@ public class ApiFilter implements Filter {
 			return false;
 		}
 		String params = "?token=" + token;
-		int statusCode = HTTP_SERVICE.sendGet(true, API_URL_TOKEN_VALIDATION + params);
+		int statusCode = HTTP_SERVICE.sendGet(true, this.api_url_token_validation + params);
 		return HttpURLConnection.HTTP_OK == statusCode;
 	}
 

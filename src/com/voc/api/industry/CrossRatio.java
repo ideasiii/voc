@@ -10,49 +10,101 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.voc.api.RootAPI;
+import com.voc.common.ApiResponse;
+import com.voc.common.Common;
 import com.voc.common.DBUtil;
 
 /**
  * 查詢產業分析交叉分析口碑總數:
  * - 查詢時間區間內各項目交叉分析的口碑總數及比例
  * - /industry/cross-ratio.jsp
- *
+ * 
+ * Params:
+ * query	*main-filter	string	主要分析項目
+ * query	*main-value		string	主要欲分析項目值
+ * query	*sec-filter		string	次要分析項目
+ * query	*sec-value		string	次要欲分析項目值
+ * query	*start_date		string	欲查詢起始日期
+ * query	*end_date		string	欲查詢結束日期
+ * 
+ * 
+ * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand IN ('BENZ', 'BMW') AND website_id IN('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
+ * http://localhost:8080/voc/industry/cross-ratio.jsp?main-filter=brand&main-value=BENZ;BMW&sec-filter=website&sec-value=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
+ * 
+ * 
  */
 public class CrossRatio extends RootAPI {
+	private String mainFilter = null;
+	private String mainValue = null;
+	private String secFilter = null;
+	private String secValue = null;
+	private String startDate = null;
+	private String endDate = null;
+	
 	private String mainSelectCol = null;
 	private String secSelectCol = null;
+	
+	private JSONObject validateParams() {
+		if (StringUtils.isBlank(this.mainFilter) || StringUtils.isBlank(this.mainValue)
+				|| StringUtils.isBlank(this.secFilter) || StringUtils.isBlank(this.secValue)
+				|| StringUtils.isBlank(this.startDate) || StringUtils.isBlank(this.endDate)) {
 
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+		}
+		
+		if (!Common.isValidDate(this.startDate, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
+		}
+		if (!Common.isValidDate(this.endDate, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
+		}
+		if (!Common.isValidStartDate(this.startDate, this.endDate, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
+		}
+		return null;
+	}
+	
 	/**
-	 * 查詢時間區間內各項目交叉分析的口碑總數及比例:
-	 * 
-	 * Params:
-	 * query	*main-filter	string	主要分析項目
-	 * query	*main-value		string	主要欲分析項目值
-	 * query	*sec-filter		string	次要分析項目
-	 * query	*sec-value		string	次要欲分析項目值
-	 * query	*start_date		string	欲查詢起始日期
-	 * query	*end_date		string	欲查詢結束日期
-	 * 
-	 * 
-	 * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand IN ('BENZ', 'BMW') AND website_id IN('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
-	 * http://localhost:8080/voc/industry/cross-ratio.jsp?main-filter=brand&main-value=BENZ;BMW&sec-filter=website&sec-value=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
-	 * 
+	 * Trim values separated by PARAM_VALUES_SEPARATOR.
 	 * 
 	 */
+	private String trimValues(String values) {
+		StringBuffer trimedValuesSB = new StringBuffer();
+		String[] valueArr = values.split(PARAM_VALUES_SEPARATOR);
+		int i = 0;
+		for (String value : valueArr) {
+			String trimedValue = StringUtils.trimToEmpty(value);
+			if (i == 0) {
+				trimedValuesSB.append(trimedValue);
+			} else {
+				trimedValuesSB.append(PARAM_VALUES_SEPARATOR).append(trimedValue);
+			}
+			i++;
+		}
+		return trimedValuesSB.toString();
+	}
+	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
-		String mainFilter = request.getParameter("main-filter");
-		String mainValue = request.getParameter("main-value");
-		String secFilter = request.getParameter("sec-filter");
-		String secValue = request.getParameter("sec-value");
-		String startDate = request.getParameter("start_date");
-		String endDate = request.getParameter("end_date");
+		this.mainFilter = StringUtils.trimToEmpty(request.getParameter("main-filter"));
+		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main-value"));
+		this.secFilter = StringUtils.trimToEmpty(request.getParameter("sec-filter"));
+		this.secValue = StringUtils.trimToEmpty(request.getParameter("sec-value"));
+		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
+		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 		
-		// TODO: param validation: 
+		this.mainValue = this.trimValues(this.mainValue);
+		this.secValue = this.trimValues(this.secValue);
+		
+		JSONObject errorResponse = this.validateParams();
+		if (errorResponse != null) {
+			return errorResponse;
+		}
 		
 		String mainFilterColumn = this.getColumnName(mainFilter);
 		String secFilterColumn = this.getColumnName(secFilter);
@@ -112,7 +164,6 @@ public class CrossRatio extends RootAPI {
 			JSONObject responseObj = new JSONObject();
 			responseObj.put("success", true);
 			responseObj.put("result", resultArray);
-			
 			return responseObj;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -127,7 +178,7 @@ public class CrossRatio extends RootAPI {
 				DBUtil.closeConn(conn);
 			}
 		}
-		return null;
+		return ApiResponse.unknownError();
 	}
 	
 	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {
