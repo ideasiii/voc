@@ -49,24 +49,16 @@ public class CrossRatio extends RootAPI {
 	private String mainSelectCol = null;
 	private String secSelectCol = null;
 	
-	private JSONObject validateParams() {
-		if (StringUtils.isBlank(this.mainFilter) || StringUtils.isBlank(this.mainValue)
-				|| StringUtils.isBlank(this.secFilter) || StringUtils.isBlank(this.secValue)
-				|| StringUtils.isBlank(this.startDate) || StringUtils.isBlank(this.endDate)) {
-
-			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
-		}
+	private void requestAndTrimParams(HttpServletRequest request) {
+		this.mainFilter = StringUtils.trimToEmpty(request.getParameter("main-filter"));
+		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main-value"));
+		this.secFilter = StringUtils.trimToEmpty(request.getParameter("sec-filter"));
+		this.secValue = StringUtils.trimToEmpty(request.getParameter("sec-value"));
+		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
+		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 		
-		if (!Common.isValidDate(this.startDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
-		}
-		if (!Common.isValidDate(this.endDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
-		}
-		if (!Common.isValidStartDate(this.startDate, this.endDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
-		}
-		return null;
+		this.mainValue = this.trimValues(this.mainValue);
+		this.secValue = this.trimValues(this.secValue);
 	}
 	
 	/**
@@ -89,18 +81,29 @@ public class CrossRatio extends RootAPI {
 		return trimedValuesSB.toString();
 	}
 	
+	private JSONObject validateParams() {
+		if (StringUtils.isBlank(this.mainFilter) || StringUtils.isBlank(this.mainValue)
+				|| StringUtils.isBlank(this.secFilter) || StringUtils.isBlank(this.secValue)
+				|| StringUtils.isBlank(this.startDate) || StringUtils.isBlank(this.endDate)) {
+
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+		}
+		
+		if (!Common.isValidDate(this.startDate, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
+		}
+		if (!Common.isValidDate(this.endDate, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
+		}
+		if (!Common.isValidStartDate(this.startDate, this.endDate, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
+		}
+		return null;
+	}
+	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
-		this.mainFilter = StringUtils.trimToEmpty(request.getParameter("main-filter"));
-		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main-value"));
-		this.secFilter = StringUtils.trimToEmpty(request.getParameter("sec-filter"));
-		this.secValue = StringUtils.trimToEmpty(request.getParameter("sec-value"));
-		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
-		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
-		
-		this.mainValue = this.trimValues(this.mainValue);
-		this.secValue = this.trimValues(this.secValue);
-		
+		this.requestAndTrimParams(request);
 		JSONObject errorResponse = this.validateParams();
 		if (errorResponse != null) {
 			return errorResponse;
