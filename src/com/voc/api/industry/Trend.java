@@ -3,12 +3,9 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -67,35 +64,21 @@ public class Trend extends RootAPI {
 
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, strInterval, resArray);
-
+		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, strInterval, strStartDate, strEndDate, resArray);
+		System.out.println("*********** resArray: "+ resArray );
+		
 		if (querySuccess) {
-			
-			if (strInterval.equals(Common.INTERVAL_DAILY)) {
-				List<String> dailyList = ApiUtil.getDailyList(strStartDate, strEndDate);
-				System.out.println("******DailyList: " + dailyList);
-				
-				
-				
-			
-					
-					
-				
-			}
-			
-			
-			
-			
 			jobj = ApiResponse.successTemplate();
 			jobj.put("result", resArray);
-
+			System.out.println("*********** response: "+ jobj.toString() );
+			
 		} else {
 				jobj = ApiResponse.unknownError();
 		}
 		return jobj;
 	}
 
-	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final String strInterval,
+	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final String strInterval, final String strStartDate, final String strEndDate,
 			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
@@ -146,6 +129,33 @@ public class Trend extends RootAPI {
 				JSONObject dataObj = new JSONObject();
 				dataObj.put("date", date);
 				dataObj.put("count", count);
+				
+	
+				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+					List<String> monthlyList = ApiUtil.getMonthlyList(strStartDate, strEndDate);
+					System.out.println("******MonthlyList: " + monthlyList);
+					
+					for (String strMonthly : monthlyList) {
+						if (strMonthly.equals(date)) {
+							continue;
+						} else {
+							dataObj.put("date", strMonthly);
+							dataObj.put("count", 0);
+						}
+					}
+				} else {
+					List<String> dailyList = ApiUtil.getDailyList(strStartDate, strEndDate);
+					int index = 0;
+					for (String strDaily : dailyList) {
+						strDaily = dailyList.get(index);
+						if (!strDaily.equals(date)) {
+							
+							dataObj.put("date", strDaily);
+							dataObj.put("count", 0);
+						}
+						index++;
+					}
+				}
 				
 				if (itemMap.get(item.toString()) == null) {
 					itemMap.put(item.toString(), new JSONArray());
