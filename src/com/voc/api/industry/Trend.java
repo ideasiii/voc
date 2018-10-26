@@ -233,7 +233,7 @@ public class Trend extends RootAPI {
 			} else {
 				sql.append(columnName);
 				sql.append(" IN (");
-				String[] arrValue = entry.getValue();
+				String[] arrValue = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 				for (int c = 0; c < arrValue.length; c++) {
 					if (0 == c) {
 						sql.append(" ?");
@@ -270,7 +270,7 @@ public class Trend extends RootAPI {
 					System.out.println("*********" + parameterIndex + ":" + value); 
 					i++;
 				} else {
-					String[] valueArr = entry.getValue();
+					String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 					for (String v : valueArr) {
 						int parameterIndex = i + 1;
 						pst.setObject(parameterIndex, v);
