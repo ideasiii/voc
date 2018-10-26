@@ -94,9 +94,8 @@ public class Trend extends RootAPI {
 			pst = conn.prepareStatement(querySQL.toString());
 			setWhereClauseValues(pst, paramMap);
 
-			Map<String, JSONArray> itemMap = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_item_dataMap = new HashMap<>();
 			rs = pst.executeQuery();
-			
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
 				int i = 0;
@@ -124,58 +123,41 @@ public class Trend extends RootAPI {
 					date = rs.getString("dailyStr");
 				}
 				int count = rs.getInt("count"); 
-				System.out.println("************** date: "+ date+ " count: "+ count );
+				System.out.println("************** item:" + item.toString() + ", date: " + date + ", count: " + count);
 				
-				JSONObject dataObj = new JSONObject();
-				dataObj.put("date", date);
-				dataObj.put("count", count);
-				
-	
-				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-					List<String> monthlyList = ApiUtil.getMonthlyList(strStartDate, strEndDate);
-					System.out.println("******MonthlyList: " + monthlyList);
-					
-					for (String strMonthly : monthlyList) {
-						if (strMonthly.equals(date)) {
-							continue;
-						} else {
-							dataObj.put("date", strMonthly);
-							dataObj.put("count", 0);
-						}
-					}
-				} else {
-					List<String> dailyList = ApiUtil.getDailyList(strStartDate, strEndDate);
-					int index = 0;
-					for (String strDaily : dailyList) {
-						strDaily = dailyList.get(index);
-						if (!strDaily.equals(date)) {
-							
-							dataObj.put("date", strDaily);
-							dataObj.put("count", 0);
-						}
-						index++;
-					}
+				if (hash_item_dataMap.get(item.toString()) == null) {
+					hash_item_dataMap.put(item.toString(), new HashMap<String, Integer>());
 				}
-				
-				if (itemMap.get(item.toString()) == null) {
-					itemMap.put(item.toString(), new JSONArray());
-				}
-				JSONArray dataArray = itemMap.get(item.toString());
-				dataArray.put(dataObj);
-				itemMap.put(item.toString(), dataArray);
+				Map<String, Integer> dataMap = hash_item_dataMap.get(item.toString());
+				dataMap.put(date, count);
 			}
-			
-			for (Map.Entry<String, JSONArray> entry : itemMap.entrySet()) {
-			String strItem = entry.getKey();
-			JSONArray dataArray = entry.getValue();	
 			
 			JSONObject resultObj = new JSONObject();
-			resultObj.put("item", strItem);
-			resultObj.put("data", dataArray);
-			out.put(resultObj);
+			for (Map.Entry<String, Map<String, Integer>> entry : hash_item_dataMap.entrySet()) {
+				String strItem = entry.getKey();
+				Map<String, Integer> dataMap = entry.getValue();
+				JSONArray dataArray = new JSONArray();
+				List<String> dateList = null;
+				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+					dateList = ApiUtil.getMonthlyList(strStartDate, strEndDate);
+				} else {
+					dateList = ApiUtil.getDailyList(strStartDate, strEndDate);
+				}
+				for (String dataStr : dateList) {
+					Integer count = dataMap.get(dataStr);
+					if (count == null) count = 0;
+					
+					JSONObject dataObject = new JSONObject();
+					dataObject.put("date", dataStr);
+					dataObject.put("count", count);
+					dataArray.put(dataObject);
+				}
+				
+				resultObj.put("item", strItem);
+				resultObj.put("data", dataArray);
 			}
+			out.put(resultObj);
 			return true;
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
