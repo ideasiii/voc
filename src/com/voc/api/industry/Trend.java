@@ -132,7 +132,6 @@ public class Trend extends RootAPI {
 				dataMap.put(date, count);
 			}
 			
-			JSONObject resultObj = new JSONObject();
 			for (Map.Entry<String, Map<String, Integer>> entry : hash_item_dataMap.entrySet()) {
 				String strItem = entry.getKey();
 				Map<String, Integer> dataMap = entry.getValue();
@@ -153,10 +152,11 @@ public class Trend extends RootAPI {
 					dataArray.put(dataObject);
 				}
 				
+				JSONObject resultObj = new JSONObject();
 				resultObj.put("item", strItem);
 				resultObj.put("data", dataArray);
+				out.put(resultObj);
 			}
-			out.put(resultObj);
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
