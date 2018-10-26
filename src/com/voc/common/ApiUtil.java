@@ -74,7 +74,7 @@ public class ApiUtil {
 	
 	public static JSONArray getDailyArray(String startDate, String endDate) {
 		JSONArray dailyArray = new JSONArray();
-		List<String> dailyList = getDailyList(startDate, startDate);
+		List<String> dailyList = getDailyList(startDate, endDate);
 		for (String dateStr : dailyList) {
 			JSONObject dailyObject = new JSONObject();
 			dailyObject.put("date", dateStr);
@@ -86,7 +86,7 @@ public class ApiUtil {
 
 	public static JSONArray getMonthlyArray(String startDate, String endDate) {
 		JSONArray monthlyArray = new JSONArray();
-		List<String> monthlyList = getMonthlyList(startDate, startDate);
+		List<String> monthlyList = getMonthlyList(startDate, endDate);
 		for (String dateStr : monthlyList) {
 			JSONObject monthlyObject = new JSONObject();
 			monthlyObject.put("date", dateStr);
