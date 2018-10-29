@@ -21,7 +21,8 @@ import com.voc.common.DBUtil;
 import com.voc.enums.industry.EnumTrend;
 
 public class Trend extends RootAPI {
-
+	private String selectUpdateTimeSQL;
+	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
 
@@ -57,19 +58,15 @@ public class Trend extends RootAPI {
 		}
 
 		paramMap = this.adjustParameterOrder(paramMap);
-		String strSelectClause = genSelectClause(paramMap, strInterval);
-		String strWhereClause = genWhereClause(paramMap, strInterval);
-		String strGroupByClause = genGroupByClause(paramMap, strInterval);
-
-		System.out.println("**************SQL: " + strSelectClause + strWhereClause + strGroupByClause);
-
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, strGroupByClause, strInterval, strStartDate, strEndDate, resArray);
+		boolean querySuccess = query(paramMap, strInterval, strStartDate, strEndDate, resArray);
 		System.out.println("*********** resArray: "+ resArray );
+		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
 		
 		if (querySuccess) {
 			jobj = ApiResponse.successTemplate();
+			jobj.put("update_time", update_time);
 			jobj.put("result", resArray);
 			System.out.println("*********** response: "+ jobj.toString() );
 			
@@ -79,17 +76,18 @@ public class Trend extends RootAPI {
 		return jobj;
 	}
 
-	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final String strGroupByClause, final String strInterval, final String strStartDate, final String strEndDate,
+	private boolean query(Map<String, String[]> paramMap, final String strInterval, final String strStartDate, final String strEndDate,
 			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
 		String date = null;
+				
 		StringBuffer querySQL = new StringBuffer();
 		try {
-			querySQL.append(strSelectClause);
-			querySQL.append(strWhereClause);
-			querySQL.append(strGroupByClause);
+			querySQL.append(genSelectClause(paramMap, strInterval));
+			querySQL.append(genWhereClause(paramMap, strInterval));
+			querySQL.append(genGroupByClause(paramMap, strInterval));
 			
 			System.out.println("****************" + querySQL.toString());
 
@@ -97,6 +95,12 @@ public class Trend extends RootAPI {
 			pst = conn.prepareStatement(querySQL.toString());
 			setWhereClauseValues(pst, paramMap);
 
+			//get update_time SQL
+			String strPstSQL = pst.toString();
+			System.out.println("**********strPstSQL: " + strPstSQL);
+			this.selectUpdateTimeSQL = "SELECT MAX(update_time) AS " + UPDATE_TIME + strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
+			System.out.println("**********selectUpdateTimeSQL: " + this.selectUpdateTimeSQL); 
+			
 			Map<String, Map<String, Integer>> hash_item_dataMap = new HashMap<>();
 			rs = pst.executeQuery();
 			while (rs.next()) {
@@ -164,15 +168,7 @@ public class Trend extends RootAPI {
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (rs != null) {
-				DBUtil.closeResultSet(rs);
-			}
-			if (pst != null) {
-				DBUtil.closePreparedStatement(pst);
-			}
-			if (conn != null) {
-				DBUtil.closeConn(conn);
-			}
+			DBUtil.close(rs, pst, conn);
 		}
 		return false;
 	}
