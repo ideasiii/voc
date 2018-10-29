@@ -59,12 +59,13 @@ public class Trend extends RootAPI {
 		paramMap = this.adjustParameterOrder(paramMap);
 		String strSelectClause = genSelectClause(paramMap, strInterval);
 		String strWhereClause = genWhereClause(paramMap, strInterval);
+		String strGroupByClause = genGroupByClause(paramMap, strInterval);
 
-		System.out.println("**************SQL: " + strSelectClause + strWhereClause);
+		System.out.println("**************SQL: " + strSelectClause + strWhereClause + strGroupByClause);
 
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, strInterval, strStartDate, strEndDate, resArray);
+		boolean querySuccess = query(paramMap, strSelectClause, strWhereClause, strGroupByClause, strInterval, strStartDate, strEndDate, resArray);
 		System.out.println("*********** resArray: "+ resArray );
 		
 		if (querySuccess) {
@@ -78,7 +79,7 @@ public class Trend extends RootAPI {
 		return jobj;
 	}
 
-	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final String strInterval, final String strStartDate, final String strEndDate,
+	private boolean query(Map<String, String[]> paramMap, final String strSelectClause, final String strWhereClause, final String strGroupByClause, final String strInterval, final String strStartDate, final String strEndDate,
 			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
@@ -88,6 +89,8 @@ public class Trend extends RootAPI {
 		try {
 			querySQL.append(strSelectClause);
 			querySQL.append(strWhereClause);
+			querySQL.append(strGroupByClause);
+			
 			System.out.println("****************" + querySQL.toString());
 
 			conn = DBUtil.getConn();
@@ -245,10 +248,30 @@ public class Trend extends RootAPI {
 			}
 			i++;
 		}
-		if (strInterval.equals(Common.INTERVAL_DAILY)) {
-			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m-%d')");
-		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m')");
+		return sql.toString();
+	}
+	
+	private String genGroupByClause(Map<String, String[]> paramMap, final String strInterval) {
+		StringBuffer sql = new StringBuffer();
+		StringBuffer groupByColumns = new StringBuffer();
+		int i = 0;
+		for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+			String paramName = entry.getKey();
+			String columnName = this.getColumnName(paramName);
+			if (!"date".equals(columnName)) {
+				if (0 == i) {
+					groupByColumns.append(columnName);
+				} else {
+					groupByColumns.append(", ").append(columnName);
+				}
+			}
+		i++;
+		}
+		
+		if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m'), ").append(groupByColumns.toString());
+		} else if (strInterval.equals(Common.INTERVAL_DAILY)) {
+			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m-%d'), ").append(groupByColumns.toString());
 		}
 		return sql.toString();
 	}
