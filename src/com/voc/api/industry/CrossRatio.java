@@ -49,6 +49,26 @@ public class CrossRatio extends RootAPI {
 	private String mainSelectCol = null;
 	private String secSelectCol = null;
 	
+	private String selectUpdateTimeSQL;
+	
+	@Override
+	public JSONObject processRequest(HttpServletRequest request) {
+		this.requestAndTrimParams(request);
+		JSONObject errorResponse = this.validateParams();
+		if (errorResponse != null) {
+			return errorResponse;
+		}
+		JSONArray resultArray = this.queryData();
+		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
+		if (resultArray != null && update_time != null) {
+			JSONObject successObject = ApiResponse.successTemplate();
+			successObject.put("update_time", update_time);
+			successObject.put("result", resultArray);
+			return successObject;
+		}
+		return ApiResponse.unknownError();
+	}
+	
 	private void requestAndTrimParams(HttpServletRequest request) {
 		this.mainFilter = StringUtils.trimToEmpty(request.getParameter("main-filter"));
 		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main-value"));
@@ -101,14 +121,7 @@ public class CrossRatio extends RootAPI {
 		return null;
 	}
 	
-	@Override
-	public JSONObject processRequest(HttpServletRequest request) {
-		this.requestAndTrimParams(request);
-		JSONObject errorResponse = this.validateParams();
-		if (errorResponse != null) {
-			return errorResponse;
-		}
-		
+	private JSONArray queryData() {
 		String mainFilterColumn = this.getColumnName(mainFilter);
 		String secFilterColumn = this.getColumnName(secFilter);
 		
@@ -125,12 +138,17 @@ public class CrossRatio extends RootAPI {
 			String[] mainValueArr = mainValue.split(PARAM_VALUES_SEPARATOR);
 			String[] secValueArr = secValue.split(PARAM_VALUES_SEPARATOR);
 			selectSQL.append(this.genSelectSQL(tableName, mainFilterColumn, secFilterColumn, mainValueArr, secValueArr));
-			System.out.println("debug:==>" + selectSQL.toString()); // debug
+			// System.out.println("debug:==>" + selectSQL.toString()); // debug
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
 			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, startDate, endDate);
-			System.out.println("debug:=================================" ); // debug
+			// System.out.println("debug:=================================" ); // debug
+			
+			String psSQLStr = preparedStatement.toString();
+			System.out.println("debug: psSQLStr = " + psSQLStr); // debug
+			this.selectUpdateTimeSQL = "SELECT MAX(update_time) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" ORDER BY "));
+			System.out.println("debug: selectUpdateTimeSQL = " + this.selectUpdateTimeSQL); // debug
 			
 			Map<String, JSONArray> mainItem_secItemArray_map = new HashMap<>();
 			rs = preparedStatement.executeQuery();
@@ -163,27 +181,15 @@ public class CrossRatio extends RootAPI {
 
 				resultArray.put(resultObj);
 			}
-			
-			JSONObject responseObj = new JSONObject();
-			responseObj.put("success", true);
-			responseObj.put("result", resultArray);
-			return responseObj;
+			return resultArray;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (rs != null) {
-				DBUtil.closeResultSet(rs);
-			}
-			if (preparedStatement != null) {
-				DBUtil.closePreparedStatement(preparedStatement);
-			}
-			if (conn != null) {
-				DBUtil.closeConn(conn);
-			}
+			DBUtil.close(rs, preparedStatement, conn);
 		}
-		return ApiResponse.unknownError();
+		return null;
 	}
-	
+
 	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {
 		StringBuffer selectSQL = new StringBuffer();
 		this.mainSelectCol = mainFilterColumn;

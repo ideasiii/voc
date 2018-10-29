@@ -52,6 +52,7 @@ import com.voc.enums.industry.EnumTotalCount;
  */
 public class TotalCount extends RootAPI {
 	private Map<String, String[]> orderedParameterMap = new ParameterMap<>();
+	private String selectUpdateTimeSQL;
 	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
@@ -60,7 +61,18 @@ public class TotalCount extends RootAPI {
 		if (errorResponse != null) {
 			return errorResponse;
 		}
-		
+		JSONArray itemArray = this.queryData();
+		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
+		if (itemArray != null && update_time != null) {
+			JSONObject successObject = ApiResponse.successTemplate();
+			successObject.put("update_time", update_time);
+			successObject.put("result", itemArray);
+			return successObject;
+		}
+		return ApiResponse.unknownError();
+	}
+	
+	private JSONArray queryData() {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
@@ -69,15 +81,20 @@ public class TotalCount extends RootAPI {
 			selectSQL.append(this.genSelectClause());
 			selectSQL.append(this.genWhereClause());
 			selectSQL.append(this.genGroupByOrderByClause());
-			System.out.println("debug:==>" + selectSQL.toString()); // debug
+			// System.out.println("debug:==>" + selectSQL.toString()); // debug
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
 			this.setWhereClauseValues(preparedStatement);
 			
-			System.out.println("debug:=================================" ); // debug
-			rs = preparedStatement.executeQuery();
+			String psSQLStr = preparedStatement.toString();
+			System.out.println("debug: psSQLStr = " + psSQLStr); // debug
+			this.selectUpdateTimeSQL = "SELECT MAX(update_time) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" ORDER BY "));
+			System.out.println("debug: selectUpdateTimeSQL = " + this.selectUpdateTimeSQL); // debug
+			
+			// System.out.println("debug:=================================" ); // debug
 			JSONArray itemArray = new JSONArray();
+			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
 				int i = 0;
@@ -108,27 +125,15 @@ public class TotalCount extends RootAPI {
 				
 				itemArray.put(itemObject);
 			}
-			
-			JSONObject responseObject = new JSONObject();
-			responseObject.put("success", true);
-			responseObject.put("result", itemArray);
-			return responseObject;
+			return itemArray;
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			if (rs != null) {
-				DBUtil.closeResultSet(rs);
-			}
-			if (preparedStatement != null) {
-				DBUtil.closePreparedStatement(preparedStatement);
-			}
-			if (conn != null) {
-				DBUtil.closeConn(conn);
-			}
+			DBUtil.close(rs, preparedStatement, conn);
 		}
-		return ApiResponse.unknownError();
+		return null;
 	}
-	
+
 	private String[] trimValues(String[] values) {
 		StringBuffer trimedValuesSB = new StringBuffer();
 		String[] vArr = StringUtils.trimToEmpty(values[0]).split(PARAM_VALUES_SEPARATOR);
@@ -385,14 +390,14 @@ public class TotalCount extends RootAPI {
 				if (paramName.equals("start_date") || paramName.equals("end_date")) {
 					int parameterIndex = i + 1;
 					preparedStatement.setObject(parameterIndex, value);
-					System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
+					// System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
 					i++;
 				} else {
 					String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 					for (String v : valueArr) {
 						int parameterIndex = i + 1;
 						preparedStatement.setObject(parameterIndex, v);
-						System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
+						// System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
 						i++;
 					}
 				}

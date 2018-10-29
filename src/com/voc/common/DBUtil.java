@@ -55,4 +55,16 @@ public class DBUtil extends DB {
 	    return Common.ERR_SUCCESS;
 	}
 	
+	public static void close(ResultSet rs, PreparedStatement ps, Connection conn) {
+		if (rs != null) {
+			DBUtil.closeResultSet(rs);
+		}
+		if (ps != null) {
+			DBUtil.closePreparedStatement(ps);
+		}
+		if (conn != null) {
+			DBUtil.closeConn(conn);
+		}
+	}
+	
 }
