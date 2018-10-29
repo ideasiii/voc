@@ -147,7 +147,7 @@ public class CrossRatio extends RootAPI {
 			
 			String psSQLStr = preparedStatement.toString();
 			System.out.println("debug: psSQLStr = " + psSQLStr); // debug
-			this.selectUpdateTimeSQL = "SELECT MAX(update_time) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
+			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			System.out.println("debug: selectUpdateTimeSQL = " + this.selectUpdateTimeSQL); // debug
 			
 			Map<String, JSONArray> mainItem_secItemArray_map = new HashMap<>();
