@@ -98,7 +98,7 @@ public class Trend extends RootAPI {
 			//get update_time SQL
 			String strPstSQL = pst.toString();
 			System.out.println("**********strPstSQL: " + strPstSQL);
-			this.selectUpdateTimeSQL = "SELECT MAX(update_time) AS " + UPDATE_TIME + strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
+			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
 			System.out.println("**********selectUpdateTimeSQL: " + this.selectUpdateTimeSQL); 
 			
 			Map<String, Map<String, Integer>> hash_item_dataMap = new HashMap<>();
