@@ -59,8 +59,11 @@ public class CrossRatio extends RootAPI {
 			return errorResponse;
 		}
 		JSONArray resultArray = this.queryData();
-		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
-		if (resultArray != null && update_time != null) {
+		String update_time = "";
+		if (resultArray != null) {
+			if (resultArray.length() > 0) {
+				update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
+			}
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", resultArray);
@@ -230,24 +233,24 @@ public class CrossRatio extends RootAPI {
 		for(String v : mainValueArr) {
 			int parameterIndex = idx + 1;
 			preparedStatement.setObject(parameterIndex, v);
-			System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
+			// System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
 			idx++;
 		}
 		for(String v : secValueArr) {
 			int parameterIndex = idx + 1;
 			preparedStatement.setObject(parameterIndex, v);
-			System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
+			// System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
 			idx++;
 		}
 		
 		int startDateIndex = idx + 1;
 		preparedStatement.setObject(startDateIndex, startDate);
-		System.out.println("debug:==>" + startDateIndex + ":" + startDate); // debug
+		// System.out.println("debug:==>" + startDateIndex + ":" + startDate); // debug
 		idx++;
 		
 		int endDateIndex = idx + 1;
 		preparedStatement.setObject(endDateIndex, endDate);
-		System.out.println("debug:==>" + endDateIndex + ":" + endDate); // debug
+		// System.out.println("debug:==>" + endDateIndex + ":" + endDate); // debug
 		idx++;
 	}
 	

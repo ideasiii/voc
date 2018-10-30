@@ -62,8 +62,11 @@ public class TotalCount extends RootAPI {
 			return errorResponse;
 		}
 		JSONArray itemArray = this.queryData();
-		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
-		if (itemArray != null && update_time != null) {
+		String update_time = "";
+		if (itemArray != null) {
+			if (itemArray.length() > 0) {
+				update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
+			}
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", itemArray);
