@@ -10,6 +10,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 
 import com.voc.common.DBUtil;
@@ -80,7 +81,7 @@ public abstract class RootAPI {
 			if (rs.next()) {
 				update_time = rs.getString(UPDATE_TIME);
 			}
-			return update_time;
+			return StringUtils.trimToEmpty(update_time);
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
