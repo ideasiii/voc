@@ -3,6 +3,6 @@
 	<Resource name="jdbc/voc" auth="Container" type="javax.sql.DataSource"
 		driverClassName="com.mysql.jdbc.Driver"
 		url="jdbc:mysql://ggininder-1-cluster.cluster-cgcqh1oe3kxf.ap-northeast-1.rds.amazonaws.com:3306/ibuzz_voc?useUnicode=true&amp;characterEncoding=UTF-8&amp;useSSL=false&amp;verifyServerCertificate=false"
-		username="Oy32W1MPTRnr41tBlkf0xg==" password="5K1pRkJMaaY4gQbqJU3EBg==" maxWait="10000" maxIdle="30"
-		maxActive="100" />
+		username="Oy32W1MPTRnr41tBlkf0xg==" password="5K1pRkJMaaY4gQbqJU3EBg==" maxWaitMillis="10000" maxIdle="30"
+		maxTotal="100" />
 </Context>
