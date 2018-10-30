@@ -193,7 +193,7 @@ public class TotalCount extends RootAPI {
 		
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
-			if ("token".equals(paramName)) continue;
+			if (API_KEY.equals(paramName)) continue;
 			
 			EnumTotalCount enumTotalCount = EnumTotalCount.getEnum(paramName);
 			if (enumTotalCount == null) {

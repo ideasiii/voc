@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
 import com.voc.service.HttpService;
 import com.voc.service.impl.HttpServiceImpl;
@@ -43,7 +44,7 @@ public class ApiFilter implements Filter {
 		servletResponse.setCharacterEncoding("UTF-8");
 		
 		// Validate the token:
-		String token = servletRequest.getParameter("token");
+		String token = servletRequest.getParameter(RootAPI.API_KEY);
 		if (!this.checkToken(token)) {
 			System.out.println("debug: Invalide token=" + token);
 			PrintWriter out = servletResponse.getWriter();

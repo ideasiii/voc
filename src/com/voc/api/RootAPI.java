@@ -16,6 +16,7 @@ import org.json.JSONObject;
 import com.voc.common.DBUtil;
 
 public abstract class RootAPI {
+	public static final String API_KEY = "api_key";
 	protected static final String UPDATE_TIME = "update_time";
 	protected static final String PARAM_VALUES_SEPARATOR = ";";
 	private static final String TABLE_PRODUCT_REPUTATION = "ibuzz_voc.product_reputation";
