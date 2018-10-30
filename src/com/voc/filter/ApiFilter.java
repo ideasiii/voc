@@ -10,6 +10,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -30,6 +31,12 @@ public class ApiFilter implements Filter {
 	@Override
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
 			throws IOException, ServletException {
+		
+		if (servletRequest instanceof HttpServletRequest) {
+			String requestURL = ((HttpServletRequest) servletRequest).getRequestURL().toString();
+			String queryString = ((HttpServletRequest) servletRequest).getQueryString();
+			System.out.println("debug: doFilter:==>" + requestURL + "?" + queryString);
+		}
 		
 		System.out.println("debug: ******* Before doFilter ******* ");
 		servletResponse.setContentType("application/json");
