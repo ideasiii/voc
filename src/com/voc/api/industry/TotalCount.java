@@ -3,6 +3,9 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -53,6 +56,7 @@ import com.voc.enums.industry.EnumTotalCount;
 public class TotalCount extends RootAPI {
 	private Map<String, String[]> orderedParameterMap = new ParameterMap<>();
 	private String selectUpdateTimeSQL;
+	private List<String> itemNameList = new ArrayList<>();
 	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
@@ -96,7 +100,7 @@ public class TotalCount extends RootAPI {
 			System.out.println("debug: selectUpdateTimeSQL = " + this.selectUpdateTimeSQL); // debug
 			
 			// System.out.println("debug:=================================" ); // debug
-			JSONArray itemArray = new JSONArray();
+			Map<String, Integer> hash_itemName_count = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
@@ -121,11 +125,16 @@ public class TotalCount extends RootAPI {
 				}
 				int count = rs.getInt("count");
 				System.out.println("debug:==>item=" + item.toString() + ", count=" + count); // debug
-				
+				hash_itemName_count.put(item.toString(), count);
+			}
+			
+			JSONArray itemArray = new JSONArray();
+			for (String itemName: itemNameList) {
+				Integer count = hash_itemName_count.get(itemName);
+				if (count == null) count = 0;
 				JSONObject itemObject = new JSONObject();
-				itemObject.put("item", item.toString());
+				itemObject.put("item", itemName);
 				itemObject.put("count", count);
-				
 				itemArray.put(itemObject);
 			}
 			return itemArray;
@@ -246,49 +255,119 @@ public class TotalCount extends RootAPI {
 			}
 		}
 		
+		String[] mainItemArr = null;
+		String[] secItemArr = null;
 		int itemCnt = 0;
 		if (paramValues_industry != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_INDUSTRY.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_industry);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_industry[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_industry[0].split(PARAM_VALUES_SEPARATOR);
+			}
 			itemCnt++;
 		}
 		if (paramValues_brand != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_BRAND.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_brand);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_brand[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_brand[0].split(PARAM_VALUES_SEPARATOR);
+			}
 			itemCnt++;
 		}
 		if (paramValues_series != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_SERIES.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_series);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_series[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_series[0].split(PARAM_VALUES_SEPARATOR);
+			}
 			itemCnt++;
 		}
 		if (paramValues_product != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_PRODUCT.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_product);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_product[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_product[0].split(PARAM_VALUES_SEPARATOR);
+			}
 			itemCnt++;
 		}
 		if (paramValues_source != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_SOURCE.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_source);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+			}
 			itemCnt++;
 		}
 		if (paramValues_website != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_WEBSITE.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_website);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = this.getWebsiteNameById(mainValue);
+				}
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String mainValue = secItemArr[i];
+					secItemArr[i] = this.getWebsiteNameById(mainValue);
+				}
+			}
 			itemCnt++;
 		}
 		if (paramValues_channel != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_CHANNEL.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_channel);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = this.getChannelNameById(mainValue);
+				}
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String secValue = secItemArr[i];
+					secItemArr[i] = this.getChannelNameById(secValue);
+				}
+			}
 			itemCnt++;
 		}
 		if (paramValues_features != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_FEATURES.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_features);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_features[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_features[0].split(PARAM_VALUES_SEPARATOR);
+			}
 			itemCnt++;
 		}
 		if (itemCnt == 0) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+		}
+		
+		if (mainItemArr != null) {
+			for (String mainItem : mainItemArr) {
+				if (secItemArr != null) {
+					for (String secItem : secItemArr) {
+						itemNameList.add(mainItem + "-" + secItem);
+					}
+				} else {
+					itemNameList.add(mainItem);
+				}
+			}
 		}
 		
 		if (paramValues_startDate != null) {

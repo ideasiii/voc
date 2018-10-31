@@ -46,6 +46,9 @@ public class CrossRatio extends RootAPI {
 	private String startDate = null;
 	private String endDate = null;
 	
+	private String[] mainValueArr = null;
+	private String[] secValueArr = null;
+
 	private String mainSelectCol = null;
 	private String secSelectCol = null;
 	
@@ -138,8 +141,8 @@ public class CrossRatio extends RootAPI {
 		ResultSet rs = null;
 		StringBuffer selectSQL = new StringBuffer();
 		try {
-			String[] mainValueArr = mainValue.split(PARAM_VALUES_SEPARATOR);
-			String[] secValueArr = secValue.split(PARAM_VALUES_SEPARATOR);
+			mainValueArr = mainValue.split(PARAM_VALUES_SEPARATOR);
+			secValueArr = secValue.split(PARAM_VALUES_SEPARATOR);
 			selectSQL.append(this.genSelectSQL(tableName, mainFilterColumn, secFilterColumn, mainValueArr, secValueArr));
 			// System.out.println("debug:==>" + selectSQL.toString()); // debug
 			
@@ -153,7 +156,7 @@ public class CrossRatio extends RootAPI {
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			System.out.println("debug: selectUpdateTimeSQL = " + this.selectUpdateTimeSQL); // debug
 			
-			Map<String, JSONArray> mainItem_secItemArray_map = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_mainItem_secItem = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				String main_item = rs.getString(this.mainSelectCol);
@@ -161,27 +164,32 @@ public class CrossRatio extends RootAPI {
 				int count = rs.getInt("count");
 				System.out.println("debug:==>main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count); // debug
 				
-				JSONObject secItemObj = new JSONObject();
-				secItemObj.put("sec_item", sec_item);
-				secItemObj.put("count", count);
-				
-				if (mainItem_secItemArray_map.get(main_item) == null) {
-					mainItem_secItemArray_map.put(main_item, new JSONArray());
+				if (hash_mainItem_secItem.get(main_item) == null) {
+					hash_mainItem_secItem.put(main_item, new HashMap<String, Integer>());
 				}
-				JSONArray secItemArray = mainItem_secItemArray_map.get(main_item);
-				secItemArray.put(secItemObj);
-				mainItem_secItemArray_map.put(main_item, secItemArray);
+				Map<String, Integer> secItemHM = hash_mainItem_secItem.get(main_item);
+				secItemHM.put(sec_item, count);
+				hash_mainItem_secItem.put(main_item, secItemHM);
 			}
 			
+			// Convert channel_id to channel_name; website_id to website_name:
+			this.convertIdToName(this.mainValueArr, this.secValueArr);
+			
 			JSONArray resultArray = new JSONArray();
-			for (Map.Entry<String, JSONArray> entry : mainItem_secItemArray_map.entrySet()) {
-				String main_item = entry.getKey();
-				JSONArray secItemArray = entry.getValue();
-				
+			for (String mainValue : mainValueArr) {
+				Map<String, Integer> secItemHM = hash_mainItem_secItem.get(mainValue);
+				JSONArray secItemArr = new JSONArray();
+				for (String secValue : secValueArr) {
+					Integer count = secItemHM.get(secValue);
+					if (count == null) count = 0; 
+					JSONObject secItemObj = new JSONObject();
+					secItemObj.put("sec_item", secValue);
+					secItemObj.put("count", count);
+					secItemArr.put(secItemObj);
+				}
 				JSONObject resultObj = new JSONObject();
-				resultObj.put("main_item", main_item);
-				resultObj.put("data", secItemArray);
-
+				resultObj.put("main_item", mainValue);
+				resultObj.put("data", secItemArr);
 				resultArray.put(resultObj);
 			}
 			return resultArray;
@@ -191,6 +199,33 @@ public class CrossRatio extends RootAPI {
 			DBUtil.close(rs, preparedStatement, conn);
 		}
 		return null;
+	}
+	
+	private void convertIdToName(String[] mainValueArr, String[] secValueArr) {
+		if ("channel".equals(this.mainFilter)) {
+			for (int i = 0; i < mainValueArr.length; i++) {
+				String mainValue = mainValueArr[i];
+				mainValueArr[i] = this.getChannelNameById(mainValue);
+			}
+		}
+		if ("website".equals(this.mainFilter)) {
+			for (int i = 0; i < mainValueArr.length; i++) {
+				String mainValue = mainValueArr[i];
+				mainValueArr[i] = this.getWebsiteNameById(mainValue);
+			}
+		}
+		if ("channel".equals(this.secFilter)) {
+			for (int i = 0; i < secValueArr.length; i++) {
+				String mainValue = secValueArr[i];
+				secValueArr[i] = this.getChannelNameById(mainValue);
+			}
+		}
+		if ("website".equals(this.secFilter)) {
+			for (int i = 0; i < secValueArr.length; i++) {
+				String mainValue = secValueArr[i];
+				secValueArr[i] = this.getWebsiteNameById(mainValue);
+			}
+		}
 	}
 
 	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {

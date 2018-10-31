@@ -90,5 +90,51 @@ public abstract class RootAPI {
 		}
 		return null;
 	}
+	
+	protected String getChannelNameById(String channelId) {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		String channelName = null;
+		String selectSql = "SELECT channel_name FROM ibuzz_voc.product_reputation WHERE channel_id = ? LIMIT 1";
+		try {
+			conn = DBUtil.getConn();
+			preparedStatement = conn.prepareStatement(selectSql);
+			preparedStatement.setString(1, channelId);
+			rs = preparedStatement.executeQuery();
+			if (rs.next()) {
+				channelName = rs.getString("channel_name");
+			}
+			return channelName;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, preparedStatement, conn);
+		}
+		return null;
+	}
+	
+	protected String getWebsiteNameById(String websiteId) {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		String websiteName = null;
+		String selectSql = "SELECT website_name FROM ibuzz_voc.product_reputation WHERE website_id = ? LIMIT 1";
+		try {
+			conn = DBUtil.getConn();
+			preparedStatement = conn.prepareStatement(selectSql);
+			preparedStatement.setString(1, websiteId);
+			rs = preparedStatement.executeQuery();
+			if (rs.next()) {
+				websiteName = rs.getString("website_name");
+			}
+			return websiteName;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, preparedStatement, conn);
+		}
+		return null;
+	}
 
 }
