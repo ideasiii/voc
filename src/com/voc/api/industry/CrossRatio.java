@@ -180,8 +180,11 @@ public class CrossRatio extends RootAPI {
 				Map<String, Integer> secItemHM = hash_mainItem_secItem.get(mainValue);
 				JSONArray secItemArr = new JSONArray();
 				for (String secValue : secValueArr) {
-					Integer count = secItemHM.get(secValue);
-					if (count == null) count = 0; 
+					Integer count = null;
+					if (secItemHM != null) {
+						count = secItemHM.get(secValue);
+					}
+					if (count == null) count = 0;
 					JSONObject secItemObj = new JSONObject();
 					secItemObj.put("sec_item", secValue);
 					secItemObj.put("count", count);
