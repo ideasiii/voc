@@ -171,6 +171,7 @@ public class CrossRatio extends RootAPI {
 				secItemHM.put(sec_item, count);
 				hash_mainItem_secItem.put(main_item, secItemHM);
 			}
+			System.out.println("debug:==>hash_mainItem_secItem=" + hash_mainItem_secItem);
 			
 			// Convert channel_id to channel_name; website_id to website_name:
 			this.convertIdToName(this.mainValueArr, this.secValueArr);

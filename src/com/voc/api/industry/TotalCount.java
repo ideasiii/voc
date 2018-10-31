@@ -127,6 +127,7 @@ public class TotalCount extends RootAPI {
 				System.out.println("debug:==>item=" + item.toString() + ", count=" + count); // debug
 				hash_itemName_count.put(item.toString(), count);
 			}
+			System.out.println("debug:==>hash_itemName_count=" + hash_itemName_count);
 			
 			JSONArray itemArray = new JSONArray();
 			for (String itemName: itemNameList) {
