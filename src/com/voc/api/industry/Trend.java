@@ -3,6 +3,7 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,11 +23,14 @@ import com.voc.enums.industry.EnumTrend;
 
 public class Trend extends RootAPI {
 	private String selectUpdateTimeSQL;
+	private List<String> itemNameList = new ArrayList<>();
+	private String strTableName;
 	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
 
 		Map<String, String[]> paramMap = request.getParameterMap();
+		strTableName = getTableName(paramMap);
 
 		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
@@ -101,7 +105,8 @@ public class Trend extends RootAPI {
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
 			System.out.println("**********selectUpdateTimeSQL: " + this.selectUpdateTimeSQL); 
 			
-			Map<String, Map<String, Integer>> hash_item_dataMap = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_itemName_dataMap = new HashMap<>();
+			Map<String, Integer> dataMap = new HashMap<String, Integer>();
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
@@ -115,7 +120,7 @@ public class Trend extends RootAPI {
 						columnName = "channel_name";
 					}
 					if (!"date".equals(columnName)) {
-						String str = rs.getString(columnName);;
+						String str = rs.getString(columnName);
 						if (i == 0) {
 							item.append(str);
 						} else {
@@ -132,38 +137,38 @@ public class Trend extends RootAPI {
 				int count = rs.getInt("count"); 
 				System.out.println("************** item:" + item.toString() + ", date: " + date + ", count: " + count);
 				
-				if (hash_item_dataMap.get(item.toString()) == null) {
-					hash_item_dataMap.put(item.toString(), new HashMap<String, Integer>());
+				if (hash_itemName_dataMap.get(item.toString()) == null) {
+					hash_itemName_dataMap.put(item.toString(), new HashMap<String, Integer>());
 				}
-				Map<String, Integer> dataMap = hash_item_dataMap.get(item.toString());
+				dataMap = hash_itemName_dataMap.get(item.toString());
 				dataMap.put(date, count);
-			}
-			
-			for (Map.Entry<String, Map<String, Integer>> entry : hash_item_dataMap.entrySet()) {
-				String strItem = entry.getKey();
-				Map<String, Integer> dataMap = entry.getValue();
-				JSONArray dataArray = new JSONArray();
-				List<String> dateList = null;
-				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-					dateList = ApiUtil.getMonthlyList(strStartDate, strEndDate);
-				} else {
-					dateList = ApiUtil.getDailyList(strStartDate, strEndDate);
-				}
-				for (String dataStr : dateList) {
-					Integer count = dataMap.get(dataStr);
-					if (count == null) count = 0;
-					
-					JSONObject dataObject = new JSONObject();
-					dataObject.put("date", dataStr);
-					dataObject.put("count", count);
-					dataArray.put(dataObject);
-				}
+			}	
 				
-				JSONObject resultObj = new JSONObject();
-				resultObj.put("item", strItem);
-				resultObj.put("data", dataArray);
-				out.put(resultObj);
-			}
+				for (String itemName: itemNameList) {
+					dataMap = hash_itemName_dataMap.get(itemName);
+					JSONArray dataArray = new JSONArray();
+					List<String> dateList = null;
+					if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+						dateList = ApiUtil.getMonthlyList(strStartDate, strEndDate);
+					} else {
+						dateList = ApiUtil.getDailyList(strStartDate, strEndDate);
+					}
+					for (String dataStr : dateList) {
+						Integer count = null;
+						if (null != dataMap) { 		
+							count = dataMap.get(dataStr);
+						}
+						if (count == null) count = 0;
+						JSONObject dataObject = new JSONObject();
+						dataObject.put("date", dataStr);
+						dataObject.put("count", count);
+						dataArray.put(dataObject);
+					}
+					JSONObject resultObj = new JSONObject();
+					resultObj.put("item", itemName);
+					resultObj.put("data", dataArray);
+					out.put(resultObj);
+				}
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -198,7 +203,7 @@ public class Trend extends RootAPI {
 				i++;
 			}
 		}
-		String strTableName = getTableName(paramMap);
+		strTableName = getTableName(paramMap);
 		if (strInterval.equals(Common.INTERVAL_DAILY)) {
 			sql.append(" ,").append("DATE_FORMAT(date, '%Y-%m-%d') AS dailyStr");
 		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
@@ -326,7 +331,9 @@ public class Trend extends RootAPI {
 		
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
+			if (API_KEY.equals(paramName)) continue;
 			String[] values = entry.getValue();
+			
 			EnumTrend enumTrend = EnumTrend.getEnum(paramName);
 			if (enumTrend == null) continue; 
 			switch (enumTrend) {
@@ -365,38 +372,120 @@ public class Trend extends RootAPI {
 				break;
 			}
 		}
+		
+		String[] mainItemArr = null;
+		String[] secItemArr = null;
+		int itemCnt = 0;
+	
 		if (paramValues_industry != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_INDUSTRY.getParamName();
 			orderedParameterMap.put(paramName, paramValues_industry);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_industry[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_industry[0].split(PARAM_VALUES_SEPARATOR);
+			}
+			itemCnt++;
 		}
 		if (paramValues_brand != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_BRAND.getParamName();
 			orderedParameterMap.put(paramName, paramValues_brand);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_brand[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_brand[0].split(PARAM_VALUES_SEPARATOR);
+			}
+			itemCnt++;
 		}
 		if (paramValues_series != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_SERIES.getParamName();
 			orderedParameterMap.put(paramName, paramValues_series);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_series[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_series[0].split(PARAM_VALUES_SEPARATOR);
+			}
+			itemCnt++;
 		}
 		if (paramValues_product != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_PRODUCT.getParamName();
 			orderedParameterMap.put(paramName, paramValues_product);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_product[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_product[0].split(PARAM_VALUES_SEPARATOR);
+			}
+			itemCnt++;
 		}
 		if (paramValues_source != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_SOURCE.getParamName();
 			orderedParameterMap.put(paramName, paramValues_source);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+			}
+			itemCnt++;
 		}
 		if (paramValues_website != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_WEBSITE.getParamName();
 			orderedParameterMap.put(paramName, paramValues_website);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = this.getWebsiteNameById(strTableName, mainValue);
+				}
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String mainValue = secItemArr[i];
+					secItemArr[i] = this.getWebsiteNameById(strTableName, mainValue);
+				}
+			}
+			itemCnt++;
 		}
 		if (paramValues_channel != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_CHANNEL.getParamName();
 			orderedParameterMap.put(paramName, paramValues_channel);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = this.getChannelNameById(strTableName, mainValue);
+				}
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String mainValue = secItemArr[i];
+					secItemArr[i] = this.getChannelNameById(strTableName, mainValue);
+				}
+			}
+			itemCnt++;
 		}
 		if (paramValues_features != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_FEATURES.getParamName();
 			orderedParameterMap.put(paramName, paramValues_features);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_features[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_features[0].split(PARAM_VALUES_SEPARATOR);
+			}
+			itemCnt++;
 		}
+		
+		if (mainItemArr != null) {
+			for (String mainItem : mainItemArr) {
+				if (secItemArr != null) {
+					for (String secItem : secItemArr) {
+						itemNameList.add(mainItem + "-" + secItem);
+					}
+				} else {
+					itemNameList.add(mainItem);
+				}
+			}
+		}
+		
 		if (paramValues_startDate != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_START_DATE.getParamName();
 			orderedParameterMap.put(paramName, paramValues_startDate);
