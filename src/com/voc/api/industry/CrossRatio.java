@@ -54,6 +54,8 @@ public class CrossRatio extends RootAPI {
 	
 	private String selectUpdateTimeSQL;
 	
+	private String tableName;
+	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
 		this.requestAndTrimParams(request);
@@ -134,7 +136,7 @@ public class CrossRatio extends RootAPI {
 		List<String> paramNameList = new ArrayList<>();
 		paramNameList.add(mainFilter);
 		paramNameList.add(secFilter);
-		String tableName = this.getTableName(paramNameList);
+		this.tableName = this.getTableName(paramNameList);
 		
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
@@ -209,25 +211,25 @@ public class CrossRatio extends RootAPI {
 		if ("channel".equals(this.mainFilter)) {
 			for (int i = 0; i < mainValueArr.length; i++) {
 				String mainValue = mainValueArr[i];
-				mainValueArr[i] = this.getChannelNameById(mainValue);
+				mainValueArr[i] = this.getChannelNameById(this.tableName, mainValue);
 			}
 		}
 		if ("website".equals(this.mainFilter)) {
 			for (int i = 0; i < mainValueArr.length; i++) {
 				String mainValue = mainValueArr[i];
-				mainValueArr[i] = this.getWebsiteNameById(mainValue);
+				mainValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
 			}
 		}
 		if ("channel".equals(this.secFilter)) {
 			for (int i = 0; i < secValueArr.length; i++) {
 				String mainValue = secValueArr[i];
-				secValueArr[i] = this.getChannelNameById(mainValue);
+				secValueArr[i] = this.getChannelNameById(this.tableName, mainValue);
 			}
 		}
 		if ("website".equals(this.secFilter)) {
 			for (int i = 0; i < secValueArr.length; i++) {
 				String mainValue = secValueArr[i];
-				secValueArr[i] = this.getWebsiteNameById(mainValue);
+				secValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
 			}
 		}
 	}

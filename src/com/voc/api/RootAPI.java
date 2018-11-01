@@ -91,12 +91,12 @@ public abstract class RootAPI {
 		return null;
 	}
 	
-	protected String getChannelNameById(String channelId) {
+	protected String getChannelNameById(String tableName, String channelId) {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String channelName = null;
-		String selectSql = "SELECT channel_name FROM ibuzz_voc.product_reputation WHERE channel_id = ? LIMIT 1";
+		String selectSql = "SELECT channel_name FROM "+ tableName +" WHERE channel_id = ? LIMIT 1";
 		try {
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSql);
@@ -114,12 +114,12 @@ public abstract class RootAPI {
 		return null;
 	}
 	
-	protected String getWebsiteNameById(String websiteId) {
+	protected String getWebsiteNameById(String tableName, String websiteId) {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String websiteName = null;
-		String selectSql = "SELECT website_name FROM ibuzz_voc.product_reputation WHERE website_id = ? LIMIT 1";
+		String selectSql = "SELECT website_name FROM " + tableName + " WHERE website_id = ? LIMIT 1";
 		try {
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSql);

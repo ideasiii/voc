@@ -57,10 +57,12 @@ public class TotalCount extends RootAPI {
 	private Map<String, String[]> orderedParameterMap = new ParameterMap<>();
 	private String selectUpdateTimeSQL;
 	private List<String> itemNameList = new ArrayList<>();
+	private String tableName;
 	
 	@Override
 	public JSONObject processRequest(HttpServletRequest request) {
 		Map<String, String[]> parameterMap = request.getParameterMap();
+		this.tableName = this.getTableName(parameterMap);
 		JSONObject errorResponse = this.validateAndSetOrderedParameterMap(parameterMap);
 		if (errorResponse != null) {
 			return errorResponse;
@@ -316,13 +318,13 @@ public class TotalCount extends RootAPI {
 				mainItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < mainItemArr.length; i++) {
 					String mainValue = mainItemArr[i];
-					mainItemArr[i] = this.getWebsiteNameById(mainValue);
+					mainItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
 				}
 			} else if (itemCnt == 1) {
 				secItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < secItemArr.length; i++) {
 					String mainValue = secItemArr[i];
-					secItemArr[i] = this.getWebsiteNameById(mainValue);
+					secItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
 				}
 			}
 			itemCnt++;
@@ -334,13 +336,13 @@ public class TotalCount extends RootAPI {
 				mainItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < mainItemArr.length; i++) {
 					String mainValue = mainItemArr[i];
-					mainItemArr[i] = this.getChannelNameById(mainValue);
+					mainItemArr[i] = this.getChannelNameById(this.tableName, mainValue);
 				}
 			} else if (itemCnt == 1) {
 				secItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < secItemArr.length; i++) {
 					String secValue = secItemArr[i];
-					secItemArr[i] = this.getChannelNameById(secValue);
+					secItemArr[i] = this.getChannelNameById(this.tableName, secValue);
 				}
 			}
 			itemCnt++;
@@ -403,8 +405,7 @@ public class TotalCount extends RootAPI {
 				i++;
 			}
 		}
-		String tableName = this.getTableName(this.orderedParameterMap);
-		selectClauseSB.append(" ,").append("SUM(reputation) AS count FROM ").append(tableName).append(" ");
+		selectClauseSB.append(" ,").append("SUM(reputation) AS count FROM ").append(this.tableName).append(" ");
 		return selectClauseSB.toString();
 	}
 	
