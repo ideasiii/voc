@@ -14,6 +14,8 @@ import org.apache.catalina.util.ParameterMap;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
@@ -54,6 +56,7 @@ import com.voc.enums.industry.EnumTotalCount;
  * 
  */
 public class TotalCount extends RootAPI {
+	private static final Logger LOGGER = LoggerFactory.getLogger(TotalCount.class);
 	private Map<String, String[]> orderedParameterMap = new ParameterMap<>();
 	private String selectUpdateTimeSQL;
 	private List<String> itemNameList = new ArrayList<>();
@@ -90,18 +93,17 @@ public class TotalCount extends RootAPI {
 			selectSQL.append(this.genSelectClause());
 			selectSQL.append(this.genWhereClause());
 			selectSQL.append(this.genGroupByOrderByClause());
-			// System.out.println("debug:==>" + selectSQL.toString()); // debug
+			LOGGER.info("selectSQL=" + selectSQL.toString());
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
 			this.setWhereClauseValues(preparedStatement);
 			
 			String psSQLStr = preparedStatement.toString();
-			System.out.println("debug: psSQLStr = " + psSQLStr); // debug
+			LOGGER.info("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
-			System.out.println("debug: selectUpdateTimeSQL = " + this.selectUpdateTimeSQL); // debug
+			LOGGER.info("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			
-			// System.out.println("debug:=================================" ); // debug
 			Map<String, Integer> hash_itemName_count = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
@@ -126,10 +128,10 @@ public class TotalCount extends RootAPI {
 					i++;
 				}
 				int count = rs.getInt("count");
-				System.out.println("debug:==>item=" + item.toString() + ", count=" + count); // debug
+				LOGGER.info("item=" + item.toString() + ", count=" + count);
 				hash_itemName_count.put(item.toString(), count);
 			}
-			System.out.println("debug:==>hash_itemName_count=" + hash_itemName_count);
+			LOGGER.info("hash_itemName_count=" + hash_itemName_count);
 			
 			JSONArray itemArray = new JSONArray();
 			for (String itemName: itemNameList) {
@@ -142,6 +144,7 @@ public class TotalCount extends RootAPI {
 			}
 			return itemArray;
 		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
 			DBUtil.close(rs, preparedStatement, conn);
@@ -474,14 +477,14 @@ public class TotalCount extends RootAPI {
 				if (paramName.equals("start_date") || paramName.equals("end_date")) {
 					int parameterIndex = i + 1;
 					preparedStatement.setObject(parameterIndex, value);
-					// System.out.println("debug:==>" + parameterIndex + ":" + value); // debug
+					// LOGGER.debug(parameterIndex + ":" + value);
 					i++;
 				} else {
 					String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 					for (String v : valueArr) {
 						int parameterIndex = i + 1;
 						preparedStatement.setObject(parameterIndex, v);
-						// System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
+						// LOGGER.debug(parameterIndex + ":" + v);
 						i++;
 					}
 				}

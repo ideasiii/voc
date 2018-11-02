@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
@@ -39,6 +41,7 @@ import com.voc.common.DBUtil;
  * 
  */
 public class CrossRatio extends RootAPI {
+	private static final Logger LOGGER = LoggerFactory.getLogger(CrossRatio.class);
 	private String mainFilter = null;
 	private String mainValue = null;
 	private String secFilter = null;
@@ -146,17 +149,16 @@ public class CrossRatio extends RootAPI {
 			mainValueArr = mainValue.split(PARAM_VALUES_SEPARATOR);
 			secValueArr = secValue.split(PARAM_VALUES_SEPARATOR);
 			selectSQL.append(this.genSelectSQL(tableName, mainFilterColumn, secFilterColumn, mainValueArr, secValueArr));
-			// System.out.println("debug:==>" + selectSQL.toString()); // debug
+			LOGGER.info("selectSQL: " + selectSQL.toString());
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
 			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, startDate, endDate);
-			// System.out.println("debug:=================================" ); // debug
 			
 			String psSQLStr = preparedStatement.toString();
-			System.out.println("debug: psSQLStr = " + psSQLStr); // debug
+			LOGGER.info("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
-			System.out.println("debug: selectUpdateTimeSQL = " + this.selectUpdateTimeSQL); // debug
+			LOGGER.info("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			
 			Map<String, Map<String, Integer>> hash_mainItem_secItem = new HashMap<>();
 			rs = preparedStatement.executeQuery();
@@ -164,7 +166,7 @@ public class CrossRatio extends RootAPI {
 				String main_item = rs.getString(this.mainSelectCol);
 				String sec_item = rs.getString(this.secSelectCol);
 				int count = rs.getInt("count");
-				System.out.println("debug:==>main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count); // debug
+				LOGGER.info("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count);
 				
 				if (hash_mainItem_secItem.get(main_item) == null) {
 					hash_mainItem_secItem.put(main_item, new HashMap<String, Integer>());
@@ -173,7 +175,7 @@ public class CrossRatio extends RootAPI {
 				secItemHM.put(sec_item, count);
 				hash_mainItem_secItem.put(main_item, secItemHM);
 			}
-			System.out.println("debug:==>hash_mainItem_secItem=" + hash_mainItem_secItem);
+			LOGGER.info("hash_mainItem_secItem=" + hash_mainItem_secItem);
 			
 			// Convert channel_id to channel_name; website_id to website_name:
 			this.convertIdToName(this.mainValueArr, this.secValueArr);
@@ -200,6 +202,7 @@ public class CrossRatio extends RootAPI {
 			}
 			return resultArray;
 		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
 			DBUtil.close(rs, preparedStatement, conn);
@@ -274,24 +277,24 @@ public class CrossRatio extends RootAPI {
 		for(String v : mainValueArr) {
 			int parameterIndex = idx + 1;
 			preparedStatement.setObject(parameterIndex, v);
-			// System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
+			// LOGGER.debug(parameterIndex + ":" + v);
 			idx++;
 		}
 		for(String v : secValueArr) {
 			int parameterIndex = idx + 1;
 			preparedStatement.setObject(parameterIndex, v);
-			// System.out.println("debug:==>" + parameterIndex + ":" + v); // debug
+			// LOGGER.debug(parameterIndex + ":" + v);
 			idx++;
 		}
 		
 		int startDateIndex = idx + 1;
 		preparedStatement.setObject(startDateIndex, startDate);
-		// System.out.println("debug:==>" + startDateIndex + ":" + startDate); // debug
+		// LOGGER.debug(startDateIndex + ":" + startDate);
 		idx++;
 		
 		int endDateIndex = idx + 1;
 		preparedStatement.setObject(endDateIndex, endDate);
-		// System.out.println("debug:==>" + endDateIndex + ":" + endDate); // debug
+		// LOGGER.debug(endDateIndex + ":" + endDate);
 		idx++;
 	}
 	
