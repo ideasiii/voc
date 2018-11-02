@@ -9,14 +9,17 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.voc.tool.AesEncryptor;
 
 public class DBUtil extends DB {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DBUtil.class);
 	private static BasicDataSource datasource = null;
 	static {
 		try {
-			System.out.println("debug: datasource init...");
+			LOGGER.info("datasource init...");
 			Context initialContext = new InitialContext();
 			datasource = (BasicDataSource)initialContext.lookup("java:comp/env/jdbc/voc");
 			
@@ -25,6 +28,7 @@ public class DBUtil extends DB {
 			datasource.setUsername(username);
 			datasource.setPassword(password);
 		} catch (NamingException e) {
+			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		}
 	}

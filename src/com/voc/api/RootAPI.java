@@ -12,10 +12,13 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.voc.common.DBUtil;
 
 public abstract class RootAPI {
+	private static final Logger LOGGER = LoggerFactory.getLogger(RootAPI.class);
 	public static final String API_KEY = "api_key";
 	protected static final String UPDATE_TIME = "update_time";
 	protected static final String PARAM_VALUES_SEPARATOR = ";";
@@ -84,6 +87,7 @@ public abstract class RootAPI {
 			}
 			return StringUtils.trimToEmpty(update_time);
 		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
 			DBUtil.close(rs, preparedStatement, conn);
@@ -107,6 +111,7 @@ public abstract class RootAPI {
 			}
 			return channelName;
 		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
 			DBUtil.close(rs, preparedStatement, conn);
@@ -130,6 +135,7 @@ public abstract class RootAPI {
 			}
 			return websiteName;
 		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
 			DBUtil.close(rs, preparedStatement, conn);
