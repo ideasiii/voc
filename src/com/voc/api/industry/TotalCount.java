@@ -93,7 +93,7 @@ public class TotalCount extends RootAPI {
 			selectSQL.append(this.genSelectClause());
 			selectSQL.append(this.genWhereClause());
 			selectSQL.append(this.genGroupByOrderByClause());
-			LOGGER.info("selectSQL=" + selectSQL.toString());
+			// LOGGER.debug("selectSQL=" + selectSQL.toString());
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());

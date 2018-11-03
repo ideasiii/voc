@@ -149,7 +149,7 @@ public class CrossRatio extends RootAPI {
 			mainValueArr = mainValue.split(PARAM_VALUES_SEPARATOR);
 			secValueArr = secValue.split(PARAM_VALUES_SEPARATOR);
 			selectSQL.append(this.genSelectSQL(tableName, mainFilterColumn, secFilterColumn, mainValueArr, secValueArr));
-			LOGGER.info("selectSQL: " + selectSQL.toString());
+			// LOGGER.debug("selectSQL: " + selectSQL.toString());
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
