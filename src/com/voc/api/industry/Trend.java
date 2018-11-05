@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.catalina.util.ParameterMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
@@ -22,6 +24,7 @@ import com.voc.common.DBUtil;
 import com.voc.enums.industry.EnumTrend;
 
 public class Trend extends RootAPI {
+	private static final Logger LOGGER = LoggerFactory.getLogger(Trend.class);
 	private String selectUpdateTimeSQL;
 	private List<String> itemNameList = new ArrayList<>();
 	private String strTableName;
@@ -65,14 +68,14 @@ public class Trend extends RootAPI {
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
 		boolean querySuccess = query(paramMap, strInterval, strStartDate, strEndDate, resArray);
-		System.out.println("*********** resArray: "+ resArray );
+		LOGGER.info("resArray: "+ resArray );
 		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
 		
 		if (querySuccess) {
 			jobj = ApiResponse.successTemplate();
 			jobj.put("update_time", update_time);
 			jobj.put("result", resArray);
-			System.out.println("*********** response: "+ jobj.toString() );
+			LOGGER.info("response: "+ jobj.toString());
 			
 		} else {
 				jobj = ApiResponse.unknownError();
@@ -93,7 +96,7 @@ public class Trend extends RootAPI {
 			querySQL.append(genWhereClause(paramMap, strInterval));
 			querySQL.append(genGroupByClause(paramMap, strInterval));
 			
-			System.out.println("****************" + querySQL.toString());
+			LOGGER.info("querySQL: " + querySQL.toString());
 
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(querySQL.toString());
@@ -101,9 +104,9 @@ public class Trend extends RootAPI {
 
 			//get update_time SQL
 			String strPstSQL = pst.toString();
-			System.out.println("**********strPstSQL: " + strPstSQL);
+			LOGGER.info("**********strPstSQL: " + strPstSQL);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
-			System.out.println("**********selectUpdateTimeSQL: " + this.selectUpdateTimeSQL); 
+			LOGGER.info("selectUpdateTimeSQL: " + this.selectUpdateTimeSQL); 
 			
 			Map<String, Map<String, Integer>> hash_itemName_dataMap = new HashMap<>();
 			Map<String, Integer> dataMap = new HashMap<String, Integer>();
@@ -135,7 +138,7 @@ public class Trend extends RootAPI {
 					date = rs.getString("dailyStr");
 				}
 				int count = rs.getInt("count"); 
-				System.out.println("************** item:" + item.toString() + ", date: " + date + ", count: " + count);
+				LOGGER.info("item: " + item.toString() + ", date: " + date + ", count: " + count);
 				
 				if (hash_itemName_dataMap.get(item.toString()) == null) {
 					hash_itemName_dataMap.put(item.toString(), new HashMap<String, Integer>());
@@ -291,14 +294,14 @@ public class Trend extends RootAPI {
 				if (paramName.equals("start_date") || paramName.equals("end_date")) {
 					int parameterIndex = i + 1;
 					pst.setObject(parameterIndex, value);
-					System.out.println("*********" + parameterIndex + ":" + value); 
+					LOGGER.info("*********" + parameterIndex + ":" + value); 
 					i++;
 				} else {
 					String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 					for (String v : valueArr) {
 						int parameterIndex = i + 1;
 						pst.setObject(parameterIndex, v);
-						System.out.println("*********" + parameterIndex + ":" + v);
+						LOGGER.info("*********" + parameterIndex + ":" + v);
 						i++;
 					}
 				}
@@ -363,9 +366,11 @@ public class Trend extends RootAPI {
 				break;
 			case PARAM_COLUMN_START_DATE:
 				paramValues_startDate = values;
+				paramValues_startDate[0] = Common.formatDate(paramValues_startDate[0], "yyyy-MM-dd");
 				break;
 			case PARAM_COLUMN_END_DATE:
 				paramValues_endDate = values;
+				paramValues_endDate[0] = Common.formatDate(paramValues_endDate[0], "yyyy-MM-dd");
 				break;
 			default:
 				// Do nothing
