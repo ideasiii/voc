@@ -1,5 +1,7 @@
 package com.voc.servlet;
 
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 
@@ -11,8 +13,12 @@ public class StartupServlet extends HttpServlet {
 	private static final long serialVersionUID = -307475523890285345L;
 	private static final Logger LOGGER = LoggerFactory.getLogger(StartupServlet.class);
 
-	public void init() {
+	@Override
+    public void init(ServletConfig config) throws ServletException {
 		LOGGER.info(" ************** VOC Start... ************** ");
+		
+		// Do nothing so far
+		
 	}
 
 }
