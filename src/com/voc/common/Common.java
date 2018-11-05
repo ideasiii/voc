@@ -5,7 +5,6 @@ import java.text.SimpleDateFormat;
 import java.text.ParseException;
 
 public class Common {
-
 	public final static int ERR_SUCCESS = 1;
 	public final static int ERR_EXCEPTION = -1;
 	
@@ -18,9 +17,7 @@ public class Common {
 	
 	public static final String INTERVAL_DAILY = "daily";
 	public static final String INTERVAL_MONTHLY = "monthly";
-	
-	
-	
+
 	/** VALIDATIONS **/
 	
 	public static boolean isValidInterval(String interval) {
@@ -29,59 +26,66 @@ public class Common {
 	
 	
 	public static boolean isValidDate(String dateToValidate, String dateFromat) {
-
 		if (dateToValidate == null) {
 			return false;
 		}
-
 		SimpleDateFormat sdf = new SimpleDateFormat(dateFromat);
 		sdf.setLenient(false);
-
 		try {
 			//if not valid, it will throw ParseException
 			Date date = sdf.parse(dateToValidate);
 			//System.out.println(date);
-
 		} catch (ParseException e) {
-
 			e.printStackTrace();
 			return false;
 		}
-
 		return true;
 	}
 	
-	 public static boolean isNotEmptyString(final String s) {
-	    	return s != null && s.length() > 0;
-	    }
-
-	public static boolean isValidStartDate(String sd, String ed, String dateFromat) {
-
+	/**
+	 * EX: Convert "2018-5-15" to "2018-05-15"
+	 * 
+	 * @param dateStr
+	 * @param dateFromat
+	 * @return formatedDateStr
+	 */
+	public static String formatDate(String dateStr, String dateFromat) {
+		String formatedDateStr = "";
 		SimpleDateFormat sdf = new SimpleDateFormat(dateFromat);
 		sdf.setLenient(false);
-
 		try {
-		
+			//if not valid, it will throw ParseException
+			Date date = sdf.parse(dateStr);
+			formatedDateStr = sdf.format(date);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return formatedDateStr;
+	}
+	
+	public static boolean isNotEmptyString(final String s) {
+		return s != null && s.length() > 0;
+	}
+
+	public static boolean isValidStartDate(String sd, String ed, String dateFromat) {
+		SimpleDateFormat sdf = new SimpleDateFormat(dateFromat);
+		sdf.setLenient(false);
+		try {
 			//check startDate before or equal endDate 
 			boolean validStartDate = !sdf.parse(sd).after(sdf.parse(ed));
 			
 			if (validStartDate == false)
 				return false;
-			
 		} catch (ParseException e) {
-
 			e.printStackTrace();
 			return false;
 		}
-
 		return true;
 	}
 
 	public static boolean isValidDateInSameMonth(final String sd, final String ed, String dateFromat) {
-
 		SimpleDateFormat sdf = new SimpleDateFormat(dateFromat);
 		sdf.setLenient(false);
-
 		try {
 			Date date1 = sdf.parse(sd);
 			Date date2 = sdf.parse(ed);
@@ -90,23 +94,15 @@ public class Common {
 			Calendar c2 = Calendar.getInstance();
 			c1.setTime(date1);
 			c2.setTime(date2);
-
 			boolean sameMonth = c1.get(Calendar.MONTH) == c2.get(Calendar.MONTH);
 			if (sameMonth == false)
 				return false;
-
 		} catch (ParseException e) {
-
 			e.printStackTrace();
 			return false;
 		}
-
 		return true;
 	}
-	
-	
-	
-	
 	
 }
 
