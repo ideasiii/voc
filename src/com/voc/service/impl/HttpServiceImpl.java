@@ -34,7 +34,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.voc.service.HttpService;
-import com.voc.servlet.StartupServlet;
 
 public class HttpServiceImpl implements HttpService{
 	private static final Logger LOGGER = LoggerFactory.getLogger(HttpServiceImpl.class);
