@@ -123,9 +123,13 @@ public class CrossRatio extends RootAPI {
 		if (!Common.isValidDate(this.startDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
 		}
+		this.startDate = Common.formatDate(this.startDate, "yyyy-MM-dd");
+		
 		if (!Common.isValidDate(this.endDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
 		}
+		this.endDate = Common.formatDate(this.endDate, "yyyy-MM-dd");
+		
 		if (!Common.isValidStartDate(this.startDate, this.endDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
 		}

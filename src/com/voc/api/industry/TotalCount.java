@@ -251,9 +251,11 @@ public class TotalCount extends RootAPI {
 				break;
 			case PARAM_COLUMN_START_DATE:
 				paramValues_startDate = trimedValues;
+				paramValues_startDate[0] = Common.formatDate(paramValues_startDate[0], "yyyy-MM-dd");
 				break;
 			case PARAM_COLUMN_END_DATE:
 				paramValues_endDate = trimedValues;
+				paramValues_endDate[0] = Common.formatDate(paramValues_endDate[0], "yyyy-MM-dd");
 				break;
 			default:
 				// Do nothing
