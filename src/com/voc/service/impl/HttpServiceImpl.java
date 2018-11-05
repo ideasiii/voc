@@ -22,6 +22,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -32,8 +34,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.reflect.TypeToken;
 import com.voc.service.HttpService;
+import com.voc.servlet.StartupServlet;
 
 public class HttpServiceImpl implements HttpService{
+	private static final Logger LOGGER = LoggerFactory.getLogger(HttpServiceImpl.class);
 	
 //	private CloseableHttpClient httpClient = HttpClients.createDefault();
 //	private CloseableHttpClient httpsClient = HttpClients.custom().setSSLHostnameVerifier(new NoopHostnameVerifier()).build();
@@ -175,9 +179,9 @@ public class HttpServiceImpl implements HttpService{
 	
 	public int sendGet(boolean isSecurity, String api){
 		CloseableHttpClient http = null;
+		HttpResponse response = null;
 		try{
 			HttpGet httpGet = new HttpGet(api);
-			HttpResponse response = null;
 			
 			if(!isSecurity){
 				http = HttpClients.createDefault();
@@ -195,8 +199,13 @@ public class HttpServiceImpl implements HttpService{
 				}).setSSLContext(sslContext).build();
 			}
 			response = http.execute(httpGet);
-			return response.getStatusLine().getStatusCode();
+			int statusCode = response.getStatusLine().getStatusCode();
+			if (statusCode != HttpURLConnection.HTTP_OK) {
+				LOGGER.error("response=" + response);
+			}
+			return statusCode;
 		}catch (Exception e) {
+			LOGGER.error(e.getMessage());
 			return HttpURLConnection.HTTP_NOT_FOUND;
 		}finally {
 			if(http != null){
