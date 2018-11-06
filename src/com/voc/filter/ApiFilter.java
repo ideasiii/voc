@@ -42,7 +42,7 @@ public class ApiFilter implements Filter {
 			LOGGER.info("doFilter:==>" + requestURL + "?" + queryString);
 		}
 		
-		LOGGER.debug(" ******* Before doFilter ******* ");
+		// LOGGER.debug(" ******* Before doFilter ******* ");
 		servletResponse.setContentType("application/json");
 		servletResponse.setCharacterEncoding("UTF-8");
 		
@@ -56,7 +56,7 @@ public class ApiFilter implements Filter {
 		} else {
 			filterChain.doFilter(servletRequest, servletResponse);
 		}
-		LOGGER.debug(" ******* After doFilter ******* ");
+		// LOGGER.debug(" ******* After doFilter ******* ");
 	}
 
 	@Override
