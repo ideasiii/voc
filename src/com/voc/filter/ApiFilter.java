@@ -37,16 +37,16 @@ public class ApiFilter implements Filter {
 	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
 			throws IOException, ServletException {
 		
+		// LOGGER.debug(" ******* Before doFilter ******* ");
+		servletResponse.setContentType("application/json");
+		servletResponse.setCharacterEncoding("UTF-8");
+		
 		if (servletRequest instanceof HttpServletRequest) {
 			String requestURL = ((HttpServletRequest) servletRequest).getRequestURL().toString();
 			String queryString = ((HttpServletRequest) servletRequest).getQueryString();
 			queryString = URLDecoder.decode(queryString, "UTF-8");
 			LOGGER.info("doFilter:==>" + requestURL + "?" + queryString);
 		}
-		
-		// LOGGER.debug(" ******* Before doFilter ******* ");
-		servletResponse.setContentType("application/json");
-		servletResponse.setCharacterEncoding("UTF-8");
 		
 		// Validate the token:
 		String token = servletRequest.getParameter(RootAPI.API_KEY);
