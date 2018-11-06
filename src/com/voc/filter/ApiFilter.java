@@ -3,6 +3,7 @@ package com.voc.filter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.URLDecoder;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -39,6 +40,7 @@ public class ApiFilter implements Filter {
 		if (servletRequest instanceof HttpServletRequest) {
 			String requestURL = ((HttpServletRequest) servletRequest).getRequestURL().toString();
 			String queryString = ((HttpServletRequest) servletRequest).getQueryString();
+			queryString = URLDecoder.decode(queryString, "UTF-8");
 			LOGGER.info("doFilter:==>" + requestURL + "?" + queryString);
 		}
 		
