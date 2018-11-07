@@ -44,7 +44,7 @@ public class ApiFilter implements Filter {
 		if (servletRequest instanceof HttpServletRequest) {
 			String requestURL = ((HttpServletRequest) servletRequest).getRequestURL().toString();
 			String queryString = ((HttpServletRequest) servletRequest).getQueryString();
-			queryString = URLDecoder.decode(queryString, "UTF-8");
+			queryString = URLDecoder.decode(StringUtils.trimToEmpty(queryString), "UTF-8");
 			LOGGER.info("doFilter:==>" + requestURL + "?" + queryString);
 		}
 		
