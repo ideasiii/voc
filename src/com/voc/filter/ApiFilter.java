@@ -69,12 +69,13 @@ public class ApiFilter implements Filter {
 	// -------------------------------------------------------------------
 	
 	private boolean checkToken(String token) {
-		if (StringUtils.isBlank(token)) {
-			return false;
-		}
-		String params = "?token=" + token;
-		int statusCode = HTTP_SERVICE.sendGet(true, this.api_url_token_validation + params);
-		return HttpURLConnection.HTTP_OK == statusCode;
+//		if (StringUtils.isBlank(token)) {
+//			return false;
+//		}
+//		String params = "?token=" + token;
+//		int statusCode = HTTP_SERVICE.sendGet(true, this.api_url_token_validation + params);
+//		return HttpURLConnection.HTTP_OK == statusCode;
+		return true; // TODO: 暫時不檢查Token
 	}
 
 }
