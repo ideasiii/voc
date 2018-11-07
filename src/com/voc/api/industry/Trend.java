@@ -104,7 +104,7 @@ public class Trend extends RootAPI {
 
 			//get update_time SQL
 			String strPstSQL = pst.toString();
-			LOGGER.info("**********strPstSQL: " + strPstSQL);
+			LOGGER.info("strPstSQL: " + strPstSQL);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
 			LOGGER.info("selectUpdateTimeSQL: " + this.selectUpdateTimeSQL); 
 			
@@ -294,14 +294,14 @@ public class Trend extends RootAPI {
 				if (paramName.equals("start_date") || paramName.equals("end_date")) {
 					int parameterIndex = i + 1;
 					pst.setObject(parameterIndex, value);
-					LOGGER.info("*********" + parameterIndex + ":" + value); 
+					LOGGER.info(parameterIndex + ":" + value); 
 					i++;
 				} else {
 					String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
 					for (String v : valueArr) {
 						int parameterIndex = i + 1;
 						pst.setObject(parameterIndex, v);
-						LOGGER.info("*********" + parameterIndex + ":" + v);
+						LOGGER.info("***" + parameterIndex + ":" + v);
 						i++;
 					}
 				}
