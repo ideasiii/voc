@@ -12,9 +12,9 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${catalina.home}/logs/voc_logs/voc_%d{yyyy-MM-dd}.%i.log</fileNamePattern>
 			<!-- each file should be at most 10MB, keep 60 days worth of history, but at most 20GB -->
-            <maxFileSize>10MB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>20GB</totalSizeCap>
+            <maxFileSize>10MB</maxFileSize> <!-- TODO: need to test -->
+            <!-- <maxHistory>60</maxHistory> -->  <!-- TBD: it doesn't seem to work after testing -->
+            <!-- <totalSizeCap>20GB</totalSizeCap> --> <!-- TODO: need to test -->
         </rollingPolicy>
 
         <encoder>
