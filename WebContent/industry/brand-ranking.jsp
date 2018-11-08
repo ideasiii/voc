@@ -3,15 +3,13 @@
 	
 <%@ page import="org.json.JSONObject"%>
 <%@ page import="com.voc.api.RootAPI" %>
-<%@ page import="com.voc.api.industry.Trend" %>
+<%@ page import="com.voc.api.industry.BrandRanking" %>
 	
 <% 
 	request.setCharacterEncoding("UTF-8");
-	// JSONObject jobj = processRequest(request);
-	// out.print(jobj.toString());
 	
-	Trend trend = new Trend();
-	JSONObject jobj = trend.processRequest(request);
+	BrandRanking brandRanking = new BrandRanking();
+	JSONObject jobj = brandRanking.processRequest(request);
 	out.print(jobj.toString());
 %>
 	

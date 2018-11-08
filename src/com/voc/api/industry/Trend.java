@@ -174,6 +174,7 @@ public class Trend extends RootAPI {
 				}
 			return true;
 		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
 			DBUtil.close(rs, pst, conn);

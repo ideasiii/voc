@@ -17,11 +17,17 @@ public class Common {
 	
 	public static final String INTERVAL_DAILY = "daily";
 	public static final String INTERVAL_MONTHLY = "monthly";
-
+	public static final String SORT_DESC = "desc";
+	public static final String SORT_ASC = "asc";
+	
 	/** VALIDATIONS **/
 	
 	public static boolean isValidInterval(String interval) {
 		return interval.equals(INTERVAL_DAILY) || interval.equals(INTERVAL_MONTHLY);
+	}
+	
+	public static boolean isValidSort(String strSort) {
+		return strSort.equals(SORT_DESC) || strSort.equals(SORT_ASC);
 	}
 	
 	
