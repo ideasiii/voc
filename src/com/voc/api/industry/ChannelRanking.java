@@ -11,14 +11,13 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 import com.voc.api.RootAPI;
-import com.voc.api.model.ChannelRankingResult;
+import com.voc.api.model.ChannelRankingModel;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
@@ -159,16 +158,17 @@ public class ChannelRanking extends RootAPI {
 		if (errorResponse != null) {
 			return errorResponse.toString();
 		}
-		JSONArray resultArray = this.queryData();
-		if (resultArray != null) {
-			JSONObject successObject = ApiResponse.successTemplate();
-			successObject.put("result", resultArray);
-			return successObject.toString();
+		List<ChannelRankingModel.Channel> channelList = this.queryData();
+		if (channelList != null) {
+			ChannelRankingModel channelRankingModel = new ChannelRankingModel();
+			channelRankingModel.setSuccess(true);
+			channelRankingModel.setResult(channelList);
+			return GSON.toJson(channelRankingModel);
 		}
 		return ApiResponse.unknownError().toString();
 	}
 	
-	private JSONArray queryData() {
+	private List<ChannelRankingModel.Channel> queryData() {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
@@ -181,7 +181,7 @@ public class ChannelRanking extends RootAPI {
 			LOGGER.debug("psSQLStr = " + psSQLStr);
 			
 			List<String> channelIdList = new ArrayList<>();
-			List<ChannelRankingResult> channelRankingResultList = new ArrayList<>();
+			List<ChannelRankingModel.Channel> channelList = new ArrayList<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				// website_name, channel_name, channel_id, SUM(reputation) AS count
@@ -193,29 +193,28 @@ public class ChannelRanking extends RootAPI {
 				
 				channelIdList.add(channelId);
 				
-				ChannelRankingResult channelRankingResult = new ChannelRankingResult();
-				channelRankingResult.setChannel_id(channelId);
-				channelRankingResult.setChannel(websiteName + "_" + channelName);
-				channelRankingResult.setCount(count);
-				channelRankingResultList.add(channelRankingResult);
+				ChannelRankingModel.Channel channel = new ChannelRankingModel().new Channel();
+				channel.setChannel_id(channelId);
+				channel.setChannel(websiteName + "_" + channelName);
+				channel.setCount(count);
+				channelList.add(channel);
 			}
-			LOGGER.debug("channelRankingResultList_before=" + channelRankingResultList);
-			GSON.toJson(channelRankingResultList);
+			LOGGER.debug("channelList_before=" + channelList);
+			GSON.toJson(channelList);
 	
 			for (Map.Entry<String, String> entry : this.hash_channelId_websiteChannelName.entrySet()) {
 				String channelId = entry.getKey();
 				String websiteChannelName = entry.getValue();
 				if (!channelIdList.contains(channelId)) {
-					ChannelRankingResult channelRankingResult = new ChannelRankingResult();
-					channelRankingResult.setChannel_id(channelId);
-					channelRankingResult.setChannel(websiteChannelName);
-					channelRankingResult.setCount(0);
-					channelRankingResultList.add(channelRankingResult);
+					ChannelRankingModel.Channel channel = new ChannelRankingModel().new Channel();
+					channel.setChannel_id(channelId);
+					channel.setChannel(websiteChannelName);
+					channel.setCount(0);
+					channelList.add(channel);
 				}
 			}
-			LOGGER.debug("channelRankingResultList_after=" + channelRankingResultList);
-			
-			return null;
+			LOGGER.debug("channelList_after=" + channelList);
+			return channelList;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
@@ -283,13 +282,3 @@ public class ChannelRanking extends RootAPI {
 		idx++;
 	}
 }
-
-
-
-
-
-
-
-
-
-
