@@ -75,6 +75,7 @@ public class CrossRatio extends RootAPI {
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", resultArray);
+			LOGGER.info("responseJsonStr=" + successObject.toString());
 			return successObject.toString();
 		}
 		return ApiResponse.unknownError().toString();
@@ -160,9 +161,9 @@ public class CrossRatio extends RootAPI {
 			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, startDate, endDate);
 			
 			String psSQLStr = preparedStatement.toString();
-			LOGGER.info("psSQLStr = " + psSQLStr);
+			LOGGER.debug("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
-			LOGGER.info("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
+			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			
 			Map<String, Map<String, Integer>> hash_mainItem_secItem = new HashMap<>();
 			rs = preparedStatement.executeQuery();
@@ -170,7 +171,7 @@ public class CrossRatio extends RootAPI {
 				String main_item = rs.getString(this.mainSelectCol);
 				String sec_item = rs.getString(this.secSelectCol);
 				int count = rs.getInt("count");
-				LOGGER.info("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count);
+				LOGGER.debug("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count);
 				
 				if (hash_mainItem_secItem.get(main_item) == null) {
 					hash_mainItem_secItem.put(main_item, new HashMap<String, Integer>());
@@ -179,7 +180,7 @@ public class CrossRatio extends RootAPI {
 				secItemHM.put(sec_item, count);
 				hash_mainItem_secItem.put(main_item, secItemHM);
 			}
-			LOGGER.info("hash_mainItem_secItem=" + hash_mainItem_secItem);
+			LOGGER.debug("hash_mainItem_secItem=" + hash_mainItem_secItem);
 			
 			// Convert channel_id to channel_name; website_id to website_name:
 			this.convertIdToName(this.mainValueArr, this.secValueArr);

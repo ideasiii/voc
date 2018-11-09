@@ -79,6 +79,7 @@ public class TotalCount extends RootAPI {
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", itemArray);
+			LOGGER.info("responseJsonStr=" + successObject.toString());
 			return successObject.toString();
 		}
 		return ApiResponse.unknownError().toString();
@@ -100,9 +101,9 @@ public class TotalCount extends RootAPI {
 			this.setWhereClauseValues(preparedStatement);
 			
 			String psSQLStr = preparedStatement.toString();
-			LOGGER.info("psSQLStr = " + psSQLStr);
+			LOGGER.debug("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
-			LOGGER.info("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
+			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			
 			Map<String, Integer> hash_itemName_count = new HashMap<>();
 			rs = preparedStatement.executeQuery();
@@ -128,10 +129,10 @@ public class TotalCount extends RootAPI {
 					i++;
 				}
 				int count = rs.getInt("count");
-				LOGGER.info("item=" + item.toString() + ", count=" + count);
+				LOGGER.debug("item=" + item.toString() + ", count=" + count);
 				hash_itemName_count.put(item.toString(), count);
 			}
-			LOGGER.info("hash_itemName_count=" + hash_itemName_count);
+			LOGGER.debug("hash_itemName_count=" + hash_itemName_count);
 			
 			JSONArray itemArray = new JSONArray();
 			for (String itemName: itemNameList) {

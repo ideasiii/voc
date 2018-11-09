@@ -66,6 +66,25 @@ public class ChannelRanking extends RootAPI {
 	private String[] channelValueArr = null; // channel (channel_id): channel_id若不存在, 就不要顯示結果
 	private Map<String, String> hash_channelId_websiteChannelName = new HashMap<>();
 	
+	@Override
+	public String processRequest(HttpServletRequest request) {
+		this.requestAndTrimParams(request);
+		JSONObject errorResponse = this.validateParams();
+		if (errorResponse != null) {
+			return errorResponse.toString();
+		}
+		List<ChannelRankingModel.Channel> channelList = this.queryData();
+		if (channelList != null) {
+			ChannelRankingModel channelRankingModel = new ChannelRankingModel();
+			channelRankingModel.setSuccess(true);
+			channelRankingModel.setResult(channelList);
+			String responseJsonStr = GSON.toJson(channelRankingModel);
+			LOGGER.info("responseJsonStr=" + responseJsonStr);
+			return responseJsonStr;
+		}
+		return ApiResponse.unknownError().toString();
+	}
+
 	private void requestAndTrimParams(HttpServletRequest request) {
 		this.parameterMap = request.getParameterMap();
 		
@@ -157,23 +176,6 @@ public class ChannelRanking extends RootAPI {
 		return null;
 	}
 
-	@Override
-	public String processRequest(HttpServletRequest request) {
-		this.requestAndTrimParams(request);
-		JSONObject errorResponse = this.validateParams();
-		if (errorResponse != null) {
-			return errorResponse.toString();
-		}
-		List<ChannelRankingModel.Channel> channelList = this.queryData();
-		if (channelList != null) {
-			ChannelRankingModel channelRankingModel = new ChannelRankingModel();
-			channelRankingModel.setSuccess(true);
-			channelRankingModel.setResult(channelList);
-			return GSON.toJson(channelRankingModel);
-		}
-		return ApiResponse.unknownError().toString();
-	}
-	
 	private List<ChannelRankingModel.Channel> queryData() {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
@@ -195,7 +197,7 @@ public class ChannelRanking extends RootAPI {
 				String channelName = rs.getString("channel_name");
 				String channelId = rs.getString("channel_id");
 				int count = rs.getInt("count");
-				LOGGER.info("websiteName=" + websiteName + ", channelName=" + channelName + ", channelId=" + channelId + ", count=" + count);
+				LOGGER.debug("websiteName=" + websiteName + ", channelName=" + channelName + ", channelId=" + channelId + ", count=" + count);
 				
 				channelIdList.add(channelId);
 				
