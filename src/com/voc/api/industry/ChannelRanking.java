@@ -153,19 +153,19 @@ public class ChannelRanking extends RootAPI {
 	}
 
 	@Override
-	public JSONObject processRequest(HttpServletRequest request) {
+	public String processRequest(HttpServletRequest request) {
 		this.requestAndTrimParams(request);
 		JSONObject errorResponse = this.validateParams();
 		if (errorResponse != null) {
-			return errorResponse;
+			return errorResponse.toString();
 		}
 		JSONArray resultArray = this.queryData();
 		if (resultArray != null) {
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("result", resultArray);
-			return successObject;
+			return successObject.toString();
 		}
-		return ApiResponse.unknownError();
+		return ApiResponse.unknownError().toString();
 	}
 	
 	private JSONArray queryData() {

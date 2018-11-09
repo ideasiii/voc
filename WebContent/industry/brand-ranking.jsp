@@ -9,8 +9,8 @@
 	request.setCharacterEncoding("UTF-8");
 	
 	BrandRanking brandRanking = new BrandRanking();
-	JSONObject jobj = brandRanking.processRequest(request);
-	out.print(jobj.toString());
+	String jsonStr = brandRanking.processRequest(request);
+	out.print(jsonStr);
 %>
 	
 	

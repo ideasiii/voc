@@ -24,14 +24,14 @@ public class BrandRanking extends RootAPI {
 	private String strLimit;
 
 	@Override
-	public JSONObject processRequest(HttpServletRequest request) {
+	public String processRequest(HttpServletRequest request) {
 
 		Map<String, String[]> paramMap = request.getParameterMap();
 		strSort = request.getParameter("sort");
 		strLimit = request.getParameter("limit");
 		
 		if (!hasRequiredParameters(paramMap)) {
-			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER).toString();
 		}
 		
 		JSONArray resArray = query(paramMap);
@@ -40,9 +40,9 @@ public class BrandRanking extends RootAPI {
 			JSONObject jobj = ApiResponse.successTemplate();
 			jobj.put("result", resArray);
 			LOGGER.info("response: "+ jobj.toString());
-			return jobj;
+			return jobj.toString();
 		}
-		return ApiResponse.unknownError();
+		return ApiResponse.unknownError().toString();
 	}
 	
 	private JSONArray query(Map<String, String[]> paramMap) {

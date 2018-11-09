@@ -30,13 +30,13 @@ public class Trend extends RootAPI {
 	private String strTableName;
 	
 	@Override
-	public JSONObject processRequest(HttpServletRequest request) {
+	public String processRequest(HttpServletRequest request) {
 
 		Map<String, String[]> paramMap = request.getParameterMap();
 		strTableName = getTableName(paramMap);
 
 		if (!hasRequiredParameters(paramMap)) {
-			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER).toString();
 		}
 
 		final String strStartDate = request.getParameter("start_date");
@@ -44,15 +44,15 @@ public class Trend extends RootAPI {
 		String strInterval;
 
 		if (!Common.isValidDate(strStartDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.").toString();
 		}
 
 		if (!Common.isValidDate(strEndDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.").toString();
 		}
 
 		if (!Common.isValidStartDate(strStartDate, strEndDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.").toString();
 		}
 
 		if (!hasInterval(paramMap)) {
@@ -60,7 +60,7 @@ public class Trend extends RootAPI {
 		} else {
 			strInterval = request.getParameter("interval");
 			if (!Common.isValidInterval(strInterval)) {
-				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid interval.");
+				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid interval.").toString();
 			}
 		}
 
@@ -80,7 +80,7 @@ public class Trend extends RootAPI {
 		} else {
 				jobj = ApiResponse.unknownError();
 		}
-		return jobj;
+		return jobj.toString();
 	}
 
 	private boolean query(Map<String, String[]> paramMap, final String strInterval, final String strStartDate, final String strEndDate,

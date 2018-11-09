@@ -60,11 +60,11 @@ public class CrossRatio extends RootAPI {
 	private String tableName;
 	
 	@Override
-	public JSONObject processRequest(HttpServletRequest request) {
+	public String processRequest(HttpServletRequest request) {
 		this.requestAndTrimParams(request);
 		JSONObject errorResponse = this.validateParams();
 		if (errorResponse != null) {
-			return errorResponse;
+			return errorResponse.toString();
 		}
 		JSONArray resultArray = this.queryData();
 		String update_time = "";
@@ -75,9 +75,9 @@ public class CrossRatio extends RootAPI {
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", resultArray);
-			return successObject;
+			return successObject.toString();
 		}
-		return ApiResponse.unknownError();
+		return ApiResponse.unknownError().toString();
 	}
 	
 	private void requestAndTrimParams(HttpServletRequest request) {

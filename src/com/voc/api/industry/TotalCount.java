@@ -63,12 +63,12 @@ public class TotalCount extends RootAPI {
 	private String tableName;
 	
 	@Override
-	public JSONObject processRequest(HttpServletRequest request) {
+	public String processRequest(HttpServletRequest request) {
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		this.tableName = this.getTableName(parameterMap);
 		JSONObject errorResponse = this.validateAndSetOrderedParameterMap(parameterMap);
 		if (errorResponse != null) {
-			return errorResponse;
+			return errorResponse.toString();
 		}
 		JSONArray itemArray = this.queryData();
 		String update_time = "";
@@ -79,9 +79,9 @@ public class TotalCount extends RootAPI {
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", itemArray);
-			return successObject;
+			return successObject.toString();
 		}
-		return ApiResponse.unknownError();
+		return ApiResponse.unknownError().toString();
 	}
 	
 	private JSONArray queryData() {

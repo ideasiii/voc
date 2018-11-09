@@ -11,7 +11,6 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,7 @@ public abstract class RootAPI {
 	private static final List<String> ITEM_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
 			"source", "website", "channel", "features");
 
-	public abstract JSONObject processRequest(HttpServletRequest request);
+	public abstract String processRequest(HttpServletRequest request);
 
 	protected String getTableName(Map<String, String[]> parameterMap) {
 		if (parameterMap.containsKey("product") || parameterMap.containsKey("series")) {

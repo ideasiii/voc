@@ -9,6 +9,6 @@
 	request.setCharacterEncoding("UTF-8");
 
 	RootAPI crossRatio = new CrossRatio();
-	JSONObject jobj = crossRatio.processRequest(request);
-	out.print(jobj.toString());
+	String jsonStr = crossRatio.processRequest(request);
+	out.print(jsonStr);
 %>

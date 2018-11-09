@@ -9,6 +9,6 @@
 	request.setCharacterEncoding("UTF-8");
 
 	RootAPI totalCount = new TotalCount();
-	JSONObject jobj = totalCount.processRequest(request);
-	out.print(jobj.toString());
+	String jsonStr = totalCount.processRequest(request);
+	out.print(jsonStr);
 %>

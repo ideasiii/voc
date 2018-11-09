@@ -9,6 +9,6 @@
 	request.setCharacterEncoding("UTF-8");
 
 	RootAPI channelRanking = new ChannelRanking();
-	JSONObject jobj = channelRanking.processRequest(request);
-	out.print(jobj.toString());
+	String jsonStr = channelRanking.processRequest(request);
+	out.print(jsonStr);
 %>

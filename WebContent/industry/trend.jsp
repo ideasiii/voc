@@ -11,8 +11,8 @@
 	// out.print(jobj.toString());
 	
 	Trend trend = new Trend();
-	JSONObject jobj = trend.processRequest(request);
-	out.print(jobj.toString());
+	String jsonStr = trend.processRequest(request);
+	out.print(jsonStr);
 %>
 	
 	
