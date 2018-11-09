@@ -58,7 +58,7 @@ public class ChannelRanking extends RootAPI {
 	private String channel;
 	private String start_date;
 	private String end_date;
-	private String sort = "DESC"; // Default: desc
+	private String sort = Common.SORT_DESC; // Default: desc
 	private int limit = 10; // Default: 10
 	
 	private String tableName;
@@ -150,6 +150,10 @@ public class ChannelRanking extends RootAPI {
 		if (!Common.isValidStartDate(this.start_date, this.end_date, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
 		}
+		
+		if (!this.sort.equalsIgnoreCase(Common.SORT_ASC) && !this.sort.equalsIgnoreCase(Common.SORT_DESC)) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid sort value.");
+		}
 		return null;
 	}
 
@@ -203,17 +207,30 @@ public class ChannelRanking extends RootAPI {
 			}
 			LOGGER.debug("channelList_before=" + GSON.toJson(channelList));
 
-			for (Map.Entry<String, String> entry : this.hash_channelId_websiteChannelName.entrySet()) {
-				String channelId = entry.getKey();
-				String websiteChannelName = entry.getValue();
-				if (!channelIdList.contains(channelId)) {
-					ChannelRankingModel.Channel channel = new ChannelRankingModel().new Channel();
-					channel.setChannel_id(channelId);
-					channel.setChannel(websiteChannelName);
-					channel.setCount(0);
-					channelList.add(channel);
+			// TODO: need to think:...
+			int cnt = this.limit - channelList.size();
+			while (cnt > 0) {
+				for (Map.Entry<String, String> entry : this.hash_channelId_websiteChannelName.entrySet()) {
+					String channelId = entry.getKey();
+					String websiteChannelName = entry.getValue();
+					if (!channelIdList.contains(channelId)) {
+						if (cnt > 0) {
+							ChannelRankingModel.Channel channel = new ChannelRankingModel().new Channel();
+							channel.setChannel_id(channelId);
+							channel.setChannel(websiteChannelName);
+							channel.setCount(0);
+							if (this.sort.equalsIgnoreCase(Common.SORT_DESC)) {
+								channelList.add(channel);
+							} else if (this.sort.equalsIgnoreCase(Common.SORT_ASC)) {
+								channelList.add(0, channel);
+							}
+							cnt--;
+						}
+					}
 				}
+				break;
 			}
+			
 			LOGGER.debug("channelList_after=" + GSON.toJson(channelList));
 			return channelList;
 		} catch (Exception e) {
@@ -244,10 +261,10 @@ public class ChannelRanking extends RootAPI {
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY website_id, channel_id ORDER BY count ");
-		if (this.sort.equals("DESC")) {
-			selectSQL.append("DESC ");
-		} else if (this.sort.equals("ASC")) {
-			selectSQL.append("ASC ");
+		if (this.sort.equalsIgnoreCase(Common.SORT_ASC)) {
+			selectSQL.append(Common.SORT_ASC).append(" ");
+		} else if (this.sort.equalsIgnoreCase(Common.SORT_DESC)) {
+			selectSQL.append(Common.SORT_DESC).append(" ");
 		}
 		selectSQL.append("LIMIT ? ");
 		return selectSQL.toString();
