@@ -199,9 +199,8 @@ public class ChannelRanking extends RootAPI {
 				channel.setCount(count);
 				channelList.add(channel);
 			}
-			LOGGER.debug("channelList_before=" + channelList);
-			GSON.toJson(channelList);
-	
+			LOGGER.debug("channelList_before=" + GSON.toJson(channelList));
+
 			for (Map.Entry<String, String> entry : this.hash_channelId_websiteChannelName.entrySet()) {
 				String channelId = entry.getKey();
 				String websiteChannelName = entry.getValue();
@@ -213,7 +212,7 @@ public class ChannelRanking extends RootAPI {
 					channelList.add(channel);
 				}
 			}
-			LOGGER.debug("channelList_after=" + channelList);
+			LOGGER.debug("channelList_after=" + GSON.toJson(channelList));
 			return channelList;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
