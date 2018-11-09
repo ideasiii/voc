@@ -47,6 +47,9 @@ public class ApiFilter implements Filter {
 			queryString = URLDecoder.decode(StringUtils.trimToEmpty(queryString), "UTF-8");
 			LOGGER.info("doFilter:==>" + requestURL + "?" + queryString);
 		}
+		String remoteHost = servletRequest.getRemoteHost();
+		String remoteAddr = servletRequest.getRemoteAddr();
+		LOGGER.info("remoteHost=" + remoteHost + ", remoteAddr=" + remoteAddr);
 		
 		// Validate the token:
 		String token = servletRequest.getParameter(RootAPI.API_KEY);
