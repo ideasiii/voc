@@ -112,7 +112,8 @@ public class ChannelRanking extends RootAPI {
 		this.channelValueArr = this.channel.split(PARAM_VALUES_SEPARATOR);
 		for (int i = 0; i < channelValueArr.length; i++) {
 			String channelId = channelValueArr[i];
-			String websiteChannelName = this.getWebsiteChannelNameById(this.tableName, channelId); // TBD: thinking...
+			// String websiteChannelName = this.getWebsiteChannelNameById(this.tableName, channelId); 
+			String websiteChannelName = this.getWebsiteChannelNameById(channelId); // TBD: thinking...
 			if (!StringUtils.isBlank(websiteChannelName)) {
 				this.hash_channelId_websiteChannelName.put(channelId, websiteChannelName);
 			} else {
@@ -120,35 +121,7 @@ public class ChannelRanking extends RootAPI {
 			}
 		}
 	}
-	
-	protected String getWebsiteChannelNameById(String tableName, String channelId) {
-		Connection conn = null;
-		PreparedStatement preparedStatement = null;
-		ResultSet rs = null;
-		String websiteName = null;
-		String channelName = null;
-		String selectSql = "SELECT website_name, channel_name FROM "+ tableName +" WHERE channel_id = ? LIMIT 1";
-		try {
-			conn = DBUtil.getConn();
-			preparedStatement = conn.prepareStatement(selectSql);
-			preparedStatement.setString(1, channelId);
-			rs = preparedStatement.executeQuery();
-			if (rs.next()) {
-				websiteName = rs.getString("website_name");
-				channelName = rs.getString("channel_name");
-			}
-			if (websiteName != null && channelName != null) {
-				return websiteName + "_" + channelName;
-			}
-		} catch (Exception e) {
-			LOGGER.error(e.getMessage());
-			e.printStackTrace();
-		} finally {
-			DBUtil.close(rs, preparedStatement, conn);
-		}
-		return null;
-	}
-	
+
 	private JSONObject validateParams() {
 		if (StringUtils.isBlank(this.brand) || StringUtils.isBlank(this.channel)
 				|| StringUtils.isBlank(this.start_date) || StringUtils.isBlank(this.end_date)) {
@@ -301,4 +274,61 @@ public class ChannelRanking extends RootAPI {
 		preparedStatement.setObject(limitIdx, this.limit);
 		idx++;
 	}
+	
+	private String getWebsiteChannelNameById(String id) {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		String websiteName = null;
+		String channelName = null;
+		String selectSql = "SELECT website_name, name FROM "+ TABLE_CHANNEL_LIST +" WHERE id = ? LIMIT 1";
+		try {
+			conn = DBUtil.getConn();
+			preparedStatement = conn.prepareStatement(selectSql);
+			preparedStatement.setString(1, id);
+			rs = preparedStatement.executeQuery();
+			if (rs.next()) {
+				websiteName = rs.getString("website_name");
+				channelName = rs.getString("name");
+			}
+			if (websiteName != null && channelName != null) {
+				return websiteName + "_" + channelName;
+			}
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, preparedStatement, conn);
+		}
+		return null;
+	}
+
+//	private String getWebsiteChannelNameById(String tableName, String channelId) {
+//		Connection conn = null;
+//		PreparedStatement preparedStatement = null;
+//		ResultSet rs = null;
+//		String websiteName = null;
+//		String channelName = null;
+//		String selectSql = "SELECT website_name, channel_name FROM " + tableName + " WHERE channel_id = ? LIMIT 1";
+//		try {
+//			conn = DBUtil.getConn();
+//			preparedStatement = conn.prepareStatement(selectSql);
+//			preparedStatement.setString(1, channelId);
+//			rs = preparedStatement.executeQuery();
+//			if (rs.next()) {
+//				websiteName = rs.getString("website_name");
+//				channelName = rs.getString("channel_name");
+//			}
+//			if (websiteName != null && channelName != null) {
+//				return websiteName + "_" + channelName;
+//			}
+//		} catch (Exception e) {
+//			LOGGER.error(e.getMessage());
+//			e.printStackTrace();
+//		} finally {
+//			DBUtil.close(rs, preparedStatement, conn);
+//		}
+//		return null;
+//	}
+
 }

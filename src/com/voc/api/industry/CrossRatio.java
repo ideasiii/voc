@@ -219,25 +219,29 @@ public class CrossRatio extends RootAPI {
 		if ("channel".equals(this.mainFilter)) {
 			for (int i = 0; i < mainValueArr.length; i++) {
 				String mainValue = mainValueArr[i];
-				mainValueArr[i] = this.getChannelNameById(this.tableName, mainValue);
+				// mainValueArr[i] = this.getChannelNameById(this.tableName, mainValue);
+				mainValueArr[i] = this.getChannelNameById(mainValue);
 			}
 		}
 		if ("website".equals(this.mainFilter)) {
 			for (int i = 0; i < mainValueArr.length; i++) {
 				String mainValue = mainValueArr[i];
-				mainValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+				// mainValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+				mainValueArr[i] = this.getWebsiteNameById(mainValue);
 			}
 		}
 		if ("channel".equals(this.secFilter)) {
 			for (int i = 0; i < secValueArr.length; i++) {
 				String mainValue = secValueArr[i];
-				secValueArr[i] = this.getChannelNameById(this.tableName, mainValue);
+				// secValueArr[i] = this.getChannelNameById(this.tableName, mainValue);
+				secValueArr[i] = this.getChannelNameById(mainValue);
 			}
 		}
 		if ("website".equals(this.secFilter)) {
 			for (int i = 0; i < secValueArr.length; i++) {
 				String mainValue = secValueArr[i];
-				secValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+				// secValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+				secValueArr[i] = this.getWebsiteNameById(mainValue);
 			}
 		}
 	}

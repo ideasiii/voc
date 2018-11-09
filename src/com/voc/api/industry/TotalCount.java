@@ -324,13 +324,15 @@ public class TotalCount extends RootAPI {
 				mainItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < mainItemArr.length; i++) {
 					String mainValue = mainItemArr[i];
-					mainItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+					// mainItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+					mainItemArr[i] = this.getWebsiteNameById(mainValue);
 				}
 			} else if (itemCnt == 1) {
 				secItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < secItemArr.length; i++) {
 					String mainValue = secItemArr[i];
-					secItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+					// secItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+					secItemArr[i] = this.getWebsiteNameById(mainValue);
 				}
 			}
 			itemCnt++;
@@ -342,13 +344,15 @@ public class TotalCount extends RootAPI {
 				mainItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < mainItemArr.length; i++) {
 					String mainValue = mainItemArr[i];
-					mainItemArr[i] = this.getChannelNameById(this.tableName, mainValue);
+					// mainItemArr[i] = this.getChannelNameById(this.tableName, mainValue);
+					mainItemArr[i] = this.getChannelNameById(mainValue);
 				}
 			} else if (itemCnt == 1) {
 				secItemArr = paramValues_channel[0].split(PARAM_VALUES_SEPARATOR);
 				for (int i = 0; i < secItemArr.length; i++) {
 					String secValue = secItemArr[i];
-					secItemArr[i] = this.getChannelNameById(this.tableName, secValue);
+					// secItemArr[i] = this.getChannelNameById(this.tableName, secValue);
+					secItemArr[i] = this.getChannelNameById(secValue);
 				}
 			}
 			itemCnt++;

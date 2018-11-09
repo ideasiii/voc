@@ -21,8 +21,10 @@ public abstract class RootAPI {
 	public static final String API_KEY = "api_key";
 	protected static final String UPDATE_TIME = "update_time";
 	protected static final String PARAM_VALUES_SEPARATOR = ";";
-	private static final String TABLE_PRODUCT_REPUTATION = "ibuzz_voc.product_reputation";
-	private static final String TABLE_BRAND_REPUTATION = "ibuzz_voc.brand_reputation";
+	protected static final String TABLE_PRODUCT_REPUTATION = "ibuzz_voc.product_reputation";
+	protected static final String TABLE_BRAND_REPUTATION = "ibuzz_voc.brand_reputation";
+	protected static final String TABLE_CHANNEL_LIST = "ibuzz_voc.channel_list";
+	protected static final String TABLE_WEBSITE_LIST = "ibuzz_voc.website_list";
 	private static final Map<String, String> PARAM_COLUMN_MAP = new HashMap<String, String>();
 	static {
 		PARAM_COLUMN_MAP.put("industry", "industry");
@@ -94,19 +96,19 @@ public abstract class RootAPI {
 		return null;
 	}
 	
-	protected String getChannelNameById(String tableName, String channelId) {
+	protected String getChannelNameById(String id) {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String channelName = null;
-		String selectSql = "SELECT channel_name FROM "+ tableName +" WHERE channel_id = ? LIMIT 1";
+		String selectSql = "SELECT name FROM "+ TABLE_CHANNEL_LIST +" WHERE id = ? LIMIT 1";
 		try {
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSql);
-			preparedStatement.setString(1, channelId);
+			preparedStatement.setString(1, id);
 			rs = preparedStatement.executeQuery();
 			if (rs.next()) {
-				channelName = rs.getString("channel_name");
+				channelName = rs.getString("name");
 			}
 			return channelName;
 		} catch (Exception e) {
@@ -117,20 +119,20 @@ public abstract class RootAPI {
 		}
 		return null;
 	}
-	
-	protected String getWebsiteNameById(String tableName, String websiteId) {
+
+	protected String getWebsiteNameById(String id) {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
 		String websiteName = null;
-		String selectSql = "SELECT website_name FROM " + tableName + " WHERE website_id = ? LIMIT 1";
+		String selectSql = "SELECT name FROM " + TABLE_WEBSITE_LIST + " WHERE id = ? LIMIT 1";
 		try {
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSql);
-			preparedStatement.setString(1, websiteId);
+			preparedStatement.setString(1, id);
 			rs = preparedStatement.executeQuery();
 			if (rs.next()) {
-				websiteName = rs.getString("website_name");
+				websiteName = rs.getString("name");
 			}
 			return websiteName;
 		} catch (Exception e) {
@@ -141,5 +143,53 @@ public abstract class RootAPI {
 		}
 		return null;
 	}
+	
+//	protected String getChannelNameById(String tableName, String channelId) {
+//		Connection conn = null;
+//		PreparedStatement preparedStatement = null;
+//		ResultSet rs = null;
+//		String channelName = null;
+//		String selectSql = "SELECT channel_name FROM "+ tableName +" WHERE channel_id = ? LIMIT 1";
+//		try {
+//			conn = DBUtil.getConn();
+//			preparedStatement = conn.prepareStatement(selectSql);
+//			preparedStatement.setString(1, channelId);
+//			rs = preparedStatement.executeQuery();
+//			if (rs.next()) {
+//				channelName = rs.getString("channel_name");
+//			}
+//			return channelName;
+//		} catch (Exception e) {
+//			LOGGER.error(e.getMessage());
+//			e.printStackTrace();
+//		} finally {
+//			DBUtil.close(rs, preparedStatement, conn);
+//		}
+//		return null;
+//	}
+
+//	protected String getWebsiteNameById(String tableName, String websiteId) {
+//		Connection conn = null;
+//		PreparedStatement preparedStatement = null;
+//		ResultSet rs = null;
+//		String websiteName = null;
+//		String selectSql = "SELECT website_name FROM " + tableName + " WHERE website_id = ? LIMIT 1";
+//		try {
+//			conn = DBUtil.getConn();
+//			preparedStatement = conn.prepareStatement(selectSql);
+//			preparedStatement.setString(1, websiteId);
+//			rs = preparedStatement.executeQuery();
+//			if (rs.next()) {
+//				websiteName = rs.getString("website_name");
+//			}
+//			return websiteName;
+//		} catch (Exception e) {
+//			LOGGER.error(e.getMessage());
+//			e.printStackTrace();
+//		} finally {
+//			DBUtil.close(rs, preparedStatement, conn);
+//		}
+//		return null;
+//	}
 
 }
