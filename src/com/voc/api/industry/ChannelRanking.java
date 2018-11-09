@@ -118,7 +118,9 @@ public class ChannelRanking extends RootAPI {
 				websiteName = rs.getString("website_name");
 				channelName = rs.getString("channel_name");
 			}
-			return websiteName + "_" + channelName;
+			if (websiteName != null && channelName != null) {
+				return websiteName + "_" + channelName;
+			}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
