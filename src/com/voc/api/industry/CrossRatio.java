@@ -27,16 +27,16 @@ import com.voc.common.DBUtil;
  * - /industry/cross-ratio.jsp
  * 
  * Params:
- * query	*main-filter	string	主要分析項目
- * query	*main-value		string	主要欲分析項目值
- * query	*sec-filter		string	次要分析項目
- * query	*sec-value		string	次要欲分析項目值
+ * query	*main_filter	string	主要分析項目
+ * query	*main_value		string	主要欲分析項目值
+ * query	*sec_filter		string	次要分析項目
+ * query	*sec_value		string	次要欲分析項目值
  * query	*start_date		string	欲查詢起始日期
  * query	*end_date		string	欲查詢結束日期
  * 
  * 
  * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand IN ('BENZ', 'BMW') AND website_id IN('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
- * http://localhost:8080/voc/industry/cross-ratio.jsp?main-filter=brand&main-value=BENZ;BMW&sec-filter=website&sec-value=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
+ * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=BENZ;BMW&sec_filter=website&sec_value=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
  * 
  * 
  */
@@ -82,10 +82,10 @@ public class CrossRatio extends RootAPI {
 	}
 	
 	private void requestAndTrimParams(HttpServletRequest request) {
-		this.mainFilter = StringUtils.trimToEmpty(request.getParameter("main-filter"));
-		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main-value"));
-		this.secFilter = StringUtils.trimToEmpty(request.getParameter("sec-filter"));
-		this.secValue = StringUtils.trimToEmpty(request.getParameter("sec-value"));
+		this.mainFilter = StringUtils.trimToEmpty(request.getParameter("main_filter"));
+		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main_value"));
+		this.secFilter = StringUtils.trimToEmpty(request.getParameter("sec_filter"));
+		this.secValue = StringUtils.trimToEmpty(request.getParameter("sec_value"));
 		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
 		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 		
