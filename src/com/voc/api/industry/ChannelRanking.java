@@ -87,7 +87,6 @@ public class ChannelRanking extends RootAPI {
 
 	private void requestAndTrimParams(HttpServletRequest request) {
 		this.parameterMap = request.getParameterMap();
-		
 		this.brand = StringUtils.trimToEmpty(request.getParameter("brand"));
 		this.channel = StringUtils.trimToEmpty(request.getParameter("channel"));
 		this.start_date = StringUtils.trimToEmpty(request.getParameter("start_date"));
@@ -184,7 +183,7 @@ public class ChannelRanking extends RootAPI {
 
 			// TODO: need to think:...
 			int cnt = this.limit - channelList.size();
-			while (cnt > 0) {
+			if (cnt > 0) {
 				for (Map.Entry<String, String> entry : this.hash_channelId_websiteChannelName.entrySet()) {
 					String channelId = entry.getKey();
 					String websiteChannelName = entry.getValue();
@@ -203,7 +202,6 @@ public class ChannelRanking extends RootAPI {
 						}
 					}
 				}
-				break;
 			}
 			
 			LOGGER.debug("channelList_after=" + GSON.toJson(channelList));
