@@ -8,7 +8,7 @@
 <% 
 	request.setCharacterEncoding("UTF-8");
 	
-	BrandRanking brandRanking = new BrandRanking();
+	RootAPI brandRanking = new BrandRanking();
 	String jsonStr = brandRanking.processRequest(request);
 	out.print(jsonStr);
 %>

@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.catalina.util.ParameterMap;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -25,9 +26,11 @@ import com.voc.enums.industry.EnumTrend;
 
 public class Trend extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Trend.class);
+	Map<String, String[]> orderedParameterMap = new ParameterMap<>();
 	private String selectUpdateTimeSQL;
 	private List<String> itemNameList = new ArrayList<>();
 	private String strTableName;
+	private String strInterval = Common.INTERVAL_DAILY;
 	
 	@Override
 	public String processRequest(HttpServletRequest request) {
@@ -41,33 +44,22 @@ public class Trend extends RootAPI {
 
 		final String strStartDate = request.getParameter("start_date");
 		final String strEndDate = request.getParameter("end_date");
-		String strInterval;
-
-		if (!Common.isValidDate(strStartDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.").toString();
-		}
-
-		if (!Common.isValidDate(strEndDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.").toString();
-		}
-
-		if (!Common.isValidStartDate(strStartDate, strEndDate, "yyyy-MM-dd")) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.").toString();
-		}
-
-		if (!hasInterval(paramMap)) {
-			strInterval = Common.INTERVAL_DAILY;
-		} else {
+	
+		if (hasInterval(paramMap)) {
 			strInterval = request.getParameter("interval");
 			if (!Common.isValidInterval(strInterval)) {
 				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid interval.").toString();
 			}
 		}
-
-		paramMap = this.adjustParameterOrder(paramMap);
+		
+		JSONObject errorResponse = adjustParameterOrder(paramMap);
+		if (null != errorResponse) {
+			return errorResponse.toString();
+		}
+		
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		boolean querySuccess = query(paramMap, strInterval, strStartDate, strEndDate, resArray);
+		boolean querySuccess = query(orderedParameterMap, strStartDate, strEndDate, resArray);
 		LOGGER.info("resArray: "+ resArray );
 		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
 		
@@ -83,7 +75,26 @@ public class Trend extends RootAPI {
 		return jobj.toString();
 	}
 
-	private boolean query(Map<String, String[]> paramMap, final String strInterval, final String strStartDate, final String strEndDate,
+	private JSONObject dateValidate(Map<String, String[]> paramMap) {
+		String sd = paramMap.get("start_date")[0];
+		String ed = paramMap.get("end_date")[0];
+		
+		if (!Common.isValidDate(sd, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
+		}
+
+		if (!Common.isValidDate(ed, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid end_date.");
+		}
+
+		if (!Common.isValidStartDate(sd, ed, "yyyy-MM-dd")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
+		}
+		return null;
+	}
+	
+	
+	private boolean query(Map<String, String[]> paramMap, final String strStartDate, final String strEndDate,
 			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
@@ -92,15 +103,15 @@ public class Trend extends RootAPI {
 				
 		StringBuffer querySQL = new StringBuffer();
 		try {
-			querySQL.append(genSelectClause(paramMap, strInterval));
-			querySQL.append(genWhereClause(paramMap, strInterval));
-			querySQL.append(genGroupByClause(paramMap, strInterval));
+			querySQL.append(genSelectClause(orderedParameterMap));
+			querySQL.append(genWhereClause(orderedParameterMap));
+			querySQL.append(genGroupByClause(orderedParameterMap));
 			
 			LOGGER.info("querySQL: " + querySQL.toString());
 
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(querySQL.toString());
-			setWhereClauseValues(pst, paramMap);
+			setWhereClauseValues(pst, orderedParameterMap);
 
 			//get update_time SQL
 			String strPstSQL = pst.toString();
@@ -114,7 +125,7 @@ public class Trend extends RootAPI {
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
 				int i = 0;
-				for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
+				for (Map.Entry<String, String[]> entry : orderedParameterMap.entrySet()) {
 					String paramName = entry.getKey();			
 					String columnName = getColumnName(paramName);
 					if ("website_id".equals(columnName)) {
@@ -182,11 +193,8 @@ public class Trend extends RootAPI {
 		return false;
 	}
 
-	private String genSelectClause(Map<String, String[]> paramMap, String strInterval) {
+	private String genSelectClause(Map<String, String[]> paramMap) {
 
-		if (hasInterval(paramMap)) {
-			paramMap.remove("interval");
-		}
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT ");
 		int i = 0;
@@ -218,10 +226,8 @@ public class Trend extends RootAPI {
 		return sql.toString();
 	}
 
-	private String genWhereClause(Map<String, String[]> paramMap, String strInterval) {
-		if (hasInterval(paramMap)) {
-			paramMap.remove("interval");
-		}
+	private String genWhereClause(Map<String, String[]> paramMap) {
+
 		StringBuffer sql = new StringBuffer();
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
@@ -256,7 +262,7 @@ public class Trend extends RootAPI {
 		return sql.toString();
 	}
 	
-	private String genGroupByClause(Map<String, String[]> paramMap, final String strInterval) {
+	private String genGroupByClause(Map<String, String[]> paramMap) {
 		StringBuffer sql = new StringBuffer();
 		StringBuffer groupByColumns = new StringBuffer();
 		int i = 0;
@@ -282,9 +288,7 @@ public class Trend extends RootAPI {
 	}
 
 	private void setWhereClauseValues(PreparedStatement pst, Map<String, String[]> paramMap) throws Exception {
-		if (hasInterval(paramMap)) {
-			paramMap.remove("interval");
-		}
+
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
 			String paramName = entry.getKey();
@@ -319,8 +323,15 @@ public class Trend extends RootAPI {
 		return paramMap.containsKey("interval");
 	}
 	
-	private Map<String, String[]> adjustParameterOrder(Map<String, String[]> parameterMap) {
-		Map<String, String[]> orderedParameterMap = new ParameterMap<>();
+	private JSONObject adjustParameterOrder(Map<String, String[]> parameterMap) {
+		JSONObject errorResponse = dateValidate(parameterMap);
+		if (null != errorResponse) {
+			return errorResponse;
+		}
+
+	//	if (hasInterval(parameterMap)) {
+	//		parameterMap.remove("interval");
+	//	}
 		
 		String[] paramValues_industry = null;
 		String[] paramValues_brand = null;
@@ -336,10 +347,15 @@ public class Trend extends RootAPI {
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
 			if (API_KEY.equals(paramName)) continue;
-			String[] values = entry.getValue();
 			
 			EnumTrend enumTrend = EnumTrend.getEnum(paramName);
-			if (enumTrend == null) continue; 
+			if (null == enumTrend)  continue;
+			
+			String[] values = entry.getValue();
+			if (StringUtils.isBlank(values[0])) {
+				continue;
+			}
+			
 			switch (enumTrend) {
 			case PARAM_COLUMN_INDUSTRY:
 				paramValues_industry = values;
@@ -484,6 +500,10 @@ public class Trend extends RootAPI {
 			itemCnt++;
 		}
 		
+		if (0 == itemCnt) {
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+		}
+		
 		if (mainItemArr != null) {
 			for (String mainItem : mainItemArr) {
 				if (secItemArr != null) {
@@ -504,7 +524,7 @@ public class Trend extends RootAPI {
 			String paramName = EnumTrend.PARAM_COLUMN_END_DATE.getParamName();
 			orderedParameterMap.put(paramName, paramValues_endDate);
 		}
-		return orderedParameterMap;
+		return null;
 	}
 
 }

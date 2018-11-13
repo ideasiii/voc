@@ -10,7 +10,7 @@
 	// JSONObject jobj = processRequest(request);
 	// out.print(jobj.toString());
 	
-	Trend trend = new Trend();
+	RootAPI trend = new Trend();
 	String jsonStr = trend.processRequest(request);
 	out.print(jsonStr);
 %>
