@@ -25,6 +25,7 @@ public abstract class RootAPI {
 	protected static final String TABLE_BRAND_REPUTATION = "ibuzz_voc.brand_reputation";
 	protected static final String TABLE_CHANNEL_LIST = "ibuzz_voc.channel_list";
 	protected static final String TABLE_WEBSITE_LIST = "ibuzz_voc.website_list";
+	protected static final String TABLE_POST_LIST = "ibuzz_voc.post_list";
 	private static final Map<String, String> PARAM_COLUMN_MAP = new HashMap<String, String>();
 	static {
 		PARAM_COLUMN_MAP.put("industry", "industry");
