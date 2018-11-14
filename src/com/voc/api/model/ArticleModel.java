@@ -27,7 +27,7 @@ public class ArticleModel {
 		private String author;
 		private String date; // yyyy-MM-dd HH:mm:ss (EX: 2018-06-10 19:49:47)
 		private String channel;
-		private int comment_count;
+		private Integer comment_count;
 
 		public String getPost_id() {
 			return post_id;
@@ -71,10 +71,10 @@ public class ArticleModel {
 		public void setChannel(String channel) {
 			this.channel = channel;
 		}
-		public int getComment_count() {
+		public Integer getComment_count() {
 			return comment_count;
 		}
-		public void setComment_count(int comment_count) {
+		public void setComment_count(Integer comment_count) {
 			this.comment_count = comment_count;
 		}
 	}
