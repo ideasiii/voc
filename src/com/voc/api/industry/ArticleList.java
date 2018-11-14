@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.voc.api.RootAPI;
 import com.voc.api.model.ArticleListModel;
+import com.voc.api.model.ArticleModel;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
@@ -89,7 +90,7 @@ public class ArticleList extends RootAPI {
 			return errorResponse.toString();
 		}
 		List<String> postIdList = this.queryPostIdList();
-		List<ArticleListModel.Article> articleList = this.queryArticleList(postIdList);
+		List<ArticleModel.Article> articleList = this.queryArticleList(postIdList);
 		if (articleList != null) {
 			ArticleListModel articleListModel = new ArticleListModel();
 			articleListModel.setSuccess(true);
@@ -104,8 +105,8 @@ public class ArticleList extends RootAPI {
 		return ApiResponse.unknownError().toString();
 	}
 	
-	private List<ArticleListModel.Article> queryArticleList(List<String> postIdList) {
-		List<ArticleListModel.Article> articleList = new ArrayList<>();
+	private List<ArticleModel.Article> queryArticleList(List<String> postIdList) {
+		List<ArticleModel.Article> articleList = new ArrayList<>();
 		if (postIdList == null || postIdList.size() == 0) {
 			return articleList;
 		}
@@ -145,7 +146,7 @@ public class ArticleList extends RootAPI {
 
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
-				ArticleListModel.Article article = new ArticleListModel().new Article();
+				ArticleModel.Article article = new ArticleModel().new Article();
 				article.setPost_id(rs.getString("id"));
 				article.setUrl(rs.getString("url"));
 				article.setTitle(rs.getString("title"));
