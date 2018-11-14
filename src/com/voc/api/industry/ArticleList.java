@@ -57,6 +57,12 @@ import com.voc.common.DBUtil;
  *  ORDER BY date DESC
  * 	LIMIT 0, 10;
  * 
+ * Note:
+ * LIMIT a, b
+ * a = (page_num - 1) * page_size
+ * b = page_size
+ * 
+ * 
  * EX: API URL:
  * http://localhost:8080/voc/industry/article-list.jsp?brand=BENZ&series=掀背車&product=B180&website=5b29c821a85d0a7df5c3ff22;5b29c824a85d0a7df5c40080&channel=5ad450dea85d0a2afac34a9b;5ad450dea85d0a2afac34aa2&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
  *  
@@ -138,7 +144,7 @@ public class ArticleList extends RootAPI {
 			}
 			
 			int pageNumIndex = i + 1;
-			preparedStatement.setInt(pageNumIndex, (this.pageNum - 1));
+			preparedStatement.setInt(pageNumIndex, ((this.pageNum - 1) * this.pageSize));
 			i++;
 			
 			int pageSizeIndex = i + 1;
