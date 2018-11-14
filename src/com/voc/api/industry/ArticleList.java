@@ -356,6 +356,10 @@ public class ArticleList extends RootAPI {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
 		
+		if (StringUtils.isBlank(this.startDate) || StringUtils.isBlank(this.endDate)) {
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+		}
+		
 		if (!Common.isValidDate(this.startDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
 		}
