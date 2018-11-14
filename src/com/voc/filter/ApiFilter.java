@@ -40,26 +40,30 @@ public class ApiFilter implements Filter {
 		// LOGGER.debug(" ******* Before doFilter ******* ");
 		servletResponse.setContentType("application/json");
 		servletResponse.setCharacterEncoding("UTF-8");
-		
-		if (servletRequest instanceof HttpServletRequest) {
-			String requestURL = ((HttpServletRequest) servletRequest).getRequestURL().toString();
-			String queryString = ((HttpServletRequest) servletRequest).getQueryString();
-			queryString = URLDecoder.decode(StringUtils.trimToEmpty(queryString), "UTF-8");
-			LOGGER.info("doFilter:==>" + requestURL + "?" + queryString);
-		}
-		String remoteHost = servletRequest.getRemoteHost();
-		String remoteAddr = servletRequest.getRemoteAddr();
-		LOGGER.info("remoteHost=" + remoteHost + ", remoteAddr=" + remoteAddr);
-		
-		// Validate the token:
-		String token = servletRequest.getParameter(RootAPI.API_KEY);
-		if (!this.checkToken(token)) {
-			LOGGER.error("Invalide token=" + token);
-			PrintWriter out = servletResponse.getWriter();
-			String jsonStr = ApiResponse.unauthorizedError().toString();
-			out.print(jsonStr);
-		} else {
-			filterChain.doFilter(servletRequest, servletResponse);
+		PrintWriter out = servletResponse.getWriter();
+		try {
+			if (servletRequest instanceof HttpServletRequest) {
+				String requestURL = ((HttpServletRequest) servletRequest).getRequestURL().toString();
+				String queryString = ((HttpServletRequest) servletRequest).getQueryString();
+				queryString = URLDecoder.decode(StringUtils.trimToEmpty(queryString), "UTF-8");
+				LOGGER.info("doFilter:==>" + requestURL + "?" + queryString);
+			}
+			String remoteHost = servletRequest.getRemoteHost();
+			String remoteAddr = servletRequest.getRemoteAddr();
+			LOGGER.info("remoteHost=" + remoteHost + ", remoteAddr=" + remoteAddr);
+			
+			// Validate the token:
+			String token = servletRequest.getParameter(RootAPI.API_KEY);
+			if (!this.checkToken(token)) {
+				LOGGER.error("Invalide token=" + token);
+				String jsonStr = ApiResponse.unauthorizedError().toString();
+				out.print(jsonStr);
+			} else {
+				filterChain.doFilter(servletRequest, servletResponse);
+			}
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			out.print(ApiResponse.unknownError().toString());
 		}
 		// LOGGER.debug(" ******* After doFilter ******* ");
 	}
