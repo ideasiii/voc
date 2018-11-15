@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
+import com.voc.common.Common;
 import com.voc.common.DBUtil;
 
 public class Comment extends RootAPI {
@@ -38,11 +39,15 @@ public class Comment extends RootAPI {
 			return errorResponse.toString();
 		}
 		
-		JSONArray resArray = query();
+		int nTotal = queryCommentCount();
+		if (0 > nTotal) {
+			return ApiResponse.unknownError().toString(); 
+		}
 		
+		JSONArray resArray = queryData();
 		if (null != resArray) {
 			JSONObject jobj = ApiResponse.successTemplate();
-			jobj.put("total", resArray.length());
+			jobj.put("total", nTotal);
 			jobj.put("page_num", nPageNum);
 			jobj.put("page_size", nPageSize);
 			jobj.put("result", resArray);
@@ -92,7 +97,7 @@ public class Comment extends RootAPI {
 		return null;
 	}
 	
-	private JSONArray query() {
+	private JSONArray queryData() {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
@@ -113,7 +118,6 @@ public class Comment extends RootAPI {
 				jobj.put("content", rs.getString("content"));
 				jobj.put("author", rs.getString("author"));
 				jobj.put("date", rs.getString("date"));
-				LOGGER.info("date: " +  rs.getTimestamp("date"));
 				out.put(jobj);
 			}
 			return out;
@@ -126,6 +130,37 @@ public class Comment extends RootAPI {
 		}
 		return null;
 	}
+	
+	private int queryCommentCount() {
+		Connection conn = null;
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		String sql = "SELECT COUNT(id) AS total FROM " + strTableName + " WHERE post_id = ?";
+		
+		try {
+			conn = DBUtil.getConn();
+			pst = conn.prepareStatement(sql);
+			int idx = 1;
+			pst.setObject(idx++, strPostId);;
+	
+			String strPstSQL = pst.toString();
+			LOGGER.info("strPstSQL: " + strPstSQL);
+			
+			rs = pst.executeQuery();
+			rs.next();
+			int total = rs.getInt("total");
+			
+			return total;
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, pst, conn);
+		}
+		return Common.ERR_EXCEPTION;
+	}
+	
+	
 	
 	private String genSelecttSQL() {
 		StringBuffer sql = new StringBuffer();
