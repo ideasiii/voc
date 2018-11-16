@@ -48,7 +48,7 @@ import com.voc.common.DBUtil;
  * 	AND website_id in ('5b29c821a85d0a7df5c3ff22', '5b29c824a85d0a7df5c40080')
  * 	AND channel_id in ('5ad450dea85d0a2afac34a9b', '5ad450dea85d0a2afac34aa2')
  * 	AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-06-30'
- *  ORDER BY date DESC;
+ *  -- ORDER BY date DESC;
  *  
  * Step_2: 取得文章列表(post_list)資訊(分頁): 
  * 	SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, channel_name, comment_count 
@@ -240,7 +240,7 @@ public class ArticleList extends RootAPI {
 		}
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
-		selectSQL.append("ORDER BY date DESC");
+		// selectSQL.append("ORDER BY date DESC");
 		return selectSQL.toString();
 	}
 	
