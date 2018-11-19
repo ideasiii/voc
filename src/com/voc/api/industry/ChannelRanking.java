@@ -181,29 +181,40 @@ public class ChannelRanking extends RootAPI {
 			}
 			LOGGER.debug("channelList_before=" + GSON.toJson(channelList));
 
-			// TODO: need to think:...
-			int cnt = this.limit - channelList.size();
-			if (cnt > 0) {
-				for (Map.Entry<String, String> entry : this.hash_channelId_websiteChannelName.entrySet()) {
-					String channelId = entry.getKey();
-					String websiteChannelName = entry.getValue();
-					if (!channelIdList.contains(channelId)) {
-						if (cnt > 0) {
-							ChannelRankingModel.Channel channel = new ChannelRankingModel().new Channel();
-							channel.setChannel_id(channelId);
-							channel.setChannel(websiteChannelName);
-							channel.setCount(0);
-							if (this.sort.equalsIgnoreCase(Common.SORT_DESC)) {
-								channelList.add(channel);
-							} else if (this.sort.equalsIgnoreCase(Common.SORT_ASC)) {
-								channelList.add(0, channel);
-							}
-							cnt--;
+			// TODO:==>TBD: need to think and test: ... 
+			int desc_remainingCnt = this.limit - channelList.size();
+			int asc_recordCnt = 0;
+			for (Map.Entry<String, String> entry : this.hash_channelId_websiteChannelName.entrySet()) {
+				String channelId = entry.getKey();
+				String websiteChannelName = entry.getValue();
+				if (!channelIdList.contains(channelId)) {
+					ChannelRankingModel.Channel channel = new ChannelRankingModel().new Channel();
+					channel.setChannel_id(channelId);
+					channel.setChannel(websiteChannelName);
+					channel.setCount(0);
+					if (this.sort.equalsIgnoreCase(Common.SORT_DESC)) {
+						if (desc_remainingCnt > 0) {
+							channelList.add(channel);
+							desc_remainingCnt--;
+						}
+					} else if (this.sort.equalsIgnoreCase(Common.SORT_ASC)) {
+						if ((this.limit - asc_recordCnt) > 0) {
+							channelList.add(0, channel);
+							asc_recordCnt++;
 						}
 					}
 				}
 			}
 			
+			if (this.sort.equalsIgnoreCase(Common.SORT_ASC)) {
+				int listSize = channelList.size();
+				int recordSize = this.limit;
+				if (this.limit > listSize) {
+					recordSize = listSize;
+				}
+				channelList = channelList.subList(0, recordSize);
+			}
+
 			LOGGER.debug("channelList_after=" + GSON.toJson(channelList));
 			return channelList;
 		} catch (Exception e) {
