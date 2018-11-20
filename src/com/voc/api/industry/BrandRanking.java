@@ -143,26 +143,38 @@ public class BrandRanking extends RootAPI {
 				LOGGER.info("brandList: " + brandList);
 			}
 
-			// if ()
-			
-			int nCount = nLimit - brandList.size();
-			if (0 < nCount) {
-				for (int i = 0; i < arrBrand.length; i++) {
-					String inputBrandItem = arrBrand[i];
-					Integer outputCount = hash_brandMap.get(inputBrandItem);
-					if (null == outputCount) {
-						JSONObject jobj = new JSONObject();
-						jobj.put("brand", inputBrandItem);
-						jobj.put("count", 0);
+			int desc_zeroCount = nLimit - brandList.size();
+			int asc_zeroCount = 0;
+			for (int i = 0; i < arrBrand.length; i++) {
+				String inputBrandItem = arrBrand[i];
+				Integer outputCount = hash_brandMap.get(inputBrandItem);
+				if (null == outputCount) {
+					JSONObject jobj = new JSONObject();
+					jobj.put("brand", inputBrandItem);
+					jobj.put("count", 0);
 
-						if (strSort.equalsIgnoreCase(Common.SORT_DESC)) {
+					if (strSort.equalsIgnoreCase(Common.SORT_DESC)) {
+						if (0 < desc_zeroCount) {
 							brandList.add(jobj);
-						} else if (strSort.equalsIgnoreCase(Common.SORT_ASC)) {
+							desc_zeroCount--;
+						}
+					} else if (strSort.equalsIgnoreCase(Common.SORT_ASC)) {
+						if (0 < (nLimit - asc_zeroCount)) {
 							brandList.add(0, jobj);
+							asc_zeroCount++;
 						}
 					}
 				}
 			}
+			if (strSort.equalsIgnoreCase(Common.SORT_ASC)) {
+				int listSize = brandList.size();
+				int recordSize = nLimit;
+				if (nLimit > listSize) {
+					recordSize = listSize;
+				}
+				brandList = brandList.subList(0, recordSize);
+			}
+
 			JSONArray out = new JSONArray(brandList);
 			return out;
 
