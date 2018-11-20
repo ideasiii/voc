@@ -51,7 +51,7 @@ import com.voc.common.DBUtil;
  *  -- ORDER BY date DESC;
  *  
  * Step_2: 取得文章列表(post_list)資訊(分頁): 
- * 	SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, channel_name, comment_count 
+ * 	SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count 
  * 	FROM ibuzz_voc.post_list 
  * 	WHERE id in ('5b1f7e3aa85d0a0145294293','5b1f7e3aa85d0a0145294294') 
  *  ORDER BY date DESC
@@ -123,7 +123,7 @@ public class ArticleList extends RootAPI {
 		ResultSet rs = null;
 		try {
 			StringBuffer queryArticleSQL = new StringBuffer();
-			queryArticleSQL.append("SELECT id, url, title, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, channel_name, comment_count ");
+			queryArticleSQL.append("SELECT id, url, title, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count ");
 			queryArticleSQL.append("FROM ").append(TABLE_POST_LIST).append(" ");
 			queryArticleSQL.append("WHERE id in (");
 			for(int i = 0 ; i < postIdList.size(); i++ ) {
@@ -161,7 +161,7 @@ public class ArticleList extends RootAPI {
 				article.setTitle(rs.getString("title"));
 				article.setAuthor(rs.getString("author"));
 				article.setDate(rs.getString("date"));
-				article.setChannel(rs.getString("channel_name"));
+				article.setChannel(rs.getString("website_name") + "_" + rs.getString("channel_name"));
 				article.setComment_count(rs.getInt("comment_count"));
 				articleList.add(article);
 			}
