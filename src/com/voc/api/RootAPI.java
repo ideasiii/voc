@@ -34,7 +34,7 @@ public abstract class RootAPI {
 		PARAM_COLUMN_MAP.put("series", "series");
 		PARAM_COLUMN_MAP.put("product", "product");
 		PARAM_COLUMN_MAP.put("source", "source");
-		PARAM_COLUMN_MAP.put("website", "website_id");
+		PARAM_COLUMN_MAP.put("website", "website_name");
 		PARAM_COLUMN_MAP.put("channel", "channel_id");
 		PARAM_COLUMN_MAP.put("features", "features");
 		PARAM_COLUMN_MAP.put("start_date", "date");

@@ -51,6 +51,15 @@ import com.voc.enums.industry.EnumTotalCount;
  * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
  * http://localhost:8080/voc/industry/total-count.jsp?website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&brand=BENZ;BMW&start_date=2018-05-01&end_date=2018-05-02
  * 
+ * Requirement Change: on 2018/12/20(一):
+ * 1. 新增 limit 參數:  Default: 10
+ * 2. 修改 website 參數，由原本吃 website ID 改為吃 website name
+ * 
+ * EX:
+ * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation where brand in ('BENZ', 'BMW') and website_name in('PTT', 'Mobile01') and DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id ORDER BY count DESC LIMIT 5;
+ * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-02&limit=5
+ * http://localhost:8080/voc/industry/total-count.jsp?website=PTT;Mobile01&brand=BENZ;BMW&start_date=2018-05-01&end_date=2018-05-02
+ * 
  * Note: 呼叫API時所下的參數若包含 product 或 series, 就使用 ibuzz_voc.product_reputation (產品表格), 否則就使用 ibuzz_voc.brand_reputation (品牌表格)
  *       ==>See RootAPI.java
  * 
@@ -61,12 +70,11 @@ public class TotalCount extends RootAPI {
 	private String selectUpdateTimeSQL;
 	private List<String> itemNameList = new ArrayList<>();
 	private String tableName;
+	private int limit = 10; // Default: 10
 	
 	@Override
 	public String processRequest(HttpServletRequest request) {
-		Map<String, String[]> parameterMap = request.getParameterMap();
-		this.tableName = this.getTableName(parameterMap);
-		JSONObject errorResponse = this.validateAndSetOrderedParameterMap(parameterMap);
+		JSONObject errorResponse = this.validateAndSetOrderedParameterMap(request);
 		if (errorResponse != null) {
 			return errorResponse.toString();
 		}
@@ -94,6 +102,7 @@ public class TotalCount extends RootAPI {
 			selectSQL.append(this.genSelectClause());
 			selectSQL.append(this.genWhereClause());
 			selectSQL.append(this.genGroupByOrderByClause());
+			selectSQL.append("LIMIT ? ");
 			// LOGGER.debug("selectSQL=" + selectSQL.toString());
 			
 			conn = DBUtil.getConn();
@@ -105,6 +114,7 @@ public class TotalCount extends RootAPI {
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			
+			JSONArray itemArray = new JSONArray();
 			Map<String, Integer> hash_itemName_count = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
@@ -113,9 +123,7 @@ public class TotalCount extends RootAPI {
 				for (Map.Entry<String, String[]> entry : this.orderedParameterMap.entrySet()) {
 					String paramName = entry.getKey();			
 					String columnName = this.getColumnName(paramName);
-					if ("website_id".equals(columnName)) {
-						columnName = "website_name";
-					} else if ("channel_id".equals(columnName)) {
+					if ("channel_id".equals(columnName)) {
 						columnName = "channel_name";
 					}
 					if (!"date".equals(columnName)) {
@@ -131,17 +139,29 @@ public class TotalCount extends RootAPI {
 				int count = rs.getInt("count");
 				LOGGER.debug("item=" + item.toString() + ", count=" + count);
 				hash_itemName_count.put(item.toString(), count);
+				
+				JSONObject itemObject = new JSONObject();
+				itemObject.put("item", item.toString());
+				itemObject.put("count", count);
+				itemArray.put(itemObject);
 			}
 			LOGGER.debug("hash_itemName_count=" + hash_itemName_count);
 			
-			JSONArray itemArray = new JSONArray();
-			for (String itemName: itemNameList) {
-				Integer count = hash_itemName_count.get(itemName);
-				if (count == null) count = 0;
-				JSONObject itemObject = new JSONObject();
-				itemObject.put("item", itemName);
-				itemObject.put("count", count);
-				itemArray.put(itemObject);
+
+			int desc_remainingCnt = this.limit - itemArray.length();
+			if (desc_remainingCnt > 0) {
+				for (String itemName: itemNameList) {
+					Integer count = hash_itemName_count.get(itemName);
+					if (count == null) {
+						if (desc_remainingCnt > 0) {
+							JSONObject itemObject = new JSONObject();
+							itemObject.put("item", itemName);
+							itemObject.put("count", 0);
+							itemArray.put(itemObject);
+							desc_remainingCnt--;
+						}
+					}
+				}
 			}
 			return itemArray;
 		} catch (Exception e) {
@@ -193,11 +213,13 @@ public class TotalCount extends RootAPI {
 		return null;
 	}
 	
-	private JSONObject validateAndSetOrderedParameterMap(Map<String, String[]> parameterMap) {
+	private JSONObject validateAndSetOrderedParameterMap(HttpServletRequest request) {
+		Map<String, String[]> parameterMap = request.getParameterMap();
 		JSONObject errorResponse = this.checkDateParameters(parameterMap);
 		if (errorResponse != null) {
 			return errorResponse;
 		}
+		this.tableName = this.getTableName(parameterMap);
 		
 		String[] paramValues_industry = null;
 		String[] paramValues_brand = null;
@@ -209,6 +231,15 @@ public class TotalCount extends RootAPI {
 		String[] paramValues_features = null;
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
+		
+		String limitStr = StringUtils.trimToEmpty(request.getParameter("limit"));
+		if (!StringUtils.isEmpty(limitStr)) {
+			try {
+				this.limit = Integer.parseInt(limitStr);
+			} catch (Exception e) {
+				LOGGER.error(e.getMessage());
+			}
+		}
 		
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
@@ -322,18 +353,18 @@ public class TotalCount extends RootAPI {
 			this.orderedParameterMap.put(paramName, paramValues_website);
 			if (itemCnt == 0) {
 				mainItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
-				for (int i = 0; i < mainItemArr.length; i++) {
-					String mainValue = mainItemArr[i];
-					// mainItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
-					mainItemArr[i] = this.getWebsiteNameById(mainValue);
-				}
+//				for (int i = 0; i < mainItemArr.length; i++) {
+//					String mainValue = mainItemArr[i];
+//					// mainItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+//					mainItemArr[i] = this.getWebsiteNameById(mainValue);
+//				}
 			} else if (itemCnt == 1) {
 				secItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
-				for (int i = 0; i < secItemArr.length; i++) {
-					String mainValue = secItemArr[i];
-					// secItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
-					secItemArr[i] = this.getWebsiteNameById(mainValue);
-				}
+//				for (int i = 0; i < secItemArr.length; i++) {
+//					String mainValue = secItemArr[i];
+//					// secItemArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+//					secItemArr[i] = this.getWebsiteNameById(mainValue);
+//				}
 			}
 			itemCnt++;
 		}
@@ -402,9 +433,7 @@ public class TotalCount extends RootAPI {
 			String paramName = entry.getKey();
 			if (this.isItemParamName(paramName)) {
 				String columnName = this.getColumnName(paramName);
-				if ("website_id".equals(columnName)) {
-					columnName = "website_name";
-				} else if ("channel_id".equals(columnName)) {
+				if ("channel_id".equals(columnName)) {
 					columnName = "channel_name";
 				}
 				if (i == 0) {
@@ -469,7 +498,7 @@ public class TotalCount extends RootAPI {
 			i++;
 		}
 		groupByOrderByClauseSB.append("GROUP BY ").append(columnsSB.toString()).append(" ");
-		groupByOrderByClauseSB.append("ORDER BY ").append(columnsSB.toString());
+		groupByOrderByClauseSB.append("ORDER BY count DESC ");
 		return groupByOrderByClauseSB.toString();
 	}
 
@@ -497,6 +526,8 @@ public class TotalCount extends RootAPI {
 				}
 			}
 		}
+		int parameterIndex = i + 1;
+		preparedStatement.setObject(parameterIndex, this.limit);
 	}
 
 }
