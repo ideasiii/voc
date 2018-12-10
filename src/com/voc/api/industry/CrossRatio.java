@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,10 +35,21 @@ import com.voc.common.DBUtil;
  * query	*sec_value		string	次要欲分析項目值
  * query	*start_date		string	欲查詢起始日期
  * query	*end_date		string	欲查詢結束日期
- * 
+ * query	 limit			string	顯示項目筆數	Default: 10 ==>注意: 這邊的limit筆數,是指 Main Item 的筆數。不是直接在SQL中,下limit喔!
+ * query	*api_key		string	MORE API token
  * 
  * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand IN ('BENZ', 'BMW') AND website_id IN('5b29c824a85d0a7df5c40080', '5b29c821a85d0a7df5c3ff22') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id;
  * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=BENZ;BMW&sec_filter=website&sec_value=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
+ * 
+ * Requirement Change: on 2018/12/20(一):
+ * 1. 新增 limit 參數:  Default: 10
+ * 2. 修改 website 參數，由原本吃 website ID 改為吃 website name
+ * 
+ * EX:
+ * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand IN ('BENZ', 'BMW') AND website_name IN('PTT', 'Mobile01') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id ORDER BY count DESC;
+ * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=BENZ;BMW&sec_filter=website&sec_value=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-02&limit=5
+ * 
+ * 
  * 
  * 
  */
@@ -48,6 +61,7 @@ public class CrossRatio extends RootAPI {
 	private String secValue = null;
 	private String startDate = null;
 	private String endDate = null;
+	private int limit = 10; // Default: 10
 	
 	private String[] mainValueArr = null;
 	private String[] secValueArr = null;
@@ -88,6 +102,15 @@ public class CrossRatio extends RootAPI {
 		this.secValue = StringUtils.trimToEmpty(request.getParameter("sec_value"));
 		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
 		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
+		
+		String limitStr = StringUtils.trimToEmpty(request.getParameter("limit"));
+		if (!StringUtils.isEmpty(limitStr)) {
+			try {
+				this.limit = Integer.parseInt(limitStr);
+			} catch (Exception e) {
+				LOGGER.error(e.getMessage());
+			}
+		}
 		
 		this.mainValue = this.trimValues(this.mainValue);
 		this.secValue = this.trimValues(this.secValue);
@@ -203,9 +226,12 @@ public class CrossRatio extends RootAPI {
 				JSONObject resultObj = new JSONObject();
 				resultObj.put("main_item", mainValue);
 				resultObj.put("data", secItemArr);
+				resultObj.put("totalCount", this.getTotalCount(secItemArr)); // for sort later
 				resultArray.put(resultObj);
 			}
-			return resultArray;
+			
+			JSONArray sortedResultArray = this.getSortedResultArray(resultArray, this.limit);
+			return sortedResultArray;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
@@ -213,6 +239,58 @@ public class CrossRatio extends RootAPI {
 			DBUtil.close(rs, preparedStatement, conn);
 		}
 		return null;
+	}
+	
+	private JSONArray getSortedResultArray(JSONArray resultArray, int limit) {
+		JSONArray sortedJsonArray = new JSONArray();
+		
+		// Step_1: parse your array in a list
+		List<JSONObject> jsonList = new ArrayList<JSONObject>();
+		for (int i = 0; i < resultArray.length(); i++) {
+		    jsonList.add(resultArray.getJSONObject(i));
+		}
+		
+		// Step_2: then use collection.sort to sort the newly created list
+		Collections.sort(jsonList, new Comparator<JSONObject>() {
+		    public int compare(JSONObject a, JSONObject b) {
+		    	Integer valA = 0;
+		    	Integer valB = 0;
+		        try {
+		            valA = (Integer) a.get("totalCount");
+		            valB = (Integer) b.get("totalCount");
+		        } 
+		        catch (Exception e) {
+		            e.printStackTrace();
+		        }
+		        return valA.compareTo(valB) * -1;
+		    }
+		});
+		
+		// Handle for limit: 
+		int listSize = jsonList.size();
+		int recordSize = limit;
+		if (limit > listSize) {
+			recordSize = listSize;
+		}
+		jsonList = jsonList.subList(0, recordSize);
+		
+		// Step_3: Insert the sorted values in your array
+		for (int i = 0; i < jsonList.size(); i++) {
+			JSONObject jsonObject = jsonList.get(i);
+			jsonObject.remove("totalCount"); // totalCount 不用顯示: after sorting, remove it.
+		    sortedJsonArray.put(jsonObject);
+		}
+		
+		return sortedJsonArray;
+	}
+	
+	private Integer getTotalCount(JSONArray secItemArr) {
+		Integer totalCount = 0;
+		for (int i = 0; i < secItemArr.length(); i++) {
+			JSONObject secItem = secItemArr.getJSONObject(i);
+			totalCount += secItem.getInt("count");
+		}
+		return totalCount;
 	}
 	
 	private void convertIdToName(String[] mainValueArr, String[] secValueArr) {
@@ -223,27 +301,27 @@ public class CrossRatio extends RootAPI {
 				mainValueArr[i] = this.getChannelNameById(mainValue);
 			}
 		}
-		if ("website".equals(this.mainFilter)) {
-			for (int i = 0; i < mainValueArr.length; i++) {
-				String mainValue = mainValueArr[i];
-				// mainValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
-				mainValueArr[i] = this.getWebsiteNameById(mainValue);
-			}
-		}
+//		if ("website".equals(this.mainFilter)) {
+//			for (int i = 0; i < mainValueArr.length; i++) {
+//				String mainValue = mainValueArr[i];
+//				// mainValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
+//				mainValueArr[i] = this.getWebsiteNameById(mainValue);
+//			}
+//		}
 		if ("channel".equals(this.secFilter)) {
 			for (int i = 0; i < secValueArr.length; i++) {
-				String mainValue = secValueArr[i];
+				String secValue = secValueArr[i];
 				// secValueArr[i] = this.getChannelNameById(this.tableName, mainValue);
-				secValueArr[i] = this.getChannelNameById(mainValue);
+				secValueArr[i] = this.getChannelNameById(secValue);
 			}
 		}
-		if ("website".equals(this.secFilter)) {
-			for (int i = 0; i < secValueArr.length; i++) {
-				String mainValue = secValueArr[i];
-				// secValueArr[i] = this.getWebsiteNameById(this.tableName, mainValue);
-				secValueArr[i] = this.getWebsiteNameById(mainValue);
-			}
-		}
+//		if ("website".equals(this.secFilter)) {
+//			for (int i = 0; i < secValueArr.length; i++) {
+//				String secValue = secValueArr[i];
+//				// secValueArr[i] = this.getWebsiteNameById(this.tableName, secValue);
+//				secValueArr[i] = this.getWebsiteNameById(secValue);
+//			}
+//		}
 	}
 
 	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {
@@ -255,9 +333,7 @@ public class CrossRatio extends RootAPI {
 			this.mainSelectCol = "channel_name";
 		}
 		this.secSelectCol = secFilterColumn;
-		if ("website_id".equals(secFilterColumn)) {
-			this.secSelectCol = "website_name";
-		} else if ("channel_id".equals(secFilterColumn)) {
+		if ("channel_id".equals(secFilterColumn)) {
 			this.secSelectCol = "channel_name";
 		}
 		selectSQL.append("SELECT ").append(this.mainSelectCol).append(", ").append(this.secSelectCol).append(", ").append("SUM(reputation) AS count ");
@@ -277,7 +353,7 @@ public class CrossRatio extends RootAPI {
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY ").append(mainFilterColumn).append(", ").append(secFilterColumn).append(" ");
-		selectSQL.append("ORDER BY ").append(mainFilterColumn).append(", ").append(secFilterColumn);
+		selectSQL.append("ORDER BY count DESC");
 		return selectSQL.toString();
 	}
 	
