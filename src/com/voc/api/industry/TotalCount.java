@@ -51,7 +51,7 @@ import com.voc.enums.industry.EnumTotalCount;
  * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&start_date=2018-05-01&end_date=2018-05-02
  * http://localhost:8080/voc/industry/total-count.jsp?website=5b29c824a85d0a7df5c40080;5b29c821a85d0a7df5c3ff22&brand=BENZ;BMW&start_date=2018-05-01&end_date=2018-05-02
  * 
- * Requirement Change: on 2018/12/20(一):
+ * Requirement Change: on 2018/12/10(一):
  * 1. 新增 limit 參數:  Default: 10
  * 2. 修改 website 參數，由原本吃 website ID 改為吃 website name
  * 
