@@ -66,16 +66,25 @@ import com.voc.common.DBUtil;
  * EX: API URL:
  * http://localhost:8080/voc/industry/article-list.jsp?brand=BENZ&series=掀背車&product=B180&website=5b29c821a85d0a7df5c3ff22;5b29c824a85d0a7df5c40080&channel=5ad450dea85d0a2afac34a9b;5ad450dea85d0a2afac34aa2&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
  *  
+ *  
+ * Requirement Change: on 2018/12/11(二): 
+ * 1.修改 website 參數，由原本吃 website ID 改為吃 website name: 
+ * 2.#TODO-2: ArticleList.java: 前面三個參數值也要能接受多個值: 
+ *  
+ * EX: API URL:
+ * http://localhost:8080/voc/industry/article-list.jsp?brand=BENZ&series=掀背車&product=B180&website=Mobile01;PTT&channel=5ad450dea85d0a2afac34a9b;5ad450dea85d0a2afac34aa2&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
+ * http://localhost:8080/voc/industry/article-list.jsp?brand=BENZ;BMW&series=掀背車&product=B180&website=Mobile01;PTT&channel=5ad450dea85d0a2afac34a9b;5ad450dea85d0a2afac34aa2&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
+ *  
  */
 public class ArticleList extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleList.class);
 	private static final Gson GSON = new Gson();
 	private Map<String, String[]> parameterMap;
-	private String brand;   // 單個參數值
-	private String series;  // 單個參數值
-	private String product; // 單個參數值
+	private String brand;   // 單個參數值 --> 改成: 多個參數值
+	private String series;  // 單個參數值 --> 改成: 多個參數值
+	private String product; // 單個參數值 --> 改成: 多個參數值
 	private String source;  // 多個參數值
-	private String website; // 多個參數值 (website id)
+	private String website; // 多個參數值 (website id --> 改成website_name)
 	private String channel; // 多個參數值 (channel id)
 	private String features;
 	private String startDate; // start_date
@@ -84,8 +93,12 @@ public class ArticleList extends RootAPI {
 	private int pageSize = 10; // page_size: 筆數 Default: 10
 
 	// 多個參數值
+	private String[] brandValueArr;
+	private String[] seriesValueArr;
+	private String[] productValueArr;
+	
 	private String[] sourceValueArr;
-	private String[] websiteIdValueArr;
+	private String[] websiteNameValueArr;
 	private String[] channelIdValueArr;
 	
 	private String tableName; // brand_reputation OR product_reputation
@@ -181,21 +194,36 @@ public class ArticleList extends RootAPI {
 		selectSQL.append("SELECT id AS post_id FROM ").append(this.tableName);
 		selectSQL.append(" WHERE ");
 		if (!StringUtils.isEmpty(brand)) {
-			selectSQL.append("brand = ? ");
+			selectSQL.append("brand IN (");
+			for (int i = 0; i < brandValueArr.length; i++) {
+				if (i == 0) selectSQL.append("?");
+				else selectSQL.append(",?");
+			}
+			selectSQL.append(") ");
 			conditionCnt++;
 		}
 		if (!StringUtils.isEmpty(series)) {
 			if (conditionCnt > 0) {
 				selectSQL.append("AND ");
 			}
-			selectSQL.append("series = ? ");
+			selectSQL.append("series IN (");
+			for (int i = 0; i < seriesValueArr.length; i++) {
+				if (i == 0) selectSQL.append("?");
+				else selectSQL.append(",?");
+			}
+			selectSQL.append(") ");
 			conditionCnt++;
 		}
 		if (!StringUtils.isEmpty(product)) {
 			if (conditionCnt > 0) {
 				selectSQL.append("AND ");
 			}
-			selectSQL.append("product = ? ");
+			selectSQL.append("product IN (");
+			for (int i = 0; i < productValueArr.length; i++) {
+				if (i == 0) selectSQL.append("?");
+				else selectSQL.append(",?");
+			}
+			selectSQL.append(") ");
 			conditionCnt++;
 		}
 		
@@ -215,8 +243,8 @@ public class ArticleList extends RootAPI {
 			if (conditionCnt > 0) {
 				selectSQL.append("AND ");
 			}
-			selectSQL.append("website_id IN (");
-			for (int i = 0; i < websiteIdValueArr.length; i++) {
+			selectSQL.append("website_name IN (");
+			for (int i = 0; i < websiteNameValueArr.length; i++) {
 				if (i == 0) selectSQL.append("?");
 				else selectSQL.append(",?");
 			}
@@ -247,19 +275,25 @@ public class ArticleList extends RootAPI {
 	private void setWhereClauseValues(PreparedStatement preparedStatement) throws Exception {
 		int idx = 0;
 		if (!StringUtils.isEmpty(brand)) {
-			int parameterIndex = idx + 1;
-			preparedStatement.setObject(parameterIndex, brand);
-			idx++;
+			for (String brandValue : brandValueArr) {
+				int parameterIndex = idx + 1;
+				preparedStatement.setObject(parameterIndex, brandValue);
+				idx++;
+			}
 		}
 		if (!StringUtils.isEmpty(series)) {
-			int parameterIndex = idx + 1;
-			preparedStatement.setObject(parameterIndex, series);
-			idx++;
+			for (String seriesValue : seriesValueArr) {
+				int parameterIndex = idx + 1;
+				preparedStatement.setObject(parameterIndex, seriesValue);
+				idx++;
+			}
 		}
 		if (!StringUtils.isEmpty(product)) {
-			int parameterIndex = idx + 1;
-			preparedStatement.setObject(parameterIndex, product);
-			idx++;
+			for (String productValue : productValueArr) {
+				int parameterIndex = idx + 1;
+				preparedStatement.setObject(parameterIndex, productValue);
+				idx++;
+			}
 		}
 		
 		if (!StringUtils.isEmpty(source)) {
@@ -270,9 +304,9 @@ public class ArticleList extends RootAPI {
 			}
 		}
 		if (!StringUtils.isEmpty(website)) {
-			for (String websiteId : websiteIdValueArr) {
+			for (String websiteName : websiteNameValueArr) {
 				int parameterIndex = idx + 1;
-				preparedStatement.setObject(parameterIndex, websiteId);
+				preparedStatement.setObject(parameterIndex, websiteName);
 				idx++;
 			}
 		}
@@ -323,11 +357,11 @@ public class ArticleList extends RootAPI {
 
 	private void requestAndTrimParams(HttpServletRequest request) {
 		this.parameterMap = request.getParameterMap();
-		this.brand = StringUtils.trimToEmpty(request.getParameter("brand"));       // 單個參數值
-		this.series = StringUtils.trimToEmpty(request.getParameter("series"));     // 單個參數值
-		this.product = StringUtils.trimToEmpty(request.getParameter("product"));   // 單個參數值
+		this.brand = StringUtils.trimToEmpty(request.getParameter("brand"));       // 單個參數值 --> 改成: 多個參數值
+		this.series = StringUtils.trimToEmpty(request.getParameter("series"));     // 單個參數值 --> 改成: 多個參數值
+		this.product = StringUtils.trimToEmpty(request.getParameter("product"));   // 單個參數值 --> 改成: 多個參數值
 		this.source = StringUtils.trimToEmpty(request.getParameter("source"));     // 多個參數值
-		this.website = StringUtils.trimToEmpty(request.getParameter("website"));   // 多個參數值 (website id)
+		this.website = StringUtils.trimToEmpty(request.getParameter("website"));   // 多個參數值 (website id --> 改成website_name)
 		this.channel = StringUtils.trimToEmpty(request.getParameter("channel"));   // 多個參數值 (channel id)
 		this.features = StringUtils.trimToEmpty(request.getParameter("features"));
 		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
@@ -354,8 +388,12 @@ public class ArticleList extends RootAPI {
 		this.tableName = this.getTableName(this.parameterMap);
 		
 		// 多個參數值: 
+		this.brandValueArr = this.brand.split(PARAM_VALUES_SEPARATOR);
+		this.seriesValueArr = this.series.split(PARAM_VALUES_SEPARATOR);
+		this.productValueArr = this.product.split(PARAM_VALUES_SEPARATOR);
+		
 		this.sourceValueArr = this.source.split(PARAM_VALUES_SEPARATOR);
-		this.websiteIdValueArr = this.website.split(PARAM_VALUES_SEPARATOR); // website ids
+		this.websiteNameValueArr = this.website.split(PARAM_VALUES_SEPARATOR); // website names
 		this.channelIdValueArr = this.channel.split(PARAM_VALUES_SEPARATOR); // channel ids
 	}
 	
