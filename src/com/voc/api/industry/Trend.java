@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +26,14 @@ import com.voc.common.Common;
 import com.voc.common.DBUtil;
 import com.voc.enums.industry.EnumTrend;
 
+/**
+ * Ex:
+ * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ&website=PTT&start_date=2018-05-01&end_date=2018-05-15
+ * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-15
+ * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-15&limit=5
+ * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-15&limit=3
+ * 
+ */
 public class Trend extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Trend.class);
 	Map<String, String[]> orderedParameterMap = new ParameterMap<>();
@@ -31,6 +41,8 @@ public class Trend extends RootAPI {
 	private List<String> itemNameList = new ArrayList<>();
 	private String strTableName;
 	private String strInterval = Common.INTERVAL_DAILY;
+	private int limit = 10; // Default: 10
+	private JSONArray sortedJsonArray;
 	
 	@Override
 	public String processRequest(HttpServletRequest request) {
@@ -57,6 +69,15 @@ public class Trend extends RootAPI {
 			return errorResponse.toString();
 		}
 		
+		String limitStr = StringUtils.trimToEmpty(request.getParameter("limit"));
+		if (!StringUtils.isEmpty(limitStr)) {
+			try {
+				this.limit = Integer.parseInt(limitStr);
+			} catch (Exception e) {
+				LOGGER.error(e.getMessage());
+			}
+		}
+		
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
 		boolean querySuccess = query(orderedParameterMap, strStartDate, strEndDate, resArray);
@@ -66,7 +87,8 @@ public class Trend extends RootAPI {
 		if (querySuccess) {
 			jobj = ApiResponse.successTemplate();
 			jobj.put("update_time", update_time);
-			jobj.put("result", resArray);
+			// jobj.put("result", resArray);
+			jobj.put("result", this.sortedJsonArray);
 			LOGGER.info("response: "+ jobj.toString());
 			
 		} else {
@@ -181,8 +203,10 @@ public class Trend extends RootAPI {
 					JSONObject resultObj = new JSONObject();
 					resultObj.put("item", itemName);
 					resultObj.put("data", dataArray);
+					resultObj.put("totalCount", this.getTotalCount(dataArray)); // for sort later
 					out.put(resultObj);
 				}
+				this.sortedJsonArray = this.getSortedResultArray(out, this.limit);
 			return true;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
@@ -191,6 +215,57 @@ public class Trend extends RootAPI {
 			DBUtil.close(rs, pst, conn);
 		}
 		return false;
+	}
+	
+	private JSONArray getSortedResultArray(JSONArray resultArray, int limit) {
+		JSONArray sortedJsonArray = new JSONArray();
+		
+		// Step_1: parse your array in a list
+		List<JSONObject> jsonList = new ArrayList<JSONObject>();
+		for (int i = 0; i < resultArray.length(); i++) {
+			jsonList.add(resultArray.getJSONObject(i));
+		}
+		
+		// Step_2: then use collection.sort to sort the newly created list
+		Collections.sort(jsonList, new Comparator<JSONObject>() {
+			public int compare(JSONObject a, JSONObject b) {
+				Integer valA = 0;
+				Integer valB = 0;
+				try {
+					valA = (Integer) a.get("totalCount");
+					valB = (Integer) b.get("totalCount");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return valA.compareTo(valB) * -1;
+			}
+		});
+		
+		// Handle for limit: 
+		int listSize = jsonList.size();
+		int recordSize = limit;
+		if (limit > listSize) {
+			recordSize = listSize;
+		}
+		jsonList = jsonList.subList(0, recordSize);
+		
+		// Step_3: Insert the sorted values in your array
+		for (int i = 0; i < jsonList.size(); i++) {
+			JSONObject jsonObject = jsonList.get(i);
+			jsonObject.remove("totalCount"); // totalCount 不用顯示: after sorting, remove it.
+			sortedJsonArray.put(jsonObject);
+		}
+		
+		return sortedJsonArray;
+	}
+	
+	private Integer getTotalCount(JSONArray dataArray) {
+		Integer totalCount = 0;
+		for (int i = 0; i < dataArray.length(); i++) {
+			JSONObject dataObject = dataArray.getJSONObject(i);
+			totalCount += dataObject.getInt("count");
+		}
+		return totalCount;
 	}
 
 	private String genSelectClause(Map<String, String[]> paramMap) {
@@ -454,18 +529,18 @@ public class Trend extends RootAPI {
 			orderedParameterMap.put(paramName, paramValues_website);
 			if (0 == itemCnt) {
 				mainItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
-				for (int i = 0; i < mainItemArr.length; i++) {
-					String mainValue = mainItemArr[i];
-					// mainItemArr[i] = this.getWebsiteNameById(strTableName, mainValue);
-					mainItemArr[i] = this.getWebsiteNameById(mainValue);
-				}
+//				for (int i = 0; i < mainItemArr.length; i++) {
+//					String mainValue = mainItemArr[i];
+//					// mainItemArr[i] = this.getWebsiteNameById(strTableName, mainValue);
+//					mainItemArr[i] = this.getWebsiteNameById(mainValue);
+//				}
 			} else if (1 == itemCnt) {
 				secItemArr = paramValues_website[0].split(PARAM_VALUES_SEPARATOR);
-				for (int i = 0; i < secItemArr.length; i++) {
-					String mainValue = secItemArr[i];
-					// secItemArr[i] = this.getWebsiteNameById(strTableName, mainValue);
-					secItemArr[i] = this.getWebsiteNameById(mainValue);
-				}
+//				for (int i = 0; i < secItemArr.length; i++) {
+//					String mainValue = secItemArr[i];
+//					// secItemArr[i] = this.getWebsiteNameById(strTableName, mainValue);
+//					secItemArr[i] = this.getWebsiteNameById(mainValue);
+//				}
 			}
 			itemCnt++;
 		}
