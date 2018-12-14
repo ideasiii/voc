@@ -433,7 +433,9 @@ public class TotalCount extends RootAPI {
 			String paramName = entry.getKey();
 			if (this.isItemParamName(paramName)) {
 				String columnName = this.getColumnName(paramName);
-				if ("channel_id".equals(columnName)) {
+				if ("website_id".equals(columnName)) {
+					columnName = "website_name";
+				} else if ("channel_id".equals(columnName)) {
 					columnName = "channel_name";
 				}
 				if (i == 0) {
