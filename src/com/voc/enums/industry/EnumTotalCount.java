@@ -9,7 +9,7 @@ public enum EnumTotalCount {
 	PARAM_COLUMN_SERIES("series", "series"),
 	PARAM_COLUMN_PRODUCT("product", "product"),
 	PARAM_COLUMN_SOURCE("source", "source"),
-	PARAM_COLUMN_WEBSITE("website", "website_id"),
+	PARAM_COLUMN_WEBSITE("website", "website_name"),
 	PARAM_COLUMN_CHANNEL("channel", "channel_id"),
 	PARAM_COLUMN_FEATURES("features", "features"),
 	PARAM_COLUMN_START_DATE("start_date", "date"),
