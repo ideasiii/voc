@@ -37,7 +37,6 @@ public class HotFeature extends RootAPI {
 	private String strEndDate;
 	private int nLimit = 10; // default
 	
-	private String strTableName;
 	private String[] arrBrand;
 	private String[] arrSeries;
 	private String[] arrProduct;
@@ -103,8 +102,6 @@ public class HotFeature extends RootAPI {
 				LOGGER.error(e.getMessage());
 			}
 		}
-
-		strTableName = getTableName(paramMap);
 		
 		arrBrand = strBrand.split(PARAM_VALUES_SEPARATOR);
 		arrSeries = strSeries.split(PARAM_VALUES_SEPARATOR);
@@ -151,8 +148,8 @@ public class HotFeature extends RootAPI {
 			sql.append("WHERE industry = ? ");
 			sql.append("AND feature_group IN (");
 			for (int i = 0; i < arrFeatureGroup.length; i++) {
-				if (0 == i) sql.append("?");
-				else sql.append(",?");
+				if (0 == i) sql.append(" ?");
+				else sql.append(", ?");
 			}
 			sql.append(") ");
 			
@@ -170,7 +167,7 @@ public class HotFeature extends RootAPI {
 				LOGGER.info("***" + parameterIndex + ":" + fg);
 				idx++;
 			}
-			LOGGER.debug("queryFeatureGroup SQL = " + pst.toString());
+			LOGGER.debug("queryFeatureList SQL = " + pst.toString());
 			
 			rs = pst.executeQuery();
 			while(rs.next()) {
@@ -200,7 +197,7 @@ public class HotFeature extends RootAPI {
 
 			String strPstSQL = pst.toString();
 			LOGGER.info("strPstSQL: " + strPstSQL);
-
+			//////////
 			List<JSONObject> brandList = new ArrayList<JSONObject>();
 			Map<String, Integer> hash_brandMap = new HashMap<>();
 			String brand;
@@ -244,26 +241,76 @@ public class HotFeature extends RootAPI {
 	
 	private String genSelecttSQL() {
 		StringBuffer sql = new StringBuffer();
-		sql.append("SELECT brand, SUM(reputation) AS count ");
-		sql.append("FROM ").append(strTableName).append(" ");
-		sql.append("WHERE brand IN (");
-
+		sql.append("SELECT count(DISTINCT id) AS count ");
+		sql.append("FROM ").append(TABLE_FEATURE_REPUTATION).append(" ");
+		sql.append("WHERE industry = ? ");
+		
+		if (!StringUtils.isBlank(strBrand)) {
+		sql.append("AND brand IN (");
 		for (int i = 0; i < arrBrand.length; i++) {
-			if (0 == i) {
-				sql.append(" ?");
-			} else {
-				sql.append(", ?");
-			}
+			if (0 == i) sql.append(" ?");
+			else sql.append(", ?");
 		}
 		sql.append(") ");
+		}
+		
+		if (!StringUtils.isBlank(strSeries)) {
+		sql.append("AND series IN (");
+		for (int i = 0; i < arrSeries.length; i++) {
+			if (0 == i) sql.append(" ?");
+			else sql.append(", ?");
+		}
+		sql.append(") ");
+		}
+		
+		if (!StringUtils.isBlank(strProduct)) {
+		sql.append("AND product IN (");
+		for (int i = 0; i < arrProduct.length; i++) {
+			if (0 == i) sql.append(" ?");
+			else sql.append(", ?");
+		}
+		sql.append(") ");
+		}
+
+		if (!StringUtils.isBlank(strSource)) {
+			// 尚未啟用
+		}
+		
+		if (!StringUtils.isBlank(strWebsite)) {
+			sql.append("AND website_name IN (");
+			for (int i = 0; i < arrWebsite.length; i++) {
+				if (0 == i) sql.append(" ?");
+				else sql.append(", ?");
+			}
+			sql.append(") ");
+			}
+		
+		if (!StringUtils.isBlank(strChannel)) {
+		sql.append("AND channel_id IN (");
+		for (int i = 0; i < arrChannel.length; i++) {
+			if (0 == i) sql.append(" ?");
+			else sql.append(", ?");
+		}
+		sql.append(") ");
+		}
+		
+		if (0 < featureList.size() && null != featureList) {
+			sql.append("AND features IN (");
+			for (int i = 0; i < featureList.size(); i++) {
+				if (0 == i) sql.append(" ?");
+				else sql.append(", ?");
+			}
+			sql.append(") ");
+			}
+		
+		if (!StringUtils.isBlank(strSentiment)) {
+			// 尚未啟用
+		}
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 		sql.append("GROUP BY brand ORDER BY count ");
-		if (strSort.equalsIgnoreCase(Common.SORT_ASC)) {
-			sql.append(Common.SORT_ASC).append(" ");
-		} else if (strSort.equalsIgnoreCase(Common.SORT_DESC)) {
-			sql.append(Common.SORT_DESC).append(" ");
-		}
+
+
 		sql.append("LIMIT ?");
 		LOGGER.info("SQL : " + sql.toString());
 		return sql.toString();
