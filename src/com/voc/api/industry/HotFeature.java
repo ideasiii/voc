@@ -21,22 +21,38 @@ import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
 
-public class BrandRanking extends RootAPI {
-	private static final Logger LOGGER = LoggerFactory.getLogger(BrandRanking.class);
+public class HotFeature extends RootAPI {
+	private static final Logger LOGGER = LoggerFactory.getLogger(HotFeature.class);
 	private Map<String, String[]> paramMap;
+	private String strIndustry;
 	private String strBrand;
+	private String strSeries;
+	private String strProduct;
+	private String strSource;
+	private String strWebsite;
+	private String strChannel;
+	private String strFeatureGroup;
+	private String strSentiment;
 	private String strStartDate;
 	private String strEndDate;
-	private String strSort = Common.SORT_DESC;
-	private int nLimit = 10;
-
+	private int nLimit = 10; // default
+	
 	private String strTableName;
 	private String[] arrBrand;
-
+	private String[] arrSeries;
+	private String[] arrProduct;
+	private String[] arrSource;
+	private String[] arrWebsite;
+	private String[] arrChannel;
+	private String[] arrFeatureGroup;
+	private String[] arrSentiment;
+	
+	private List<String> featureList; // query from keyword list table
+	
 	@Override
 	public String processRequest(HttpServletRequest request) {
 		paramMap = request.getParameterMap();
-
+		
 		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER).toString();
 		}
@@ -45,7 +61,11 @@ public class BrandRanking extends RootAPI {
 		if (null != errorResponse) {
 			return errorResponse.toString();
 		}
-
+		if (paramMap.containsKey("features") && null != arrFeatureGroup) {
+			featureList = queryFeatureList();
+			LOGGER.info("***featureList: " + featureList);
+		}
+		
 		JSONArray resArray = query();
 
 		if (null != resArray) {
@@ -58,19 +78,22 @@ public class BrandRanking extends RootAPI {
 	}
 
 	private boolean hasRequiredParameters(Map<String, String[]> paramMap) {
-		return paramMap.containsKey("brand") && paramMap.containsKey("start_date") && paramMap.containsKey("end_date");
+		return paramMap.containsKey("industry") && paramMap.containsKey("start_date") && paramMap.containsKey("end_date");
 	}
-
+	
 	private void requestParams(HttpServletRequest request) {
 
+		strIndustry = request.getParameter("industry");
 		strBrand = request.getParameter("brand");
+		strSeries = request.getParameter("series");
+		strProduct = request.getParameter("product");
+		strSource = request.getParameter("source");
+		strWebsite = request.getParameter("website");
+		strChannel = request.getParameter("channel");
+		strFeatureGroup = request.getParameter("features");
+		strSentiment = request.getParameter("sentiment");
 		strStartDate = request.getParameter("start_date");
 		strEndDate = request.getParameter("end_date");
-
-		String strSort = request.getParameter("sort");
-		if (!StringUtils.isBlank(strSort)) {
-			this.strSort = strSort;
-		}
 
 		String strLimit = request.getParameter("limit");
 		if (!StringUtils.isBlank(strLimit)) {
@@ -82,9 +105,17 @@ public class BrandRanking extends RootAPI {
 		}
 
 		strTableName = getTableName(paramMap);
+		
 		arrBrand = strBrand.split(PARAM_VALUES_SEPARATOR);
+		arrSeries = strSeries.split(PARAM_VALUES_SEPARATOR);
+		arrProduct = strProduct.split(PARAM_VALUES_SEPARATOR);
+		arrSource = strSource.split(PARAM_VALUES_SEPARATOR);
+		arrWebsite = strWebsite.split(PARAM_VALUES_SEPARATOR);
+		arrChannel = strChannel.split(PARAM_VALUES_SEPARATOR);
+		arrFeatureGroup = strFeatureGroup.split(PARAM_VALUES_SEPARATOR);
+		arrSentiment = strSentiment.split(PARAM_VALUES_SEPARATOR);
 	}
-
+	
 	private JSONObject validate() {
 		if (StringUtils.isBlank(strBrand) || StringUtils.isBlank(strStartDate) || StringUtils.isBlank(strEndDate)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
@@ -103,13 +134,60 @@ public class BrandRanking extends RootAPI {
 		if (!Common.isValidStartDate(strStartDate, strEndDate, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
 		}
-
-		if (!Common.isValidSort(strSort)) {
-			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid sort values.");
+		return null;
+	}
+	
+	private List<String> queryFeatureList() {
+		Connection conn = null;
+		PreparedStatement pst = null;
+		ResultSet rs = null;
+		String feature;
+		List<String> featureList = new ArrayList<>();
+		
+		try {
+			StringBuffer sql = new StringBuffer();
+			sql.append("SELECT DISTINCT feature ");
+			sql.append("FROM ").append(TABLE_INDUSTRY_FEATURE_KEYWORD_LIST).append(" ");
+			sql.append("WHERE industry = ? ");
+			sql.append("AND feature_group IN (");
+			for (int i = 0; i < arrFeatureGroup.length; i++) {
+				if (0 == i) sql.append("?");
+				else sql.append(",?");
+			}
+			sql.append(") ");
+			
+			conn = DBUtil.getConn();
+			pst = conn.prepareStatement(sql.toString());
+			int idx = 0;
+			
+			int industryIndex = idx + 1;
+			pst.setObject(industryIndex, strIndustry);
+			idx++;
+			
+			for (String fg : arrFeatureGroup) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, fg);
+				LOGGER.info("***" + parameterIndex + ":" + fg);
+				idx++;
+			}
+			LOGGER.debug("queryFeatureGroup SQL = " + pst.toString());
+			
+			rs = pst.executeQuery();
+			while(rs.next()) {
+				feature = rs.getString("feature");
+				featureList.add(feature);
+			}
+ 			return featureList;
+			
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, pst, conn);
 		}
 		return null;
 	}
-
+	
 	private JSONArray query() {
 		Connection conn = null;
 		PreparedStatement pst = null;
@@ -143,8 +221,6 @@ public class BrandRanking extends RootAPI {
 				LOGGER.info("brandList: " + brandList);
 			}
 
-			int desc_zeroCount = nLimit - brandList.size();
-			int asc_zeroCount = 0;
 			for (int i = 0; i < arrBrand.length; i++) {
 				String inputBrandItem = arrBrand[i];
 				Integer outputCount = hash_brandMap.get(inputBrandItem);
@@ -152,29 +228,8 @@ public class BrandRanking extends RootAPI {
 					JSONObject jobj = new JSONObject();
 					jobj.put("brand", inputBrandItem);
 					jobj.put("count", 0);
-
-					if (strSort.equalsIgnoreCase(Common.SORT_DESC)) {
-						if (0 < desc_zeroCount) {
-							brandList.add(jobj);
-							desc_zeroCount--;
-						}
-					} else if (strSort.equalsIgnoreCase(Common.SORT_ASC)) {
-						if (0 < (nLimit - asc_zeroCount)) {
-							brandList.add(0, jobj);
-							asc_zeroCount++;
-						}
-					}
 				}
 			}
-			if (strSort.equalsIgnoreCase(Common.SORT_ASC)) {
-				int listSize = brandList.size();
-				int recordSize = nLimit;
-				if (nLimit > listSize) {
-					recordSize = listSize;
-				}
-				brandList = brandList.subList(0, recordSize);
-			}
-
 			JSONArray out = new JSONArray(brandList);
 			return out;
 
@@ -186,7 +241,7 @@ public class BrandRanking extends RootAPI {
 		}
 		return null;
 	}
-
+	
 	private String genSelecttSQL() {
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT brand, SUM(reputation) AS count ");
@@ -213,7 +268,7 @@ public class BrandRanking extends RootAPI {
 		LOGGER.info("SQL : " + sql.toString());
 		return sql.toString();
 	}
-
+	
 	private void setWhereClauseValues(PreparedStatement pst) throws Exception {
 		int idx = 0;
 
@@ -236,4 +291,6 @@ public class BrandRanking extends RootAPI {
 		pst.setObject(limitIndex, nLimit);
 		idx++;
 	}
+	
+	
 }
