@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,7 +63,6 @@ public class HotFeature extends RootAPI {
 			featureList = queryFeatureList();
 			LOGGER.info("***featureList: " + featureList);
 		}
-		
 		JSONArray resArray = query();
 
 		if (null != resArray) {
@@ -198,36 +196,18 @@ public class HotFeature extends RootAPI {
 			String strPstSQL = pst.toString();
 			LOGGER.info("strPstSQL: " + strPstSQL);
 			//////////
-			List<JSONObject> brandList = new ArrayList<JSONObject>();
-			Map<String, Integer> hash_brandMap = new HashMap<>();
-			String brand;
 			int count;
-
+			String feature;
+			JSONObject jobj = new JSONObject();
 			rs = pst.executeQuery();
 			while (rs.next()) {
-
-				brand = rs.getString("brand");
+				feature = rs.getString("features");
 				count = rs.getInt("count");
-
-				JSONObject jobj = new JSONObject();
-				jobj.put("brand", brand);
+				
+				jobj.put("feature", feature);
 				jobj.put("count", count);
-				brandList.add(jobj);
-				hash_brandMap.put(brand, count);
-
-				LOGGER.info("brandList: " + brandList);
 			}
-
-			for (int i = 0; i < arrBrand.length; i++) {
-				String inputBrandItem = arrBrand[i];
-				Integer outputCount = hash_brandMap.get(inputBrandItem);
-				if (null == outputCount) {
-					JSONObject jobj = new JSONObject();
-					jobj.put("brand", inputBrandItem);
-					jobj.put("count", 0);
-				}
-			}
-			JSONArray out = new JSONArray(brandList);
+			JSONArray out = new JSONArray(jobj);
 			return out;
 
 		} catch (Exception e) {
@@ -240,36 +220,49 @@ public class HotFeature extends RootAPI {
 	}
 	
 	private String genSelecttSQL() {
+		int nCount = 0;
 		StringBuffer sql = new StringBuffer();
-		sql.append("SELECT count(DISTINCT id) AS count ");
+		sql.append("SELECT features, count(DISTINCT id) AS count ");
 		sql.append("FROM ").append(TABLE_FEATURE_REPUTATION).append(" ");
-		sql.append("WHERE industry = ? ");
+		sql.append("WHERE ");
 		
 		if (!StringUtils.isBlank(strBrand)) {
-		sql.append("AND brand IN (");
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+		sql.append("brand IN (");
 		for (int i = 0; i < arrBrand.length; i++) {
 			if (0 == i) sql.append(" ?");
 			else sql.append(", ?");
 		}
 		sql.append(") ");
+		nCount++;
 		}
 		
 		if (!StringUtils.isBlank(strSeries)) {
-		sql.append("AND series IN (");
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+		sql.append("series IN (");
 		for (int i = 0; i < arrSeries.length; i++) {
 			if (0 == i) sql.append(" ?");
 			else sql.append(", ?");
 		}
 		sql.append(") ");
+		nCount++;
 		}
 		
 		if (!StringUtils.isBlank(strProduct)) {
-		sql.append("AND product IN (");
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+		sql.append("product IN (");
 		for (int i = 0; i < arrProduct.length; i++) {
 			if (0 == i) sql.append(" ?");
 			else sql.append(", ?");
 		}
 		sql.append(") ");
+		nCount++;
 		}
 
 		if (!StringUtils.isBlank(strSource)) {
@@ -277,30 +270,42 @@ public class HotFeature extends RootAPI {
 		}
 		
 		if (!StringUtils.isBlank(strWebsite)) {
-			sql.append("AND website_name IN (");
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+			sql.append("website_name IN (");
 			for (int i = 0; i < arrWebsite.length; i++) {
 				if (0 == i) sql.append(" ?");
 				else sql.append(", ?");
 			}
 			sql.append(") ");
+			nCount++;
 			}
 		
 		if (!StringUtils.isBlank(strChannel)) {
-		sql.append("AND channel_id IN (");
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+		sql.append("channel_id IN (");
 		for (int i = 0; i < arrChannel.length; i++) {
 			if (0 == i) sql.append(" ?");
 			else sql.append(", ?");
 		}
 		sql.append(") ");
+		nCount++;
 		}
 		
 		if (0 < featureList.size() && null != featureList) {
-			sql.append("AND features IN (");
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+			sql.append("features IN (");
 			for (int i = 0; i < featureList.size(); i++) {
 				if (0 == i) sql.append(" ?");
 				else sql.append(", ?");
 			}
 			sql.append(") ");
+			nCount++;
 			}
 		
 		if (!StringUtils.isBlank(strSentiment)) {
@@ -308,10 +313,9 @@ public class HotFeature extends RootAPI {
 		}
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
-		sql.append("GROUP BY brand ORDER BY count ");
-
-
+		sql.append("GROUP BY features ORDER BY count DESC");
 		sql.append("LIMIT ?");
+		
 		LOGGER.info("SQL : " + sql.toString());
 		return sql.toString();
 	}
@@ -319,13 +323,68 @@ public class HotFeature extends RootAPI {
 	private void setWhereClauseValues(PreparedStatement pst) throws Exception {
 		int idx = 0;
 
+		if (!StringUtils.isBlank(strBrand)) {
 		for (String v : arrBrand) {
 			int parameterIndex = idx + 1;
 			pst.setObject(parameterIndex, v);
 			// LOGGER.info("***" + parameterIndex + ":" + v);
 			idx++;
+			}
 		}
-
+		
+		if (!StringUtils.isBlank(strSeries)) {
+			for (String v : arrSeries) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				// LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
+				}
+			}
+		
+		if (!StringUtils.isBlank(strProduct)) {
+			for (String v : arrProduct) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				// LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
+				}
+			}
+		
+		if (!StringUtils.isBlank(strSource)) {
+			// 尚未啟用
+		}
+		
+		if (!StringUtils.isBlank(strWebsite)) {
+			for (String v : arrWebsite) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				// LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
+				}
+			}
+		
+		if (!StringUtils.isBlank(strChannel)) {
+			for (String v : arrChannel) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				// LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
+				}
+			}
+		
+		if (!StringUtils.isBlank(strFeatureGroup)) {
+			for (String v : featureList) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
+				}
+			}
+		
+		if (!StringUtils.isBlank(strSentiment)) {
+			// 尚未啟用
+		}
+		
 		int startDateIndex = idx + 1;
 		pst.setObject(startDateIndex, strStartDate);
 		idx++;
