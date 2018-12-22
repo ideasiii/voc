@@ -200,7 +200,7 @@ public class FeatureArticleList extends RootAPI {
 	private String genQueryPostIdSQL() {
 		int conditionCnt = 0;
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT id AS post_id FROM ").append(TABLE_FEATURE_REPUTATION);
+		selectSQL.append("SELECT DISTINCT id AS post_id FROM ").append(TABLE_FEATURE_REPUTATION);
 		selectSQL.append(" WHERE ");
 		if (!StringUtils.isEmpty(industry)) {
 			selectSQL.append("industry IN (");
