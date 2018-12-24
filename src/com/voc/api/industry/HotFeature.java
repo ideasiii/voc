@@ -20,6 +20,14 @@ import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
 
+/**
+ * 
+ * 
+ * http://localhost:8080/voc/industry/hot-feature.jsp?industry=汽車產業&features=使用問題&website=Mobile01&start_date=2018-05-01&end_date=2018-05-15&limit=15
+ * 
+ *
+ */
+
 public class HotFeature extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HotFeature.class);
 	private Map<String, String[]> paramMap;
