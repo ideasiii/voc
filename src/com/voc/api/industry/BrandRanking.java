@@ -117,7 +117,7 @@ public class BrandRanking extends RootAPI {
 
 		try {
 			conn = DBUtil.getConn();
-			pst = conn.prepareStatement(genSelecttSQL());
+			pst = conn.prepareStatement(genSelectSQL());
 			setWhereClauseValues(pst);
 
 			String strPstSQL = pst.toString();
@@ -187,7 +187,7 @@ public class BrandRanking extends RootAPI {
 		return null;
 	}
 
-	private String genSelecttSQL() {
+	private String genSelectSQL() {
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT brand, SUM(reputation) AS count ");
 		sql.append("FROM ").append(strTableName).append(" ");

@@ -190,9 +190,9 @@ public class HotFeature extends RootAPI {
 
 		try {
 			conn = DBUtil.getConn();
-			pst = conn.prepareStatement(genSelecttSQL());
+			pst = conn.prepareStatement(genSelectSQL());
 			setWhereClauseValues(pst);
-
+			
 			String strPstSQL = pst.toString();
 			LOGGER.info("strPstSQL: " + strPstSQL);
 			//////////
@@ -221,7 +221,7 @@ public class HotFeature extends RootAPI {
 		return null;
 	}
 	
-	private String genSelecttSQL() {
+	private String genSelectSQL() {
 		int nCount = 0;
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT features, count(DISTINCT id) AS count ");
@@ -297,7 +297,7 @@ public class HotFeature extends RootAPI {
 		nCount++;
 		}
 		
-		if (0 < featureList.size() && null != featureList) {
+		if (!StringUtils.isBlank(strFeatureGroup) && 0 < featureList.size() && null != featureList) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
