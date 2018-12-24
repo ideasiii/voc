@@ -39,11 +39,11 @@ public class HotFeature extends RootAPI {
 	private String[] arrBrand;
 	private String[] arrSeries;
 	private String[] arrProduct;
-	private String[] arrSource;
+//	private String[] arrSource;
 	private String[] arrWebsite;
 	private String[] arrChannel;
 	private String[] arrFeatureGroup;
-	private String[] arrSentiment;
+//	private String[] arrSentiment;
 	
 	private List<String> featureList; // query from keyword list table
 	
@@ -80,17 +80,17 @@ public class HotFeature extends RootAPI {
 	
 	private void requestParams(HttpServletRequest request) {
 
-		strIndustry = request.getParameter("industry");
-		strBrand = request.getParameter("brand");
-		strSeries = request.getParameter("series");
-		strProduct = request.getParameter("product");
-		strSource = request.getParameter("source");
-		strWebsite = request.getParameter("website");
-		strChannel = request.getParameter("channel");
-		strFeatureGroup = request.getParameter("features");
-		strSentiment = request.getParameter("sentiment");
-		strStartDate = request.getParameter("start_date");
-		strEndDate = request.getParameter("end_date");
+		strIndustry = StringUtils.trimToEmpty(request.getParameter("industry"));
+		strBrand = StringUtils.trimToEmpty(request.getParameter("brand"));
+		strSeries = StringUtils.trimToEmpty(request.getParameter("series"));
+		strProduct = StringUtils.trimToEmpty(request.getParameter("product"));
+		strSource = StringUtils.trimToEmpty(request.getParameter("source"));
+		strWebsite = StringUtils.trimToEmpty(request.getParameter("website"));
+		strChannel = StringUtils.trimToEmpty(request.getParameter("channel"));
+		strFeatureGroup = StringUtils.trimToEmpty(request.getParameter("features"));
+		strSentiment = StringUtils.trimToEmpty(request.getParameter("sentiment"));
+		strStartDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
+		strEndDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 
 		String strLimit = request.getParameter("limit");
 		if (!StringUtils.isBlank(strLimit)) {
@@ -104,15 +104,15 @@ public class HotFeature extends RootAPI {
 		arrBrand = strBrand.split(PARAM_VALUES_SEPARATOR);
 		arrSeries = strSeries.split(PARAM_VALUES_SEPARATOR);
 		arrProduct = strProduct.split(PARAM_VALUES_SEPARATOR);
-		arrSource = strSource.split(PARAM_VALUES_SEPARATOR);
+	//	arrSource = strSource.split(PARAM_VALUES_SEPARATOR);
 		arrWebsite = strWebsite.split(PARAM_VALUES_SEPARATOR);
 		arrChannel = strChannel.split(PARAM_VALUES_SEPARATOR);
 		arrFeatureGroup = strFeatureGroup.split(PARAM_VALUES_SEPARATOR);
-		arrSentiment = strSentiment.split(PARAM_VALUES_SEPARATOR);
+	//	arrSentiment = strSentiment.split(PARAM_VALUES_SEPARATOR);
 	}
 	
 	private JSONObject validate() {
-		if (StringUtils.isBlank(strBrand) || StringUtils.isBlank(strStartDate) || StringUtils.isBlank(strEndDate)) {
+		if (StringUtils.isBlank(strIndustry) || StringUtils.isBlank(strStartDate) || StringUtils.isBlank(strEndDate)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
 
@@ -141,7 +141,7 @@ public class HotFeature extends RootAPI {
 		
 		try {
 			StringBuffer sql = new StringBuffer();
-			sql.append("SELECT DISTINCT feature ");
+			sql.append("SELECT DISTINCT feature AS f ");
 			sql.append("FROM ").append(TABLE_INDUSTRY_FEATURE_KEYWORD_LIST).append(" ");
 			sql.append("WHERE industry = ? ");
 			sql.append("AND feature_group IN (");
@@ -169,7 +169,7 @@ public class HotFeature extends RootAPI {
 			
 			rs = pst.executeQuery();
 			while(rs.next()) {
-				feature = rs.getString("feature");
+				feature = rs.getString("f");
 				featureList.add(feature);
 			}
  			return featureList;
@@ -198,16 +198,18 @@ public class HotFeature extends RootAPI {
 			//////////
 			int count;
 			String feature;
-			JSONObject jobj = new JSONObject();
+			JSONArray out = new JSONArray();
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				feature = rs.getString("features");
 				count = rs.getInt("count");
 				
+				JSONObject jobj = new JSONObject();
 				jobj.put("feature", feature);
 				jobj.put("count", count);
+				out.put(jobj);
 			}
-			JSONArray out = new JSONArray(jobj);
+			LOGGER.info("Out array: " + out);
 			return out;
 
 		} catch (Exception e) {
@@ -313,7 +315,7 @@ public class HotFeature extends RootAPI {
 		}
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
-		sql.append("GROUP BY features ORDER BY count DESC");
+		sql.append("GROUP BY features ORDER BY count DESC ");
 		sql.append("LIMIT ?");
 		
 		LOGGER.info("SQL : " + sql.toString());
