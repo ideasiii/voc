@@ -71,8 +71,12 @@ public class HotFeature extends RootAPI {
 			featureList = queryFeatureList();
 			LOGGER.info("***featureList: " + featureList);
 		}
-		JSONArray resArray = query();
-
+		
+		JSONArray resArray = new JSONArray();
+		if (StringUtils.isEmpty(this.strFeatureGroup) || (null != featureList && featureList.size() > 0)) {
+			resArray = query();
+		}
+	
 		if (null != resArray) {
 			JSONObject jobj = ApiResponse.successTemplate();
 			jobj.put("result", resArray);
