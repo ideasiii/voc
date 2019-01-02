@@ -2,6 +2,7 @@ package com.voc.api.topic;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +18,8 @@ import com.voc.common.Common;
 import com.voc.common.DBUtil;
 
 /**
+ * 新增自訂主題任務: 將用戶新增的自訂主題關鍵字新增至任務列表中
+ * 
  * http://localhost:8080/voc/topic/add-topic.jsp
  * 
  * Example: the post data in body:
@@ -45,6 +48,7 @@ public class AddTopic extends RootAPI {
 		this.requestAndTrimParams(request);
 		JSONObject errorResponse = this.validateParams();
 		if (errorResponse != null) {
+			LOGGER.info(errorResponse.toString());
 			return errorResponse.toString();
 		}
 		boolean isSuccess = this.insertTopicKeywordJobList(this.user, this.project_name, this.topic, this.keyword, this.start_date, this.end_date);
@@ -85,13 +89,47 @@ public class AddTopic extends RootAPI {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid period values.");
 		}
 		
+		if (this.queryTopicKeywordJobListCnt(this.user, this.project_name, this.topic) > 0) {
+			return ApiResponse.error(ApiResponse.STATUS_CONFLICTS);
+		}
+		
 		return null;
 	}
 	
+	private int queryTopicKeywordJobListCnt(String user, String project_name, String topic) {
+		int recordCnt = 0;
+		Connection conn = null;
+		PreparedStatement pStmt = null;
+		ResultSet rs = null;
+		String sqlStr = "SELECT _id FROM " + TABLE_TOPIC_KEYWORD_JOB_LIST + " WHERE user = ? AND project_name = ? AND topic = ?";
+		try {
+			conn = DBUtil.getConn();
+			pStmt = conn.prepareStatement(sqlStr);
+			pStmt.setObject(1, user);
+            pStmt.setObject(2, project_name);
+            pStmt.setObject(3, topic);
+			rs = pStmt.executeQuery();
+			while (rs.next()) {
+				String _id = rs.getString("_id");
+				LOGGER.info("_id = " + _id);
+				recordCnt++;
+			}
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, pStmt, conn);
+		}
+		if (recordCnt > 0) {
+			LOGGER.info("Duplicated recordCnt = " + recordCnt);
+		}
+		return recordCnt;
+	}
+
 	private boolean insertTopicKeywordJobList(String user, String project_name, String topic, String keyword, String start_date, String end_date) {
 		Connection conn = null;
 		PreparedStatement pStmt = null;
-		String sqlStr="INSERT INTO topic_keyword_job_list (user, project_name, topic, keyword, start_date, end_date, create_time, state) values (?, ?, ?, ?, ?, ?, ?, ?)";
+		String sqlStr="INSERT INTO " + TABLE_TOPIC_KEYWORD_JOB_LIST + " (user, project_name, topic, keyword, start_date, end_date, create_time, state) values (?, ?, ?, ?, ?, ?, ?, ?)";
         try {
 			conn = DBUtil.getConn();
 			pStmt = conn.prepareStatement(sqlStr);
