@@ -5,7 +5,6 @@ import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,7 +35,6 @@ public abstract class RootAPI {
 	protected static final String TABLE_INDUSTRY_FEATURE_KEYWORD_LIST = "ibuzz_voc.industry_feature_keyword_list";
 	protected static final String TABLE_FEATURE_REPUTATION = "ibuzz_voc.feature_reputation";
 	protected static final String TABLE_TOPIC_KEYWORD_JOB_LIST = "ibuzz_voc.topic_keyword_job_list";
-	protected static final SimpleDateFormat SDF_DATE_STR = new SimpleDateFormat("yyyy-MM-dd");
 	private static final Map<String, String> PARAM_COLUMN_MAP = new HashMap<String, String>();
 	static {
 		PARAM_COLUMN_MAP.put("industry", "industry");
