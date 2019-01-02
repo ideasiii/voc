@@ -1,5 +1,7 @@
 package com.voc.api;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
@@ -257,6 +260,23 @@ public abstract class RootAPI {
 			e.printStackTrace();
 		} finally {
 			DBUtil.close(rs, preparedStatement, conn);
+		}
+		return null;
+	}
+
+	protected String requestBody(HttpServletRequest request) {
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader((ServletInputStream) request.getInputStream(), "utf-8"));
+			StringBuffer sb = new StringBuffer("");
+			String temp;
+			while ((temp = br.readLine()) != null) {
+				sb.append(temp);
+			}
+			br.close();
+			return sb.toString();
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
 		}
 		return null;
 	}
