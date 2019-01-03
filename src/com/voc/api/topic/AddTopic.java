@@ -60,13 +60,32 @@ public class AddTopic extends RootAPI {
 	
 	private void requestAndTrimParams(HttpServletRequest request) {
 		String jsonStr = this.requestBody(request);
-		JSONObject jSONObject = new JSONObject(jsonStr);
-		this.user = StringUtils.trimToEmpty(jSONObject.getString("user"));
-		this.project_name = StringUtils.trimToEmpty(jSONObject.getString("project_name"));
-		this.topic = StringUtils.trimToEmpty(jSONObject.getString("topic"));
-		this.keyword = StringUtils.trimToEmpty(jSONObject.getString("keyword"));
-		this.start_date = StringUtils.trimToEmpty(jSONObject.getString("start_date"));
-		this.end_date = StringUtils.trimToEmpty(jSONObject.getString("end_date"));
+		JSONObject requestJsonObj = new JSONObject();
+		if (StringUtils.isNotBlank(jsonStr)) {
+			try {
+				requestJsonObj = new JSONObject(jsonStr);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		if (requestJsonObj.has("user")) {
+			this.user = StringUtils.trimToEmpty(requestJsonObj.getString("user"));
+		}
+		if (requestJsonObj.has("project_name")) {
+			this.project_name = StringUtils.trimToEmpty(requestJsonObj.getString("project_name"));
+		}
+		if (requestJsonObj.has("topic")) {
+			this.topic = StringUtils.trimToEmpty(requestJsonObj.getString("topic"));
+		}
+		if (requestJsonObj.has("keyword")) {
+			this.keyword = StringUtils.trimToEmpty(requestJsonObj.getString("keyword"));
+		}
+		if (requestJsonObj.has("start_date")) {
+			this.start_date = StringUtils.trimToEmpty(requestJsonObj.getString("start_date"));
+		}
+		if (requestJsonObj.has("end_date")) {
+			this.end_date = StringUtils.trimToEmpty(requestJsonObj.getString("end_date"));
+		}
 	}
 	
 	private JSONObject validateParams() {
