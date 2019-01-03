@@ -273,7 +273,7 @@ public abstract class RootAPI {
 				sb.append(temp);
 			}
 			br.close();
-			String str = sb.toString();
+			String str = StringUtils.trimToEmpty(sb.toString());
 			LOGGER.info(str);
 			return str;
 		} catch (Exception e) {
