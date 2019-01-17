@@ -48,12 +48,18 @@ public abstract class RootAPI {
 		PARAM_COLUMN_MAP.put("features", "features");
 		PARAM_COLUMN_MAP.put("start_date", "date");
 		PARAM_COLUMN_MAP.put("end_date", "date");
+		
+		PARAM_COLUMN_MAP.put("user", "user");
+		PARAM_COLUMN_MAP.put("project_name", "project_name");
+		PARAM_COLUMN_MAP.put("topic", "topic");
+		PARAM_COLUMN_MAP.put("sentiment", "sentiment");
 	}
-	private static final List<String> VALID_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
-			"source", "website", "channel", "features", "start_date", "end_date", "interval");
+//	private static final List<String> VALID_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
+//			"source", "website", "channel", "features", "start_date", "end_date", "interval");
 	
 	private static final List<String> ITEM_PARAM_NAMES = Arrays.asList("industry", "brand", "series", "product",
-			"source", "website", "channel", "features");
+			"source", "website", "channel", "features", 
+			"user", "project_name", "topic", "sentiment");
 
 	public abstract String processRequest(HttpServletRequest request);
 
@@ -77,9 +83,9 @@ public abstract class RootAPI {
 		return PARAM_COLUMN_MAP.get(paramName);
 	}
 
-	protected boolean isValidParamName(String paramName) {
-		return VALID_PARAM_NAMES.contains(paramName);
-	}
+//	protected boolean isValidParamName(String paramName) {
+//		return VALID_PARAM_NAMES.contains(paramName);
+//	}
 
 	protected boolean isItemParamName(String paramName) {
 		return ITEM_PARAM_NAMES.contains(paramName);
