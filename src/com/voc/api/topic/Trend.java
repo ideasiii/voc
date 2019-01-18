@@ -26,6 +26,13 @@ import com.voc.common.Common;
 import com.voc.common.DBUtil;
 import com.voc.enums.topic.EnumTrend;
 
+/**
+* Ex:
+* http://localhost:8080/voc/topic/trend.jsp?user=tsmc&project_name=自訂汽車專案&topic=日系汽車;歐系汽車&website=壹蘋果網絡;PIXNET痞客邦&start_date=2018-12-01&end_date=2018-12-17
+* http://localhost:8080/voc/topic/trend.jsp?user=tsmc&project_name=自訂汽車專案&topic=日系汽車;歐系汽車&website=壹蘋果網絡;PIXNET痞客邦&start_date=2018-12-01&end_date=2018-12-17&limit=3&interval=monthly
+* 
+*/
+
 public class Trend extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Trend.class);
 	Map<String, String[]> orderedParameterMap = new ParameterMap<>();
@@ -145,7 +152,10 @@ public class Trend extends RootAPI {
 				StringBuffer item = new StringBuffer();
 				int i = 0;
 				for (Map.Entry<String, String[]> entry : orderedParameterMap.entrySet()) {
-					String paramName = entry.getKey();			
+					String paramName = entry.getKey();	
+					if (paramName.equals("user") || paramName.equals("project_name")) {
+						continue;
+					}
 					String columnName = getColumnName(paramName);
 					if ("website_id".equals(columnName)) {
 						columnName = "website_name";
@@ -292,6 +302,9 @@ public class Trend extends RootAPI {
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : orderedParameterMap.entrySet()) {
 			String paramName = entry.getKey();
+			if (paramName.equals("user") || paramName.equals("project_name")) {
+				continue;
+			}
 			String columnName = this.getColumnName(paramName);
 			if (!"date".equals(columnName)) {
 				if (0 == i) {
