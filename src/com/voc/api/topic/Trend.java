@@ -42,6 +42,8 @@ public class Trend extends RootAPI {
 	private String strTableName = TABLE_TOPIC_REPUTATION;
 	private String strInterval = Common.INTERVAL_DAILY;
 	private int limit = 10; // Default: 10
+	private String strStartDate;
+	private String strEndDate;
 
 	@Override
 	public String processRequest(HttpServletRequest request) {
@@ -51,10 +53,7 @@ public class Trend extends RootAPI {
 		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER).toString();
 		}
-		
-		final String strStartDate = request.getParameter("start_date");
-		final String strEndDate = request.getParameter("end_date");
-		
+
 		if (hasInterval(paramMap)) {
 			strInterval = request.getParameter("interval");
 			if (!Common.isValidInterval(strInterval)) {
@@ -62,7 +61,7 @@ public class Trend extends RootAPI {
 			}
 		}
 		
-		JSONObject errorResponse = adjustParameterOrder(paramMap);
+		JSONObject errorResponse = adjustParameterOrder(request);
 		if (null != errorResponse) {
 			return errorResponse.toString();
 		}
@@ -78,7 +77,7 @@ public class Trend extends RootAPI {
 		
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
-		boolean querySuccess = query(orderedParameterMap, strStartDate, strEndDate, resArray);
+		boolean querySuccess = query(orderedParameterMap, resArray);
 		LOGGER.info("resArray: "+ resArray );
 		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
 		
@@ -120,8 +119,7 @@ public class Trend extends RootAPI {
 		return null;
 	}
 	
-	private boolean query(Map<String, String[]> paramMap, final String strStartDate, final String strEndDate,
-			final JSONArray out) {
+	private boolean query(Map<String, String[]> paramMap, final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
@@ -403,12 +401,22 @@ public class Trend extends RootAPI {
 		return sortedJsonArray;
 	}
 	
-	private JSONObject adjustParameterOrder(Map<String, String[]> parameterMap) {
+	private JSONObject adjustParameterOrder(HttpServletRequest request) {
+		Map<String, String[]> parameterMap = request.getParameterMap();
+		final String strUser = request.getParameter("user");
+		final String strProjectName = request.getParameter("project_name");
+		strStartDate = request.getParameter("start_date");
+		strEndDate = request.getParameter("end_date");
+		
+		if (StringUtils.isBlank(strUser) || StringUtils.isBlank(strProjectName) || StringUtils.isBlank(strStartDate) || StringUtils.isBlank(strEndDate)) {
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+		}
+		
 		JSONObject errorResponse = dateValidate(parameterMap);
 		if (null != errorResponse) {
 			return errorResponse;
 		}
-
+		
 		String[] paramValues_user = null;
 		String[] paramValues_topic = null;
 		String[] paramValues_projectName = null;
