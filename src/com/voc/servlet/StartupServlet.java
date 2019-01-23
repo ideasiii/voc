@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.voc.tool.MyJiebaSegmenter;
+
 @WebServlet(name = "StartupServlet", urlPatterns = {"/StartupServlet"}, loadOnStartup = 1)
 public class StartupServlet extends HttpServlet {
 	private static final long serialVersionUID = -307475523890285345L;
@@ -16,9 +18,7 @@ public class StartupServlet extends HttpServlet {
 	@Override
     public void init(ServletConfig config) throws ServletException {
 		LOGGER.info(" ************** VOC Start... ************** ");
-		
-		// Do nothing so far
-		
+		MyJiebaSegmenter.getInstance(); // Initialize JiebaSegmenter Object (Singleton).
 	}
 
 }
