@@ -43,7 +43,7 @@ public class KeywordArticleList extends RootAPI {
 	private String channel;
 	private String sentiment;
 	
-	private String keyword; // 關鍵詞: 用程式處理 ==>TODO: 
+	private String keyword; // 關鍵詞: 用程式處理
 	
 	private String startDate; // start_date
 	private String endDate; // end_date
