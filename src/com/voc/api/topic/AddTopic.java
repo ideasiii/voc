@@ -36,6 +36,8 @@ import com.voc.common.DBUtil;
  */
 public class AddTopic extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(AddTopic.class);
+	private int _id; // inserted id
+	
 	private String user;
 	private String project_name;
 	private String topic;
@@ -53,7 +55,9 @@ public class AddTopic extends RootAPI {
 		}
 		boolean isSuccess = this.insertTopicKeywordJobList(this.user, this.project_name, this.topic, this.keyword, this.start_date, this.end_date);
 		if (isSuccess) {
-			return ApiResponse.successTemplate().toString();
+			JSONObject successObj = ApiResponse.successTemplate();
+			successObj.put("id", this._id);
+			return successObj.toString();
 		}
 		return ApiResponse.unknownError().toString();
 	}
@@ -151,7 +155,9 @@ public class AddTopic extends RootAPI {
 		String sqlStr="INSERT INTO " + TABLE_TOPIC_KEYWORD_JOB_LIST + " (user, project_name, topic, keyword, start_date, end_date, create_time, state) values (?, ?, ?, ?, ?, ?, ?, ?)";
         try {
 			conn = DBUtil.getConn();
-			pStmt = conn.prepareStatement(sqlStr);
+			conn.setAutoCommit(false);
+			
+			pStmt = conn.prepareStatement(sqlStr, PreparedStatement.RETURN_GENERATED_KEYS);
 			pStmt.setObject(1, user);
             pStmt.setObject(2, project_name);
             pStmt.setObject(3, topic);
@@ -160,10 +166,29 @@ public class AddTopic extends RootAPI {
             pStmt.setObject(6, end_date);
             pStmt.setObject(7, new Date()); // create_time: 預設寫現在時間
             pStmt.setObject(8, "尚未分析"); // state: 預設寫 "尚未分析"
-            pStmt.execute();
+            pStmt.executeUpdate();
+            
+			ResultSet generatedKeys = pStmt.getGeneratedKeys();
+			if (generatedKeys.next()) {
+				this._id = generatedKeys.getInt(1);
+			} else {
+				try {
+					conn.rollback();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				LOGGER.error("INSERT failed, no ID obtained.");
+				return false;
+			}
+			conn.commit();
             LOGGER.info("INSERT OK!!!");
 			return true;
 		} catch (Exception e) {
+			try {
+				conn.rollback();
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
 		} finally {
