@@ -192,7 +192,7 @@ public class UpdateTopic extends RootAPI {
 	private boolean updateTopicKeywordJobList() {
 		Connection conn = null;
 		PreparedStatement pStmt = null;
-		String sqlStr="UPDATE " + TABLE_TOPIC_KEYWORD_JOB_LIST + " SET user=?, project_name=?, topic=?, keyword=?, start_date=?, end_date=? WHERE _id=?";
+		String sqlStr="UPDATE " + TABLE_TOPIC_KEYWORD_JOB_LIST + " SET user=?, project_name=?, topic=?, keyword=?, start_date=?, end_date=?, state=?, progress=?, update_time=? WHERE _id=?";
         try {
 			conn = DBUtil.getConn();
 			pStmt = conn.prepareStatement(sqlStr);
@@ -202,7 +202,10 @@ public class UpdateTopic extends RootAPI {
             pStmt.setObject(4, this.keyword);
             pStmt.setObject(5, this.start_date);
             pStmt.setObject(6, this.end_date);
-            pStmt.setObject(7, this.id);
+            pStmt.setObject(7, "尚未分析"); // state
+            pStmt.setObject(8, 0);       // progress
+            pStmt.setObject(9, null);    // update_time
+            pStmt.setObject(10, this.id);
             pStmt.execute();
             LOGGER.info("UPDATE OK!!!");
 			return true;
