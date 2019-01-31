@@ -42,10 +42,10 @@ public class TopicList extends RootAPI {
 	}
 	
 	private JSONObject requestParams(HttpServletRequest request) {
-		String strJson = requestBody(request);
-		JSONObject jobj = new JSONObject(strJson);
-		strUser = jobj.getString("user");
-		strProjectName = jobj.getString("project_name");
+		//String strJson = requestBody(request);
+		//JSONObject jobj = new JSONObject(strJson);
+		strUser = StringUtils.trimToEmpty(request.getParameter("user"));
+		strProjectName = StringUtils.trimToEmpty(request.getParameter("project_name"));
 		
 		if (StringUtils.isBlank(strUser) ||  StringUtils.isBlank(strProjectName)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);

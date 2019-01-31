@@ -42,9 +42,9 @@ public class TopicState extends RootAPI {
 	}
 	
 	private JSONObject requestParams(HttpServletRequest request) {
-		String strJson = requestBody(request);
-		JSONObject jobj = new JSONObject(strJson);
-		strId = jobj.getString("id");
+		//String strJson = requestBody(request);
+		//JSONObject jobj = new JSONObject(strJson);
+		strId = StringUtils.trimToEmpty(request.getParameter("id"));
 		if (StringUtils.isBlank(strId)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
