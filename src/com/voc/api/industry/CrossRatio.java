@@ -22,6 +22,7 @@ import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+import com.voc.enums.EnumSentiment;
 
 /**
  * 查詢產業分析交叉分析口碑總數:
@@ -49,7 +50,11 @@ import com.voc.common.DBUtil;
  * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation WHERE brand IN ('BENZ', 'BMW') AND website_name IN('PTT', 'Mobile01') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id ORDER BY count DESC;
  * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=BENZ;BMW&sec_filter=website&sec_value=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-02&limit=5
  * 
+ * Requirement Change: 
+ * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
  * 
+ * EX:
+ * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=MAZDA;BENZ&sec_filter=sentiment&sec_value=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&limit=10
  * 
  * 
  */
@@ -193,6 +198,12 @@ public class CrossRatio extends RootAPI {
 			while (rs.next()) {
 				String main_item = rs.getString(this.mainSelectCol);
 				String sec_item = rs.getString(this.secSelectCol);
+				if ("sentiment".equals(this.mainSelectCol)) {
+					main_item = EnumSentiment.getEnum(main_item).getName();
+				}
+				if ("sentiment".equals(this.secSelectCol)) {
+					sec_item = EnumSentiment.getEnum(sec_item).getName();
+				}
 				int count = rs.getInt("count");
 				LOGGER.debug("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count);
 				
@@ -308,6 +319,12 @@ public class CrossRatio extends RootAPI {
 //				mainValueArr[i] = this.getWebsiteNameById(mainValue);
 //			}
 //		}
+		if ("sentiment".equals(this.mainFilter)) {
+			for (int i = 0; i < mainValueArr.length; i++) {
+				String mainValue = mainValueArr[i];
+				mainValueArr[i] = EnumSentiment.getEnum(mainValue).getName();
+			}
+		}
 		if ("channel".equals(this.secFilter)) {
 			for (int i = 0; i < secValueArr.length; i++) {
 				String secValue = secValueArr[i];
@@ -322,6 +339,12 @@ public class CrossRatio extends RootAPI {
 //				secValueArr[i] = this.getWebsiteNameById(secValue);
 //			}
 //		}
+		if ("sentiment".equals(this.secFilter)) {
+			for (int i = 0; i < secValueArr.length; i++) {
+				String secValue = secValueArr[i];
+				secValueArr[i] = EnumSentiment.getEnum(secValue).getName();
+			}
+		}
 	}
 
 	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {
