@@ -21,6 +21,7 @@ import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+import com.voc.enums.EnumSentiment;
 import com.voc.enums.industry.EnumTotalCount;
 
 /**
@@ -59,6 +60,14 @@ import com.voc.enums.industry.EnumTotalCount;
  * SELECT brand, website_name, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation where brand in ('BENZ', 'BMW') and website_name in('PTT', 'Mobile01') and DATE_FORMAT(date, '%Y-%m-%d') >= '2018-05-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-05-02' GROUP BY brand, website_id ORDER BY count DESC LIMIT 5;
  * http://localhost:8080/voc/industry/total-count.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-02&limit=5
  * http://localhost:8080/voc/industry/total-count.jsp?website=PTT;Mobile01&brand=BENZ;BMW&start_date=2018-05-01&end_date=2018-05-02
+ * 
+ * Requirement Change: 
+ * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * 
+ * EX:
+ * SELECT brand, sentiment, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation where brand in ('MAZDA','BENZ') and sentiment in('1','0','-1') and DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-03-31' GROUP BY brand, sentiment ORDER BY count DESC LIMIT 10;
+ * http://localhost:8080/voc/industry/total-count.jsp?brand=MAZDA;BENZ&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&limit=10
+ * 
  * 
  * Note: 呼叫API時所下的參數若包含 product 或 series, 就使用 ibuzz_voc.product_reputation (產品表格), 否則就使用 ibuzz_voc.brand_reputation (品牌表格)
  *       ==>See RootAPI.java
@@ -127,7 +136,10 @@ public class TotalCount extends RootAPI {
 						columnName = "channel_name";
 					}
 					if (!"date".equals(columnName)) {
-						String s = rs.getString(columnName);;
+						String s = rs.getString(columnName);
+						if ("sentiment".equals(paramName)) {
+							s = EnumSentiment.getEnum(s).getName();
+						}
 						if (i == 0) {
 							item.append(s);
 						} else {
@@ -228,6 +240,7 @@ public class TotalCount extends RootAPI {
 		String[] paramValues_source = null;
 		String[] paramValues_website = null;
 		String[] paramValues_channel = null;
+		String[] paramValues_sentiment = null;
 		String[] paramValues_features = null;
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
@@ -277,6 +290,9 @@ public class TotalCount extends RootAPI {
 				break;
 			case PARAM_COLUMN_CHANNEL:
 				paramValues_channel = trimedValues;
+				break;
+			case PARAM_COLUMN_SENTIMENT:
+				paramValues_sentiment = trimedValues;
 				break;
 			case PARAM_COLUMN_FEATURES:
 				paramValues_features = trimedValues;
@@ -384,6 +400,24 @@ public class TotalCount extends RootAPI {
 					String secValue = secItemArr[i];
 					// secItemArr[i] = this.getChannelNameById(this.tableName, secValue);
 					secItemArr[i] = this.getChannelNameById(secValue);
+				}
+			}
+			itemCnt++;
+		}
+		if (paramValues_sentiment != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_SENTIMENT.getParamName();
+			this.orderedParameterMap.put(paramName, paramValues_sentiment);
+			if (itemCnt == 0) {
+				mainItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = EnumSentiment.getEnum(mainValue).getName();
+				}
+			} else if (itemCnt == 1) {
+				secItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String secValue = secItemArr[i];
+					secItemArr[i] = EnumSentiment.getEnum(secValue).getName();
 				}
 			}
 			itemCnt++;
