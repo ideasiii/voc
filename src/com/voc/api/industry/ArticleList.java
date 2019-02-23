@@ -74,7 +74,14 @@ import com.voc.common.DBUtil;
  * EX: API URL:
  * http://localhost:8080/voc/industry/article-list.jsp?brand=BENZ&series=掀背車&product=B180&website=Mobile01;PTT&channel=5ad450dea85d0a2afac34a9b;5ad450dea85d0a2afac34aa2&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
  * http://localhost:8080/voc/industry/article-list.jsp?brand=BENZ;BMW&series=掀背車&product=B180&website=Mobile01;PTT&channel=5ad450dea85d0a2afac34a9b;5ad450dea85d0a2afac34aa2&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
- *  
+ * 
+ * Requirement Change: 
+ * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * 
+ * EX: 
+ * http://localhost:8080/voc/industry/article-list.jsp?brand=MAZDA;BENZ&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&page_num=1&page_size=10
+ * 
+ * 
  */
 public class ArticleList extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleList.class);
@@ -87,6 +94,7 @@ public class ArticleList extends RootAPI {
 	private String website; // 多個參數值 (website id --> 改成website_name)
 	private String channel; // 多個參數值 (channel id)
 	private String features;
+	private String sentiment; // 欲查詢評價 (1:偏正、0:中性、-1:偏負)
 	private String startDate; // start_date
 	private String endDate; // end_date
 	private int pageNum = 1; // page_num: 頁數 Default: 1
@@ -100,6 +108,7 @@ public class ArticleList extends RootAPI {
 	private String[] sourceValueArr;
 	private String[] websiteNameValueArr;
 	private String[] channelIdValueArr;
+	private String[] sentimentValueArr;
 	
 	private String tableName; // brand_reputation OR product_reputation
 	
@@ -204,6 +213,18 @@ public class ArticleList extends RootAPI {
 		if (!StringUtils.isEmpty(features)) {
 			// TODO: Do something later... 
 		}
+		if (!StringUtils.isEmpty(sentiment)) {
+			if (conditionCnt > 0) {
+				selectSQL.append("AND ");
+			}
+			selectSQL.append("sentiment IN (");
+			for (int i = 0; i < sentimentValueArr.length; i++) {
+				if (i == 0) selectSQL.append("?");
+				else selectSQL.append(",?");
+			}
+			selectSQL.append(") ");
+			conditionCnt++;
+		}
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 		// selectSQL.append("ORDER BY date DESC");
@@ -258,6 +279,13 @@ public class ArticleList extends RootAPI {
 		if (!StringUtils.isEmpty(features)) {
 			// TODO: Do something later... 
 		}
+		if (!StringUtils.isEmpty(sentiment)) {
+			for (String sentiment : sentimentValueArr) {
+				int parameterIndex = idx + 1;
+				preparedStatement.setObject(parameterIndex, sentiment);
+				idx++;
+			}
+		}
 		
 		int startDateIndex = idx + 1;
 		preparedStatement.setObject(startDateIndex, this.startDate);
@@ -302,6 +330,7 @@ public class ArticleList extends RootAPI {
 		this.website = StringUtils.trimToEmpty(request.getParameter("website"));   // 多個參數值 (website id --> 改成website_name)
 		this.channel = StringUtils.trimToEmpty(request.getParameter("channel"));   // 多個參數值 (channel id)
 		this.features = StringUtils.trimToEmpty(request.getParameter("features"));
+		this.sentiment = StringUtils.trimToEmpty(request.getParameter("sentiment")); 
 		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
 		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 
@@ -333,12 +362,13 @@ public class ArticleList extends RootAPI {
 		this.sourceValueArr = this.source.split(PARAM_VALUES_SEPARATOR);
 		this.websiteNameValueArr = this.website.split(PARAM_VALUES_SEPARATOR); // website names
 		this.channelIdValueArr = this.channel.split(PARAM_VALUES_SEPARATOR); // channel ids
+		this.sentimentValueArr = this.sentiment.split(PARAM_VALUES_SEPARATOR);
 	}
 	
 	private JSONObject validateParams() {
 		if (StringUtils.isBlank(this.brand) && StringUtils.isBlank(this.series) && StringUtils.isBlank(this.product) 
 				&& StringUtils.isBlank(this.source) && StringUtils.isBlank(this.website) && StringUtils.isBlank(this.channel) 
-				&& StringUtils.isBlank(this.features)) {
+				&& StringUtils.isBlank(this.features) && StringUtils.isBlank(this.sentiment)) {
 			
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
