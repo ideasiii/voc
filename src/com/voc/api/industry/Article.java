@@ -65,7 +65,7 @@ public class Article extends RootAPI {
 		ResultSet rs = null;
 		try {
 			StringBuffer queryArticleSQL = new StringBuffer();
-			queryArticleSQL.append("SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count ");
+			queryArticleSQL.append("SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count, sentiment_score, sentiment ");
 			queryArticleSQL.append("FROM ").append(TABLE_POST_LIST).append(" ");
 			queryArticleSQL.append("WHERE id = ? ");
 			
@@ -85,6 +85,8 @@ public class Article extends RootAPI {
 				article.setDate(rs.getString("date"));
 				article.setChannel(rs.getString("website_name") + "_" + rs.getString("channel_name"));
 				article.setComment_count(rs.getInt("comment_count"));
+				article.setSentiment_score((Double)rs.getObject("sentiment_score"));
+				article.setSentiment((Integer)rs.getObject("sentiment"));
 			}
 			return article;
 		} catch (Exception e) {
