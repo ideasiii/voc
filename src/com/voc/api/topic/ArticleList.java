@@ -32,11 +32,26 @@ import com.voc.common.DBUtil;
  *   ==>SELECT id AS post_id FROM ibuzz_voc.topic_reputation 
  *      WHERE user = 'tsmc' AND project_name = '自訂汽車專案' AND topic IN ('日系汽車','歐系汽車') AND website_name IN ('PTT','Mobile01') 
  *      AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-12-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-12-31' 
+ *      
+ *   ==>Test for sentiment: 
+ *   	SELECT id AS post_id FROM ibuzz_voc.topic_reputation 
+ *   	WHERE user = '5bff9b81617d854c850a0d15' AND project_name = '自訂汽車專案' AND topic IN ('日系汽車','歐系汽車') 
+ *   	AND sentiment IN ('1','0','-1')
+ *   	AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31';
+ *      
  * - SQL_2:   
  *   ==>SELECT id, url, title, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count 
  *      FROM ibuzz_voc.post_list 
  *      WHERE id in ('5c0726dea85d0a38779609e3','5c0f1edba85d0a40d96ae734','5c1469c5a85d0a55f12fa3b3',...) 
  *      ORDER BY date DESC LIMIT 0, 10
+ * 
+ * 
+ * Requirement Change: 
+ * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * 
+ * EX:
+ * http://localhost:8080/voc/topic/article-list.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&topic=日系汽車;歐系汽車&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31&page_num=1&page_size=10     
+ * 
  */
 public class ArticleList extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleList.class);
@@ -49,7 +64,7 @@ public class ArticleList extends RootAPI {
 	private String source;
 	private String website;
 	private String channel;
-	private String sentiment;
+	private String sentiment; // 欲查詢評價 (1:偏正、0:中性、-1:偏負)
 	
 	private String startDate; // start_date
 	private String endDate; // end_date
@@ -125,7 +140,7 @@ public class ArticleList extends RootAPI {
 			}
 			selectSQL.append(") ");
 		}
-		if (!StringUtils.isEmpty(sentiment)) { // 尚未啟用: TODO: Test later... 
+		if (!StringUtils.isEmpty(sentiment)) {
 			selectSQL.append("AND sentiment IN (");
 			for (int i = 0; i < sentimentValueArr.length; i++) {
 				if (i == 0) selectSQL.append("?");
@@ -173,7 +188,7 @@ public class ArticleList extends RootAPI {
 				idx++;
 			}
 		}
-		if (!StringUtils.isEmpty(sentiment)) { // 尚未啟用: TODO: Test later... 
+		if (!StringUtils.isEmpty(sentiment)) {
 			for (String sentimentValue : sentimentValueArr) {
 				int parameterIndex = idx + 1;
 				preparedStatement.setObject(parameterIndex, sentimentValue);
