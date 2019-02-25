@@ -31,6 +31,11 @@ import com.voc.common.DBUtil;
  * 	WHERE industry IN ('汽車產業') AND features IN ('諮詢', '期待') AND website_name IN ('NowNews','PTT') AND channel_id IN ('5ad450d9a85d0a2afac3466d','5ad450dfa85d0a2afac34b6d') 
  * 	AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-06-30';
  * 
+ *  SELECT DISTINCT id AS post_id FROM ibuzz_voc.feature_reputation 
+ *  WHERE industry IN ('汽車','單車') AND features IN ('E-NCAP', 'ADS','佔空間') AND sentiment IN ('1','0','-1') 
+ *  AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31';
+ *  
+ * 
  * Step_2: 取得文章列表(post_list)資訊(分頁): 
  * 	SELECT id, url, title, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count 
  * 	FROM ibuzz_voc.post_list 
@@ -41,6 +46,12 @@ import com.voc.common.DBUtil;
  * EX: API URL:
  * http://localhost:8080/voc/industry/feature-article-list.jsp?industry=汽車產業&features=諮詢;期待&website=NowNews;PTT&channel=5ad450d9a85d0a2afac3466d;5ad450dfa85d0a2afac34b6d&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
  * 
+ * 
+ * Requirement Change: 
+ * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * 
+ * EX: 
+ * http://localhost:8080/voc/industry/feature-article-list.jsp?industry=汽車;單車&features=E-NCAP;ADS;佔空間&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31&page_num=1&page_size=10
  *
  */
 public class FeatureArticleList extends RootAPI {
@@ -55,7 +66,7 @@ public class FeatureArticleList extends RootAPI {
 	private String website; // website_name
 	private String channel; // channel id
 	private String features; // 必填: 
-	private String sentiment; // 欲查詢評價 (尚未啟用) (1:正評、0:中立、-1:負評)
+	private String sentiment; // 欲查詢評價 (1:偏正、0:中性、-1:偏負)
 	
 	private String startDate; // 必填: start_date
 	private String endDate; // 必填: end_date
@@ -70,7 +81,7 @@ public class FeatureArticleList extends RootAPI {
 	private String[] websiteValueArr;
 	private String[] channelValueArr;
 	private String[] featuresValueArr;
-//	private String[] sentimentValueArr; // 尚未啟用
+	private String[] sentimentValueArr;
 
 	@Override
 	public String processRequest(HttpServletRequest request) {
@@ -135,7 +146,7 @@ public class FeatureArticleList extends RootAPI {
 		this.websiteValueArr = this.website.split(PARAM_VALUES_SEPARATOR); // website names
 		this.channelValueArr = this.channel.split(PARAM_VALUES_SEPARATOR); // channel ids
 		this.featuresValueArr = this.features.split(PARAM_VALUES_SEPARATOR);
-//		this.sentimentValueArr = this.sentiment.split(PARAM_VALUES_SEPARATOR);
+		this.sentimentValueArr = this.sentiment.split(PARAM_VALUES_SEPARATOR);
 	}
 	
 	private JSONObject validateParams() {
@@ -288,11 +299,18 @@ public class FeatureArticleList extends RootAPI {
 			selectSQL.append(") ");
 			conditionCnt++;
 		}
-		
 		if (!StringUtils.isEmpty(sentiment)) {
-			// 尚未啟用
+			if (conditionCnt > 0) {
+				selectSQL.append("AND ");
+			}
+			selectSQL.append("sentiment IN (");
+			for (int i = 0; i < sentimentValueArr.length; i++) {
+				if (i == 0) selectSQL.append("?");
+				else selectSQL.append(",?");
+			}
+			selectSQL.append(") ");
+			conditionCnt++;
 		}
-		
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 		
@@ -355,9 +373,12 @@ public class FeatureArticleList extends RootAPI {
 				idx++;
 			}
 		}
-		
 		if (!StringUtils.isEmpty(sentiment)) {
-			// 尚未啟用
+			for (String sentiment : sentimentValueArr) {
+				int parameterIndex = idx + 1;
+				preparedStatement.setObject(parameterIndex, sentiment);
+				idx++;
+			}
 		}
 		
 		int startDateIndex = idx + 1;
