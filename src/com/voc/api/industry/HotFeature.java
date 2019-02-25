@@ -25,7 +25,9 @@ import com.voc.common.DBUtil;
  * 
  * http://localhost:8080/voc/industry/hot-feature.jsp?industry=汽車產業&features=使用問題&website=Mobile01&start_date=2018-05-01&end_date=2018-05-15&limit=15
  * 
- *
+ * 新增sentiment:
+ * http://localhost:8080/voc/industry/hot-feature.jsp?industry=輪胎&start_date=2019-02-09&end_date=2019-02-26&limit=15&sentiment=0
+ * http://localhost:8080/voc/industry/hot-feature.jsp?industry=輪胎&features=種類&start_date=2019-02-09&end_date=2019-02-26&limit=15&sentiment=1
  */
 
 public class HotFeature extends RootAPI {
@@ -51,7 +53,7 @@ public class HotFeature extends RootAPI {
 	private String[] arrWebsite;
 	private String[] arrChannel;
 	private String[] arrFeatureGroup;
-//	private String[] arrSentiment;
+	private String[] arrSentiment;
 	
 	private List<String> featureList; // query from keyword list table
 	
@@ -120,7 +122,7 @@ public class HotFeature extends RootAPI {
 		arrWebsite = strWebsite.split(PARAM_VALUES_SEPARATOR);
 		arrChannel = strChannel.split(PARAM_VALUES_SEPARATOR);
 		arrFeatureGroup = strFeatureGroup.split(PARAM_VALUES_SEPARATOR);
-	//	arrSentiment = strSentiment.split(PARAM_VALUES_SEPARATOR);
+		arrSentiment = strSentiment.split(PARAM_VALUES_SEPARATOR);
 	}
 	
 	private JSONObject validate() {
@@ -323,7 +325,16 @@ public class HotFeature extends RootAPI {
 			}
 		
 		if (!StringUtils.isBlank(strSentiment)) {
-			// 尚未啟用
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+		sql.append("sentiment IN (");
+		for (int i = 0; i < arrSentiment.length; i++) {
+			if (0 == i) sql.append(" ?");
+			else sql.append(", ?");
+		}
+		sql.append(") ");
+		nCount++;
 		}
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
@@ -396,7 +407,12 @@ public class HotFeature extends RootAPI {
 			}
 		
 		if (!StringUtils.isBlank(strSentiment)) {
-			// 尚未啟用
+			for (String v : arrSentiment) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				// LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
+				}
 		}
 		
 		int startDateIndex = idx + 1;

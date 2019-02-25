@@ -24,6 +24,7 @@ import com.voc.common.ApiResponse;
 import com.voc.common.ApiUtil;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+import com.voc.enums.EnumSentiment;
 import com.voc.enums.topic.EnumTrend;
 
 /**
@@ -162,6 +163,9 @@ public class Trend extends RootAPI {
 					}
 					if (!"date".equals(columnName)) {
 						String str = rs.getString(columnName);
+						if (paramName.equals("sentiment")) {
+							str = EnumSentiment.getEnum(str).getName();
+						}
 						if (i == 0) {
 							item.append(str);
 						} else {
@@ -550,6 +554,20 @@ public class Trend extends RootAPI {
 		if (paramValues_sentiment != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_SENTIMENT.getParamName();
 			orderedParameterMap.put(paramName, paramValues_sentiment);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = EnumSentiment.getEnum(mainValue).getName();
+				}
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String secValue = secItemArr[i];
+					secItemArr[i] = EnumSentiment.getEnum(secValue).getName();
+				}
+			}
+			itemCnt++;
 		}
 		
 		if (0 == itemCnt) {

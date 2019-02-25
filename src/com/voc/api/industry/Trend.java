@@ -24,6 +24,7 @@ import com.voc.common.ApiResponse;
 import com.voc.common.ApiUtil;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+import com.voc.enums.EnumSentiment;
 import com.voc.enums.industry.EnumTrend;
 
 /**
@@ -32,7 +33,8 @@ import com.voc.enums.industry.EnumTrend;
  * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-15
  * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-15&limit=5
  * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-15&limit=3
- * 
+ * 新增sentiment:
+ * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&start_date=2019-01-01&end_date=2019-02-15&limit=3&sentiment=1
  */
 public class Trend extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Trend.class);
@@ -157,6 +159,9 @@ public class Trend extends RootAPI {
 					}
 					if (!"date".equals(columnName)) {
 						String str = rs.getString(columnName);
+						if (paramName.equals("sentiment")) {
+							str = EnumSentiment.getEnum(str).getName();
+						}
 						if (i == 0) {
 							item.append(str);
 						} else {
@@ -415,6 +420,7 @@ public class Trend extends RootAPI {
 		String[] paramValues_source = null;
 		String[] paramValues_website = null;
 		String[] paramValues_channel = null;
+		String[] paramValues_sentiment = null;
 		String[] paramValues_features = null;
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
@@ -452,6 +458,9 @@ public class Trend extends RootAPI {
 				break;
 			case PARAM_COLUMN_CHANNEL:
 				paramValues_channel = values;
+				break;
+			case PARAM_COLUMN_SENTIMENT:
+				paramValues_sentiment = values;
 				break;
 			case PARAM_COLUMN_FEATURES:
 				paramValues_features = values;
@@ -560,6 +569,24 @@ public class Trend extends RootAPI {
 					String mainValue = secItemArr[i];
 					// secItemArr[i] = this.getChannelNameById(strTableName, mainValue);
 					secItemArr[i] = this.getChannelNameById(mainValue);
+				}
+			}
+			itemCnt++;
+		}
+		if (paramValues_sentiment != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_SENTIMENT.getParamName();
+			orderedParameterMap.put(paramName, paramValues_sentiment);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = EnumSentiment.getEnum(mainValue).getName();
+				}
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String secValue = secItemArr[i];
+					secItemArr[i] = EnumSentiment.getEnum(secValue).getName();
 				}
 			}
 			itemCnt++;
