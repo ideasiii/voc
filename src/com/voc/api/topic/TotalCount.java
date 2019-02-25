@@ -21,6 +21,7 @@ import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+import com.voc.enums.EnumSentiment;
 import com.voc.enums.topic.EnumTotalCount;
 
 /**
@@ -44,6 +45,22 @@ import com.voc.enums.topic.EnumTotalCount;
  *      WHERE user in ('tsmc') AND project_name in ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') 
  *      AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-12-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-12-31' 
  *      GROUP BY topic ORDER BY count DESC LIMIT 10
+ *      
+ *   
+ * Requirement Change: 
+ * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * 
+ * EX:
+ * - URL: 
+ *   ==>http://localhost:8080/voc/topic/total-count.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&topic=歐系汽車;日系汽車&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31
+ * - SQL:
+ *   ==>SELECT topic ,sentiment ,SUM(reputation) AS count FROM ibuzz_voc.topic_reputation 
+ *      WHERE user in ('5bff9b81617d854c850a0d15') AND project_name in ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') 
+ *      AND sentiment in ('1','0','-1') 
+ *      AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31' 
+ *      GROUP BY topic, sentiment ORDER BY count DESC LIMIT 5;
+ * 
+ * 
  * 
  */
 public class TotalCount extends RootAPI {
@@ -112,7 +129,10 @@ public class TotalCount extends RootAPI {
 						columnName = "channel_name";
 					}
 					if (!"date".equals(columnName)) {
-						String s = rs.getString(columnName);;
+						String s = rs.getString(columnName);
+						if ("sentiment".equals(paramName)) {
+							s = EnumSentiment.getEnum(s).getName();
+						}
 						if (i == 0) {
 							item.append(s);
 						} else {
@@ -370,10 +390,18 @@ public class TotalCount extends RootAPI {
 			this.orderedParameterMap.put(paramName, paramValues_sentiment);
 			if (itemCnt == 0) {
 				mainItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < mainItemArr.length; i++) {
+					String mainValue = mainItemArr[i];
+					mainItemArr[i] = EnumSentiment.getEnum(mainValue).getName();
+				}
 			} else if (itemCnt == 1) {
 				secItemArr = paramValues_sentiment[0].split(PARAM_VALUES_SEPARATOR);
+				for (int i = 0; i < secItemArr.length; i++) {
+					String secValue = secItemArr[i];
+					secItemArr[i] = EnumSentiment.getEnum(secValue).getName();
+				}
 			}
-			// itemCnt++;
+			itemCnt++;
 		}
 		
 		// topic, source, website, channel 至少須帶其中一個參數
