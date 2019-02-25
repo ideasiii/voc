@@ -22,6 +22,7 @@ import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+import com.voc.enums.EnumSentiment;
 
 /**
  * 查詢自訂主題分析交叉分析口碑總數: 查詢時間區間內各項目交叉分析的口碑總數及比例
@@ -35,6 +36,21 @@ import com.voc.common.DBUtil;
  *   	WHERE user = 'tsmc' AND project_name = '自訂汽車專案' AND topic IN ('日系汽車','歐系汽車') AND website_name IN ('PTT','Mobile01') 
  *   	AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-12-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-12-31' 
  *   	GROUP BY topic, website_name ORDER BY count DESC
+ *   
+ * 
+ * Requirement Change: 
+ * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * 
+ * EX:
+ * - URL:  
+ *   ==>http://localhost:8080/voc/topic/cross-ratio.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&main_filter=topic&main_value=歐系汽車;日系汽車&sec_filter=sentiment&sec_value=1;0;-1&start_date=2019-01-01&end_date=2019-12-31&limit=5 
+ * - SQL:
+ *   ==>SELECT topic, sentiment, SUM(reputation) AS count FROM ibuzz_voc.topic_reputation 
+ *   WHERE user = '5bff9b81617d854c850a0d15' AND project_name = '自訂汽車專案' AND topic IN ('歐系汽車','日系汽車') 
+ *   AND sentiment IN ('1','0','-1') 
+ *   AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31' 
+ *   GROUP BY topic, sentiment ORDER BY count DESC;
+ * 
  * 
  */
 public class CrossRatio extends RootAPI {
@@ -179,6 +195,12 @@ public class CrossRatio extends RootAPI {
 			while (rs.next()) {
 				String main_item = rs.getString(this.mainSelectCol);
 				String sec_item = rs.getString(this.secSelectCol);
+				if ("sentiment".equals(this.mainSelectCol)) {
+					main_item = EnumSentiment.getEnum(main_item).getName();
+				}
+				if ("sentiment".equals(this.secSelectCol)) {
+					sec_item = EnumSentiment.getEnum(sec_item).getName();
+				}
 				int count = rs.getInt("count");
 				LOGGER.debug("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count);
 				
@@ -294,6 +316,12 @@ public class CrossRatio extends RootAPI {
 //				mainValueArr[i] = this.getWebsiteNameById(mainValue);
 //			}
 //		}
+		if ("sentiment".equals(this.mainFilter)) {
+			for (int i = 0; i < mainValueArr.length; i++) {
+				String mainValue = mainValueArr[i];
+				mainValueArr[i] = EnumSentiment.getEnum(mainValue).getName();
+			}
+		}
 		if ("channel".equals(this.secFilter)) {
 			for (int i = 0; i < secValueArr.length; i++) {
 				String secValue = secValueArr[i];
@@ -308,6 +336,12 @@ public class CrossRatio extends RootAPI {
 //				secValueArr[i] = this.getWebsiteNameById(secValue);
 //			}
 //		}
+		if ("sentiment".equals(this.secFilter)) {
+			for (int i = 0; i < secValueArr.length; i++) {
+				String secValue = secValueArr[i];
+				secValueArr[i] = EnumSentiment.getEnum(secValue).getName();
+			}
+		}
 	}
 
 	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {
