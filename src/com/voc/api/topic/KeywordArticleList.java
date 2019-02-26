@@ -27,8 +27,17 @@ import com.voc.common.DBUtil;
  * 
  * EX-1:
  * - URL:
- *   ==>http://localhost:8080/voc/topic/keyword-article-list.jsp?user=tsmc&project_name=自訂汽車專案&topic=日系汽車;歐系汽車&website=PTT;Mobile01&keyword=挑戰&start_date=2018-12-01&end_date=2018-12-31&page_num=1&page_size=3    
+ *   ==>http://localhost:8080/voc/topic/keyword-article-list.jsp?user=tsmc&project_name=自訂汽車專案&topic=日系汽車;歐系汽車&website=PTT;Mobile01&keyword=挑戰&start_date=2018-12-01&end_date=2018-12-31&page_num=1&page_size=3
+ *   ==>http://localhost:8080/voc/topic/keyword-article-list.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&website=PTT;Mobile01&keyword=挑戰&start_date=2019-01-01&end_date=2019-12-31&page_num=1&page_size=3
+ *   ==>http://localhost:8080/voc/topic/keyword-article-list.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&website=PTT;Mobile01&sentiment=1;0;-1&keyword=挑戰&start_date=2019-01-01&end_date=2019-12-31&page_num=1&page_size=3
  * 
+ * SQL Example:
+ *   SELECT id AS post_id FROM ibuzz_voc.topic_reputation 
+ *   WHERE user = '5bff9b81617d854c850a0d15' AND project_name = '自訂汽車專案' AND website_name IN ('PTT','Mobile01') 
+ *   AND sentiment IN ('1','0','-1') 
+ *   AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31'
+ *   
+ *   
  */
 public class KeywordArticleList extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(KeywordArticleList.class);
@@ -74,7 +83,11 @@ public class KeywordArticleList extends RootAPI {
 		if (toIndex > maxIdx) {
 			toIndex = maxIdx;
 		}
-		List<ArticleModel.Article> pageList = articleList.subList(this.pageSize * (this.pageNum - 1), toIndex);
+		List<ArticleModel.Article> pageList = new ArrayList<ArticleModel.Article>();
+		if (articleList != null && articleList.size() > 0) {
+			pageList = articleList.subList(this.pageSize * (this.pageNum - 1), toIndex);
+		}
+		
 		if (pageList != null) {
 			ArticleListModel articleListModel = new ArticleListModel();
 			articleListModel.setSuccess(true);
@@ -126,7 +139,7 @@ public class KeywordArticleList extends RootAPI {
 			}
 			selectSQL.append(") ");
 		}
-		if (!StringUtils.isEmpty(sentiment)) { // 尚未啟用: TODO: Test later... 
+		if (!StringUtils.isEmpty(sentiment)) { 
 			selectSQL.append("AND sentiment IN (");
 			for (int i = 0; i < sentimentValueArr.length; i++) {
 				if (i == 0) selectSQL.append("?");
@@ -174,7 +187,7 @@ public class KeywordArticleList extends RootAPI {
 				idx++;
 			}
 		}
-		if (!StringUtils.isEmpty(sentiment)) { // 尚未啟用: TODO: Test later... 
+		if (!StringUtils.isEmpty(sentiment)) { 
 			for (String sentimentValue : sentimentValueArr) {
 				int parameterIndex = idx + 1;
 				preparedStatement.setObject(parameterIndex, sentimentValue);

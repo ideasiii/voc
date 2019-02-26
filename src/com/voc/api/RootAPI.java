@@ -283,7 +283,7 @@ public abstract class RootAPI {
 		ResultSet rs = null;
 		try {
 			StringBuffer queryArticleSQL = new StringBuffer();
-			queryArticleSQL.append("SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count ");
+			queryArticleSQL.append("SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count, sentiment_score, sentiment ");
 			queryArticleSQL.append("FROM ").append(TABLE_POST_LIST).append(" ");
 			queryArticleSQL.append("WHERE id in (");
 			for(int i = 0 ; i < postIdList.size(); i++ ) {
@@ -319,6 +319,8 @@ public abstract class RootAPI {
 					article.setDate(rs.getString("date"));
 					article.setChannel(rs.getString("website_name") + "_" + rs.getString("channel_name"));
 					article.setComment_count(rs.getInt("comment_count"));
+					article.setSentiment_score((Double)rs.getObject("sentiment_score"));
+					article.setSentiment((Integer)rs.getObject("sentiment"));
 					articleList.add(article);
 				}
 			}
