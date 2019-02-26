@@ -33,9 +33,25 @@ import com.voc.tool.MyJiebaSegmenter;
  * 
  * EX-1:
  * - URL:
- *   ==>http://localhost:8080/voc/topic/hot-keyword.jsp?user=tsmc&project_name=自訂汽車專案&topic=日系汽車;歐系汽車&website=PTT;Mobile01&start_date=2018-12-01&end_date=2018-12-01    
+ *   ==>http://localhost:8080/voc/topic/hot-keyword.jsp?user=tsmc&project_name=自訂汽車專案&topic=日系汽車;歐系汽車&website=PTT;Mobile01&start_date=2018-12-01&end_date=2018-12-01 
  *   
- * 
+ *   
+ * EX-2:
+ * - URL:
+ *   ==>http://localhost:8080/voc/topic/hot-keyword.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31   
+ *   
+ * - Step1(SQL1):
+ *   ==>SELECT id AS post_id FROM ibuzz_voc.topic_reputation 
+ *      WHERE user = '5bff9b81617d854c850a0d15' AND project_name = '自訂汽車專案' 
+ *      AND sentiment IN ('1','0','-1') 
+ *      AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31';
+ *      
+ * - Step2:
+ *   ==>queryArticleList
+ *   
+ * - Step3:
+ *   ==>MyJiebaSegmenter
+ *   
  */
 public class HotKeyword extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HotKeyword.class);
@@ -193,7 +209,7 @@ public class HotKeyword extends RootAPI {
 			}
 			selectSQL.append(") ");
 		}
-		if (!StringUtils.isEmpty(sentiment)) { // 尚未啟用: TODO: Test later... 
+		if (!StringUtils.isEmpty(sentiment)) { 
 			selectSQL.append("AND sentiment IN (");
 			for (int i = 0; i < sentimentValueArr.length; i++) {
 				if (i == 0) selectSQL.append("?");
@@ -241,7 +257,7 @@ public class HotKeyword extends RootAPI {
 				idx++;
 			}
 		}
-		if (!StringUtils.isEmpty(sentiment)) { // 尚未啟用: TODO: Test later... 
+		if (!StringUtils.isEmpty(sentiment)) {
 			for (String sentimentValue : sentimentValueArr) {
 				int parameterIndex = idx + 1;
 				preparedStatement.setObject(parameterIndex, sentimentValue);
