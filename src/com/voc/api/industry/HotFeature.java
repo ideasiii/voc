@@ -242,6 +242,14 @@ public class HotFeature extends RootAPI {
 		sql.append("FROM ").append(TABLE_FEATURE_REPUTATION).append(" ");
 		sql.append("WHERE ");
 		
+		if (!StringUtils.isBlank(strIndustry)) {
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+			sql.append("industry = ? ");
+			nCount++;
+		}
+		
 		if (!StringUtils.isBlank(strBrand)) {
 			if (0 < nCount) {
 				sql.append("AND ");
@@ -348,6 +356,12 @@ public class HotFeature extends RootAPI {
 	private void setWhereClauseValues(PreparedStatement pst) throws Exception {
 		int idx = 0;
 
+		if (!StringUtils.isBlank(strIndustry)) {
+			int industryIndex = idx + 1;
+			pst.setObject(industryIndex, strIndustry);
+			idx++;
+		}
+		
 		if (!StringUtils.isBlank(strBrand)) {
 		for (String v : arrBrand) {
 			int parameterIndex = idx + 1;
