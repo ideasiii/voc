@@ -24,6 +24,7 @@ import com.voc.common.DBUtil;
 public abstract class RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(RootAPI.class);
 	public static final String API_KEY = "api_key";
+	protected static final String TOTAL_COUNT = "total_count";
 	protected static final String UPDATE_TIME = "update_time";
 	protected static final String PARAM_VALUES_SEPARATOR = ";";
 	protected static final String TABLE_PRODUCT_REPUTATION = "ibuzz_voc.product_reputation";
@@ -90,7 +91,29 @@ public abstract class RootAPI {
 	protected boolean isItemParamName(String paramName) {
 		return ITEM_PARAM_NAMES.contains(paramName);
 	}
-	
+
+	protected int queryToltalCount(String selectTotalCountSQL) {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		int totalCount = 0;
+		try {
+			conn = DBUtil.getConn();
+			preparedStatement = conn.prepareStatement(selectTotalCountSQL);
+			rs = preparedStatement.executeQuery();
+			if (rs.next()) {
+				totalCount = rs.getInt(TOTAL_COUNT);
+			}
+			return totalCount;
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, preparedStatement, conn);
+		}
+		return 0;
+	}
+
 	protected String queryUpdateTime(String selectUpdateTimeSQL) {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;

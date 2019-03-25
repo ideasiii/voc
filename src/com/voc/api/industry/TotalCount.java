@@ -76,6 +76,7 @@ import com.voc.enums.industry.EnumTotalCount;
 public class TotalCount extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TotalCount.class);
 	private Map<String, String[]> orderedParameterMap = new ParameterMap<>();
+	private String selectTotalCountSQL;
 	private String selectUpdateTimeSQL;
 	private List<String> itemNameList = new ArrayList<>();
 	private String tableName;
@@ -88,15 +89,18 @@ public class TotalCount extends RootAPI {
 			return errorResponse.toString();
 		}
 		JSONArray itemArray = this.queryData();
+		int total_count = 0;
 		String update_time = "";
 		if (itemArray != null) {
 			if (itemArray.length() > 0) {
+				total_count = this.queryToltalCount(this.selectTotalCountSQL);
 				update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
 			}
 			JSONObject successObject = ApiResponse.successTemplate();
+			successObject.put("total_count", total_count);
 			successObject.put("update_time", update_time);
 			successObject.put("result", itemArray);
-			LOGGER.info("responseJsonStr=" + successObject.toString());
+//			LOGGER.info("responseJsonStr=" + successObject.toString());
 			return successObject.toString();
 		}
 		return ApiResponse.unknownError().toString();
@@ -122,6 +126,8 @@ public class TotalCount extends RootAPI {
 			LOGGER.debug("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
+			this.selectTotalCountSQL = "SELECT SUM(reputation) AS " + TOTAL_COUNT + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
+			LOGGER.debug("selectTotalCountSQL = " + this.selectTotalCountSQL);
 			
 			JSONArray itemArray = new JSONArray();
 			Map<String, Integer> hash_itemName_count = new HashMap<>();
