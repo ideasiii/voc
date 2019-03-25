@@ -28,6 +28,7 @@ public class ArticleModel {
 		private String date; // yyyy-MM-dd HH:mm:ss (EX: 2018-06-10 19:49:47)
 		private String channel;
 		private Integer comment_count;
+		private Integer reputation;
 		private Double sentiment_score;
 		private Integer sentiment;
 
@@ -78,6 +79,12 @@ public class ArticleModel {
 		}
 		public void setComment_count(Integer comment_count) {
 			this.comment_count = comment_count;
+		}
+		public Integer getReputation() {
+			return reputation;
+		}
+		public void setReputation(Integer reputation) {
+			this.reputation = reputation;
 		}
 		public Double getSentiment_score() {
 			return sentiment_score;

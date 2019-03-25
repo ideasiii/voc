@@ -4,7 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -82,7 +84,9 @@ public class FeatureArticleList extends RootAPI {
 	private String[] channelValueArr;
 	private String[] featuresValueArr;
 	private String[] sentimentValueArr;
-
+	
+	private Map<String, Integer> hash_postId_reputation = new HashMap<String, Integer>();
+	
 	@Override
 	public String processRequest(HttpServletRequest request) {
 		this.requestAndTrimParams(request);
@@ -91,7 +95,7 @@ public class FeatureArticleList extends RootAPI {
 			return errorResponse.toString();
 		}
 		List<String> postIdList = this.queryPostIdList();
-		List<ArticleModel.Article> articleList = this.queryArticleList(postIdList, this.pageNum, this.pageSize);
+		List<ArticleModel.Article> articleList = this.queryArticleList(postIdList, this.hash_postId_reputation, this.pageNum, this.pageSize);
 		if (articleList != null) {
 			ArticleListModel articleListModel = new ArticleListModel();
 			articleListModel.setSuccess(true);
@@ -100,7 +104,7 @@ public class FeatureArticleList extends RootAPI {
 			articleListModel.setPage_size(this.pageSize);
 			articleListModel.setResult(articleList);
 			String responseJsonStr = GSON.toJson(articleListModel);
-			LOGGER.info("responseJsonStr=" + responseJsonStr);
+//			LOGGER.info("responseJsonStr=" + responseJsonStr);
 			return responseJsonStr;
 		}
 		return ApiResponse.unknownError().toString();
@@ -198,6 +202,8 @@ public class FeatureArticleList extends RootAPI {
 			while (rs.next()) {
 				String post_id = rs.getString("post_id");
 				postIdList.add(post_id);
+				int reputation = rs.getInt("reputation");
+				this.hash_postId_reputation.put(post_id, reputation);
 			}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
@@ -211,7 +217,7 @@ public class FeatureArticleList extends RootAPI {
 	private String genQueryPostIdSQL() {
 		int conditionCnt = 0;
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT DISTINCT id AS post_id FROM ").append(TABLE_FEATURE_REPUTATION);
+		selectSQL.append("SELECT DISTINCT id AS post_id, reputation FROM ").append(TABLE_FEATURE_REPUTATION);
 		selectSQL.append(" WHERE ");
 		if (!StringUtils.isEmpty(industry)) {
 			selectSQL.append("industry IN (");

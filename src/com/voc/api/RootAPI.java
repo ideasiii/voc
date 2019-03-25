@@ -232,7 +232,7 @@ public abstract class RootAPI {
 //		return null;
 //	}
 	
-	protected List<ArticleModel.Article> queryArticleList(List<String> postIdList, int pageNum, int pageSize) {
+	protected List<ArticleModel.Article> queryArticleList(List<String> postIdList, Map<String, Integer> hash_postId_reputation, int pageNum, int pageSize) {
 		List<ArticleModel.Article> articleList = new ArrayList<>();
 		if (postIdList == null || postIdList.size() == 0) {
 			return articleList;
@@ -282,6 +282,7 @@ public abstract class RootAPI {
 				article.setDate(rs.getString("date"));
 				article.setChannel(rs.getString("website_name") + "_" + rs.getString("channel_name"));
 				article.setComment_count(rs.getInt("comment_count"));
+				article.setReputation(hash_postId_reputation.get(article.getPost_id()));
 				article.setSentiment_score((Double)rs.getObject("sentiment_score"));
 				article.setSentiment((Integer)rs.getObject("sentiment"));
 				articleList.add(article);
@@ -296,7 +297,7 @@ public abstract class RootAPI {
 		return null;
 	}
 	
-	protected List<ArticleModel.Article> queryArticleList(List<String> postIdList, String keyword) {
+	protected List<ArticleModel.Article> queryArticleList(List<String> postIdList, Map<String, Integer> hash_postId_reputation, String keyword) {
 		List<ArticleModel.Article> articleList = new ArrayList<>();
 		if (postIdList == null || postIdList.size() == 0) {
 			return articleList;
@@ -342,6 +343,7 @@ public abstract class RootAPI {
 					article.setDate(rs.getString("date"));
 					article.setChannel(rs.getString("website_name") + "_" + rs.getString("channel_name"));
 					article.setComment_count(rs.getInt("comment_count"));
+					article.setReputation(hash_postId_reputation.get(article.getPost_id()));
 					article.setSentiment_score((Double)rs.getObject("sentiment_score"));
 					article.setSentiment((Integer)rs.getObject("sentiment"));
 					articleList.add(article);

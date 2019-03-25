@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +70,7 @@ import com.voc.common.DBUtil;
  *  
  * Requirement Change: on 2018/12/11(二): 
  * 1.修改 website 參數，由原本吃 website ID 改為吃 website name: 
- * 2.#TODO-2: ArticleList.java: 前面三個參數值也要能接受多個值: 
+ * 2.ArticleList.java: 前面三個參數值也要能接受多個值: 
  *  
  * EX: API URL:
  * http://localhost:8080/voc/industry/article-list.jsp?brand=BENZ&series=掀背車&product=B180&website=Mobile01;PTT&channel=5ad450dea85d0a2afac34a9b;5ad450dea85d0a2afac34aa2&start_date=2018-01-01&end_date=2018-06-30&page_num=1&page_size=10
@@ -111,6 +112,7 @@ public class ArticleList extends RootAPI {
 	private String[] sentimentValueArr;
 	
 	private String tableName; // brand_reputation OR product_reputation
+	private Map<String, Integer> hash_postId_reputation = new HashMap<String, Integer>();
 	
 	@Override
 	public String processRequest(HttpServletRequest request) {
@@ -120,7 +122,7 @@ public class ArticleList extends RootAPI {
 			return errorResponse.toString();
 		}
 		List<String> postIdList = this.queryPostIdList();
-		List<ArticleModel.Article> articleList = this.queryArticleList(postIdList, this.pageNum, this.pageSize);
+		List<ArticleModel.Article> articleList = this.queryArticleList(postIdList, this.hash_postId_reputation, this.pageNum, this.pageSize);
 		if (articleList != null) {
 			ArticleListModel articleListModel = new ArticleListModel();
 			articleListModel.setSuccess(true);
@@ -129,7 +131,7 @@ public class ArticleList extends RootAPI {
 			articleListModel.setPage_size(this.pageSize);
 			articleListModel.setResult(articleList);
 			String responseJsonStr = GSON.toJson(articleListModel);
-			LOGGER.info("responseJsonStr=" + responseJsonStr);
+//			LOGGER.info("responseJsonStr=" + responseJsonStr);
 			return responseJsonStr;
 		}
 		return ApiResponse.unknownError().toString();
@@ -138,7 +140,7 @@ public class ArticleList extends RootAPI {
 	private String genQueryPostIdSQL() {
 		int conditionCnt = 0;
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT id AS post_id FROM ").append(this.tableName);
+		selectSQL.append("SELECT id AS post_id, reputation FROM ").append(this.tableName);
 		selectSQL.append(" WHERE ");
 		if (!StringUtils.isEmpty(brand)) {
 			selectSQL.append("brand IN (");
@@ -311,6 +313,8 @@ public class ArticleList extends RootAPI {
 			while (rs.next()) {
 				String post_id = rs.getString("post_id");
 				postIdList.add(post_id);
+				int reputation = rs.getInt("reputation");
+				this.hash_postId_reputation.put(post_id, reputation);
 			}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
