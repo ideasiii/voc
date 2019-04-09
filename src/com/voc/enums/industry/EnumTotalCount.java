@@ -13,6 +13,7 @@ public enum EnumTotalCount {
 	PARAM_COLUMN_CHANNEL("channel", "channel_id"),
 	PARAM_COLUMN_SENTIMENT("sentiment", "sentiment"),
 	PARAM_COLUMN_FEATURES("features", "features"),
+	PARAM_COLUMN_MONITORBRAND("monitor_brand", "brand"),
 	PARAM_COLUMN_START_DATE("start_date", "date"),
 	PARAM_COLUMN_END_DATE("end_date", "date"),
 	PARAM_COLUMN_LIMIT("limit", "limit");

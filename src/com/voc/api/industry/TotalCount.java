@@ -63,11 +63,14 @@ import com.voc.enums.industry.EnumTotalCount;
  * 
  * Requirement Change: 
  * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
- * 
  * EX:
  * SELECT brand, sentiment, SUM(reputation) AS count FROM ibuzz_voc.brand_reputation where brand in ('MAZDA','BENZ') and sentiment in('1','0','-1') and DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-03-31' GROUP BY brand, sentiment ORDER BY count DESC LIMIT 10;
  * http://localhost:8080/voc/industry/total-count.jsp?brand=MAZDA;BENZ&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&limit=10
  * 
+ * Requirement Change: 加參數:monitor_brand(監測品牌範圍):
+ * Ex: 
+ * http://localhost:8080/voc/industry/total-count.jsp?brand=MAZDA;BENZ&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&limit=10
+ * http://localhost:8080/voc/industry/total-count.jsp?brand=MAZDA;BENZ&sentiment=1;0;-1&monitor_brand=MAZDA&start_date=2019-01-01&end_date=2019-03-31&limit=10
  * 
  * Note: 呼叫API時所下的參數若包含 product 或 series, 就使用 ibuzz_voc.product_reputation (產品表格), 否則就使用 ibuzz_voc.brand_reputation (品牌表格)
  *       ==>See RootAPI.java
@@ -136,7 +139,10 @@ public class TotalCount extends RootAPI {
 				StringBuffer item = new StringBuffer();
 				int i = 0;
 				for (Map.Entry<String, String[]> entry : this.orderedParameterMap.entrySet()) {
-					String paramName = entry.getKey();			
+					String paramName = entry.getKey();
+					if ("monitor_brand".equals(paramName)) {
+						continue;
+					}
 					String columnName = this.getColumnName(paramName);
 					if ("channel_id".equals(columnName)) {
 						columnName = "channel_name";
@@ -248,6 +254,7 @@ public class TotalCount extends RootAPI {
 		String[] paramValues_channel = null;
 		String[] paramValues_sentiment = null;
 		String[] paramValues_features = null;
+		String[] paramValues_monitorBrand = null;
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
 		
@@ -302,6 +309,9 @@ public class TotalCount extends RootAPI {
 				break;
 			case PARAM_COLUMN_FEATURES:
 				paramValues_features = trimedValues;
+				break;
+			case PARAM_COLUMN_MONITORBRAND:
+				paramValues_monitorBrand = trimedValues;
 				break;
 			case PARAM_COLUMN_START_DATE:
 				paramValues_startDate = trimedValues;
@@ -438,6 +448,10 @@ public class TotalCount extends RootAPI {
 			}
 			itemCnt++;
 		}
+		if (paramValues_monitorBrand != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_MONITORBRAND.getParamName();
+			this.orderedParameterMap.put(paramName, paramValues_monitorBrand);
+		}
 		if (itemCnt == 0) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
@@ -528,7 +542,10 @@ public class TotalCount extends RootAPI {
 		StringBuffer columnsSB = new StringBuffer();
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : this.orderedParameterMap.entrySet()) {
-			String paramName = entry.getKey();			
+			String paramName = entry.getKey();
+			if ("monitor_brand".equals(paramName)) {
+				continue;
+			}
 			String columnName = this.getColumnName(paramName);
 			if (!"date".equals(columnName)) {
 				if (i == 0) {

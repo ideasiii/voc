@@ -52,10 +52,13 @@ import com.voc.enums.EnumSentiment;
  * 
  * Requirement Change: 
  * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
- * 
  * EX:
  * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=MAZDA;BENZ&sec_filter=sentiment&sec_value=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&limit=10
  * 
+ * Requirement Change: 加參數:monitor_brand(監測品牌範圍):
+ * Ex: 
+ * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=MAZDA;BENZ;TOYOTA&sec_filter=sentiment&sec_value=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&limit=10
+ * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=MAZDA;BENZ;TOYOTA&sec_filter=sentiment&sec_value=1;0;-1&monitor_brand=MAZDA;BENZ&start_date=2019-01-01&end_date=2019-03-31&limit=10
  * 
  */
 public class CrossRatio extends RootAPI {
@@ -64,12 +67,14 @@ public class CrossRatio extends RootAPI {
 	private String mainValue = null;
 	private String secFilter = null;
 	private String secValue = null;
+	private String monitor_brand = null;
 	private String startDate = null;
 	private String endDate = null;
 	private int limit = 10; // Default: 10
 	
 	private String[] mainValueArr = null;
 	private String[] secValueArr = null;
+	private String[] monitorBrandArr = null;
 
 	private String mainSelectCol = null;
 	private String secSelectCol = null;
@@ -94,7 +99,7 @@ public class CrossRatio extends RootAPI {
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", resultArray);
-			LOGGER.info("responseJsonStr=" + successObject.toString());
+			// LOGGER.info("responseJsonStr=" + successObject.toString());
 			return successObject.toString();
 		}
 		return ApiResponse.unknownError().toString();
@@ -105,6 +110,7 @@ public class CrossRatio extends RootAPI {
 		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main_value"));
 		this.secFilter = StringUtils.trimToEmpty(request.getParameter("sec_filter"));
 		this.secValue = StringUtils.trimToEmpty(request.getParameter("sec_value"));
+		this.monitor_brand = StringUtils.trimToEmpty(request.getParameter("monitor_brand"));
 		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
 		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 		
@@ -181,12 +187,13 @@ public class CrossRatio extends RootAPI {
 		try {
 			mainValueArr = mainValue.split(PARAM_VALUES_SEPARATOR);
 			secValueArr = secValue.split(PARAM_VALUES_SEPARATOR);
-			selectSQL.append(this.genSelectSQL(tableName, mainFilterColumn, secFilterColumn, mainValueArr, secValueArr));
+			monitorBrandArr = monitor_brand.split(PARAM_VALUES_SEPARATOR);
+			selectSQL.append(this.genSelectSQL(tableName, mainFilterColumn, secFilterColumn, mainValueArr, secValueArr, monitorBrandArr));
 			// LOGGER.debug("selectSQL: " + selectSQL.toString());
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
-			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, startDate, endDate);
+			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, monitorBrandArr, startDate, endDate);
 			
 			String psSQLStr = preparedStatement.toString();
 			LOGGER.debug("psSQLStr = " + psSQLStr);
@@ -347,7 +354,9 @@ public class CrossRatio extends RootAPI {
 		}
 	}
 
-	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr) {
+	private String genSelectSQL(String tableName, String mainFilterColumn, String secFilterColumn, String[] mainValueArr, String[] secValueArr, 
+			String[] monitorBrandArr) {
+		
 		StringBuffer selectSQL = new StringBuffer();
 		this.mainSelectCol = mainFilterColumn;
 		if ("website_id".equals(mainFilterColumn)) {
@@ -373,6 +382,16 @@ public class CrossRatio extends RootAPI {
 			else selectSQL.append(",?");
 		}
 		selectSQL.append(") ");
+		
+		if (StringUtils.isNotBlank(monitor_brand)) {
+			selectSQL.append("AND brand IN (");
+			for(int i = 0 ; i < monitorBrandArr.length ; i++ ) {
+				if (i == 0) selectSQL.append("?");
+				else selectSQL.append(",?");
+			}
+			selectSQL.append(") ");
+		}
+		
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY ").append(mainFilterColumn).append(", ").append(secFilterColumn).append(" ");
@@ -380,7 +399,9 @@ public class CrossRatio extends RootAPI {
 		return selectSQL.toString();
 	}
 	
-	private void setWhereClauseValues(PreparedStatement preparedStatement, String[] mainValueArr, String[] secValueArr, String startDate, String endDate) throws Exception {
+	private void setWhereClauseValues(PreparedStatement preparedStatement, String[] mainValueArr, String[] secValueArr, 
+			String[] monitorBrandArr, String startDate, String endDate) throws Exception {
+		
 		int idx = 0;
 		for(String v : mainValueArr) {
 			int parameterIndex = idx + 1;
@@ -393,6 +414,15 @@ public class CrossRatio extends RootAPI {
 			preparedStatement.setObject(parameterIndex, v);
 			// LOGGER.debug(parameterIndex + ":" + v);
 			idx++;
+		}
+		
+		if (StringUtils.isNotBlank(monitor_brand)) {
+			for(String v : monitorBrandArr) {
+				int parameterIndex = idx + 1;
+				preparedStatement.setObject(parameterIndex, v);
+				// LOGGER.debug(parameterIndex + ":" + v);
+				idx++;
+			}
 		}
 		
 		int startDateIndex = idx + 1;
