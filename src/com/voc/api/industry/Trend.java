@@ -35,6 +35,9 @@ import com.voc.enums.industry.EnumTrend;
  * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&website=PTT;Mobile01&start_date=2018-05-01&end_date=2018-05-15&limit=3
  * 新增sentiment:
  * http://localhost:8080/voc/industry/trend.jsp?brand=BENZ;BMW&start_date=2019-01-01&end_date=2019-02-15&limit=3&sentiment=1
+ * 新增monitor_brand:
+ * http://localhost:8080/voc/industry/trend.jsp?website=PTT;Mobile01&brand=MAZDA&monitor_brand=MAZDA;BENZ&start_date=2019-03-01&end_date=2019-03-05
+ * http://localhost:8080/voc/industry/trend.jsp?website=PTT;Mobile01&sentiment=1;0;-1&monitor_brand=MAZDA;BENZ&start_date=2019-03-01&end_date=2019-03-05
  */
 public class Trend extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Trend.class);
@@ -151,6 +154,9 @@ public class Trend extends RootAPI {
 				int i = 0;
 				for (Map.Entry<String, String[]> entry : orderedParameterMap.entrySet()) {
 					String paramName = entry.getKey();			
+					if (paramName.equals("monitor_brand")) {
+						continue;
+					}
 					String columnName = getColumnName(paramName);
 					if ("website_id".equals(columnName)) {
 						columnName = "website_name";
@@ -295,6 +301,7 @@ public class Trend extends RootAPI {
 				i++;
 			}
 		}
+		
 		strTableName = getTableName(paramMap);
 		if (strInterval.equals(Common.INTERVAL_DAILY)) {
 			sql.append(" ,").append("DATE_FORMAT(date, '%Y-%m-%d') AS dailyStr");
@@ -422,6 +429,7 @@ public class Trend extends RootAPI {
 		String[] paramValues_channel = null;
 		String[] paramValues_sentiment = null;
 		String[] paramValues_features = null;
+		String[] paramValues_monitorBrand = null;
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
 		
@@ -465,6 +473,9 @@ public class Trend extends RootAPI {
 			case PARAM_COLUMN_FEATURES:
 				paramValues_features = values;
 				break;
+			case PARAM_COLUMN_MONITOR_BRAND:
+				paramValues_monitorBrand = values;
+				break;	
 			case PARAM_COLUMN_START_DATE:
 				paramValues_startDate = values;
 				paramValues_startDate[0] = Common.formatDate(paramValues_startDate[0], "yyyy-MM-dd");
@@ -601,7 +612,16 @@ public class Trend extends RootAPI {
 			}
 			itemCnt++;
 		}
-		
+		if (paramValues_monitorBrand != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_MONITOR_BRAND.getParamName();
+			orderedParameterMap.put(paramName, paramValues_monitorBrand);
+			if (0 == itemCnt) {
+				mainItemArr = paramValues_monitorBrand[0].split(PARAM_VALUES_SEPARATOR);
+			} else if (1 == itemCnt) {
+				secItemArr = paramValues_monitorBrand[0].split(PARAM_VALUES_SEPARATOR);
+			}
+			itemCnt++;
+		}
 		if (0 == itemCnt) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
