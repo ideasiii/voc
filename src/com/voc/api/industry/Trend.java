@@ -48,7 +48,7 @@ public class Trend extends RootAPI {
 	private String strInterval = Common.INTERVAL_DAILY;
 	private int limit = 10; // Default: 10
 	private JSONArray sortedJsonArray;
-	
+
 	@Override
 	public String processRequest(HttpServletRequest request) {
 
@@ -61,19 +61,19 @@ public class Trend extends RootAPI {
 
 		final String strStartDate = request.getParameter("start_date");
 		final String strEndDate = request.getParameter("end_date");
-	
+
 		if (hasInterval(paramMap)) {
 			strInterval = request.getParameter("interval");
 			if (!Common.isValidInterval(strInterval)) {
 				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid interval.").toString();
 			}
 		}
-		
+
 		JSONObject errorResponse = adjustParameterOrder(paramMap);
 		if (null != errorResponse) {
 			return errorResponse.toString();
 		}
-		
+
 		String limitStr = StringUtils.trimToEmpty(request.getParameter("limit"));
 		if (!StringUtils.isEmpty(limitStr)) {
 			try {
@@ -82,22 +82,22 @@ public class Trend extends RootAPI {
 				LOGGER.error(e.getMessage());
 			}
 		}
-		
+
 		JSONObject jobj = new JSONObject();
 		JSONArray resArray = new JSONArray();
 		boolean querySuccess = query(orderedParameterMap, strStartDate, strEndDate, resArray);
-		LOGGER.info("resArray: "+ resArray );
+		LOGGER.info("resArray: " + resArray);
 		String update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
-		
+
 		if (querySuccess) {
 			jobj = ApiResponse.successTemplate();
 			jobj.put("update_time", update_time);
 			// jobj.put("result", resArray);
 			jobj.put("result", this.sortedJsonArray);
-			LOGGER.info("response: "+ jobj.toString());
-			
+			LOGGER.info("response: " + jobj.toString());
+
 		} else {
-				jobj = ApiResponse.unknownError();
+			jobj = ApiResponse.unknownError();
 		}
 		return jobj.toString();
 	}
@@ -105,7 +105,7 @@ public class Trend extends RootAPI {
 	private JSONObject dateValidate(Map<String, String[]> paramMap) {
 		String sd = paramMap.get("start_date")[0];
 		String ed = paramMap.get("end_date")[0];
-		
+
 		if (!Common.isValidDate(sd, "yyyy-MM-dd")) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid start_date.");
 		}
@@ -119,33 +119,33 @@ public class Trend extends RootAPI {
 		}
 		return null;
 	}
-	
-	
+
 	private boolean query(Map<String, String[]> paramMap, final String strStartDate, final String strEndDate,
 			final JSONArray out) {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
 		String date = null;
-				
+
 		StringBuffer querySQL = new StringBuffer();
 		try {
 			querySQL.append(genSelectClause(orderedParameterMap));
 			querySQL.append(genWhereClause(orderedParameterMap));
 			querySQL.append(genGroupByClause(orderedParameterMap));
-			
+
 			LOGGER.info("querySQL: " + querySQL.toString());
 
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(querySQL.toString());
 			setWhereClauseValues(pst, orderedParameterMap);
 
-			//get update_time SQL
+			// get update_time SQL
 			String strPstSQL = pst.toString();
 			LOGGER.info("strPstSQL: " + strPstSQL);
-			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
-			LOGGER.info("selectUpdateTimeSQL: " + this.selectUpdateTimeSQL); 
-			
+			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME
+					+ strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
+			LOGGER.info("selectUpdateTimeSQL: " + this.selectUpdateTimeSQL);
+
 			Map<String, Map<String, Integer>> hash_itemName_dataMap = new HashMap<>();
 			Map<String, Integer> dataMap = new HashMap<String, Integer>();
 			rs = pst.executeQuery();
@@ -153,71 +153,72 @@ public class Trend extends RootAPI {
 				StringBuffer item = new StringBuffer();
 				int i = 0;
 				for (Map.Entry<String, String[]> entry : orderedParameterMap.entrySet()) {
-					String paramName = entry.getKey();			
-					if (paramName.equals("monitor_brand")) {
-						continue;
-					}
-					String columnName = getColumnName(paramName);
-					if ("website_id".equals(columnName)) {
-						columnName = "website_name";
-					} else if ("channel_id".equals(columnName)) {
-						columnName = "channel_name";
-					}
-					if (!"date".equals(columnName)) {
-						String str = rs.getString(columnName);
-						if (paramName.equals("sentiment")) {
-							str = EnumSentiment.getEnum(str).getName();
+					String paramName = entry.getKey();
+					if (!paramName.equals("monitor_brand")) { 
+
+						String columnName = getColumnName(paramName);
+						if ("website_id".equals(columnName)) {
+							columnName = "website_name";
+						} else if ("channel_id".equals(columnName)) {
+							columnName = "channel_name";
 						}
-						if (i == 0) {
-							item.append(str);
-						} else {
-							item.append("-").append(str);
+						if (!"date".equals(columnName)) {
+							String str = rs.getString(columnName);
+							if (paramName.equals("sentiment")) {
+								str = EnumSentiment.getEnum(str).getName();
+							}
+							if (i == 0) {
+								item.append(str);
+							} else {
+								item.append("-").append(str);
+							}
 						}
+						i++;
 					}
-					i++;
 				}
 				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
 					date = rs.getString("monthlyStr");
 				} else {
 					date = rs.getString("dailyStr");
 				}
-				int count = rs.getInt("count"); 
+				int count = rs.getInt("count");
 				LOGGER.info("item: " + item.toString() + ", date: " + date + ", count: " + count);
-				
+
 				if (hash_itemName_dataMap.get(item.toString()) == null) {
 					hash_itemName_dataMap.put(item.toString(), new HashMap<String, Integer>());
 				}
 				dataMap = hash_itemName_dataMap.get(item.toString());
 				dataMap.put(date, count);
-			}	
-				
-				for (String itemName: itemNameList) {
-					dataMap = hash_itemName_dataMap.get(itemName);
-					JSONArray dataArray = new JSONArray();
-					List<String> dateList = null;
-					if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-						dateList = ApiUtil.getMonthlyList(strStartDate, strEndDate);
-					} else {
-						dateList = ApiUtil.getDailyList(strStartDate, strEndDate);
-					}
-					for (String dataStr : dateList) {
-						Integer count = null;
-						if (null != dataMap) { 		
-							count = dataMap.get(dataStr);
-						}
-						if (count == null) count = 0;
-						JSONObject dataObject = new JSONObject();
-						dataObject.put("date", dataStr);
-						dataObject.put("count", count);
-						dataArray.put(dataObject);
-					}
-					JSONObject resultObj = new JSONObject();
-					resultObj.put("item", itemName);
-					resultObj.put("data", dataArray);
-					resultObj.put("totalCount", this.getTotalCount(dataArray)); // for sort later
-					out.put(resultObj);
+			}
+
+			for (String itemName : itemNameList) {
+				dataMap = hash_itemName_dataMap.get(itemName);
+				JSONArray dataArray = new JSONArray();
+				List<String> dateList = null;
+				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
+					dateList = ApiUtil.getMonthlyList(strStartDate, strEndDate);
+				} else {
+					dateList = ApiUtil.getDailyList(strStartDate, strEndDate);
 				}
-				this.sortedJsonArray = this.getSortedResultArray(out, this.limit);
+				for (String dataStr : dateList) {
+					Integer count = null;
+					if (null != dataMap) {
+						count = dataMap.get(dataStr);
+					}
+					if (count == null)
+						count = 0;
+					JSONObject dataObject = new JSONObject();
+					dataObject.put("date", dataStr);
+					dataObject.put("count", count);
+					dataArray.put(dataObject);
+				}
+				JSONObject resultObj = new JSONObject();
+				resultObj.put("item", itemName);
+				resultObj.put("data", dataArray);
+				resultObj.put("totalCount", this.getTotalCount(dataArray)); // for sort later
+				out.put(resultObj);
+			}
+			this.sortedJsonArray = this.getSortedResultArray(out, this.limit);
 			return true;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
@@ -227,16 +228,16 @@ public class Trend extends RootAPI {
 		}
 		return false;
 	}
-	
+
 	private JSONArray getSortedResultArray(JSONArray resultArray, int limit) {
 		JSONArray sortedJsonArray = new JSONArray();
-		
+
 		// Step_1: parse your array in a list
 		List<JSONObject> jsonList = new ArrayList<JSONObject>();
 		for (int i = 0; i < resultArray.length(); i++) {
 			jsonList.add(resultArray.getJSONObject(i));
 		}
-		
+
 		// Step_2: then use collection.sort to sort the newly created list
 		Collections.sort(jsonList, new Comparator<JSONObject>() {
 			public int compare(JSONObject a, JSONObject b) {
@@ -251,25 +252,25 @@ public class Trend extends RootAPI {
 				return valA.compareTo(valB) * -1;
 			}
 		});
-		
-		// Handle for limit: 
+
+		// Handle for limit:
 		int listSize = jsonList.size();
 		int recordSize = limit;
 		if (limit > listSize) {
 			recordSize = listSize;
 		}
 		jsonList = jsonList.subList(0, recordSize);
-		
+
 		// Step_3: Insert the sorted values in your array
 		for (int i = 0; i < jsonList.size(); i++) {
 			JSONObject jsonObject = jsonList.get(i);
 			jsonObject.remove("totalCount"); // totalCount 不用顯示: after sorting, remove it.
 			sortedJsonArray.put(jsonObject);
 		}
-		
+
 		return sortedJsonArray;
 	}
-	
+
 	private Integer getTotalCount(JSONArray dataArray) {
 		Integer totalCount = 0;
 		for (int i = 0; i < dataArray.length(); i++) {
@@ -301,7 +302,7 @@ public class Trend extends RootAPI {
 				i++;
 			}
 		}
-		
+
 		strTableName = getTableName(paramMap);
 		if (strInterval.equals(Common.INTERVAL_DAILY)) {
 			sql.append(" ,").append("DATE_FORMAT(date, '%Y-%m-%d') AS dailyStr");
@@ -348,7 +349,7 @@ public class Trend extends RootAPI {
 		}
 		return sql.toString();
 	}
-	
+
 	private String genGroupByClause(Map<String, String[]> paramMap) {
 		StringBuffer sql = new StringBuffer();
 		StringBuffer groupByColumns = new StringBuffer();
@@ -363,9 +364,9 @@ public class Trend extends RootAPI {
 					groupByColumns.append(", ").append(columnName);
 				}
 			}
-		i++;
+			i++;
 		}
-		
+
 		if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
 			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m'), ").append(groupByColumns.toString());
 		} else if (strInterval.equals(Common.INTERVAL_DAILY)) {
@@ -386,7 +387,7 @@ public class Trend extends RootAPI {
 				if (paramName.equals("start_date") || paramName.equals("end_date")) {
 					int parameterIndex = i + 1;
 					pst.setObject(parameterIndex, value);
-					LOGGER.info(parameterIndex + ":" + value); 
+					LOGGER.info(parameterIndex + ":" + value);
 					i++;
 				} else {
 					String[] valueArr = entry.getValue()[0].split(PARAM_VALUES_SEPARATOR);
@@ -409,17 +410,17 @@ public class Trend extends RootAPI {
 	private boolean hasInterval(Map<String, String[]> paramMap) {
 		return paramMap.containsKey("interval");
 	}
-	
+
 	private JSONObject adjustParameterOrder(Map<String, String[]> parameterMap) {
 		JSONObject errorResponse = dateValidate(parameterMap);
 		if (null != errorResponse) {
 			return errorResponse;
 		}
 
-	//	if (hasInterval(parameterMap)) {
-	//		parameterMap.remove("interval");
-	//	}
-		
+		// if (hasInterval(parameterMap)) {
+		// parameterMap.remove("interval");
+		// }
+
 		String[] paramValues_industry = null;
 		String[] paramValues_brand = null;
 		String[] paramValues_series = null;
@@ -432,19 +433,21 @@ public class Trend extends RootAPI {
 		String[] paramValues_monitorBrand = null;
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
-		
+
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
-			if (API_KEY.equals(paramName)) continue;
-			
+			if (API_KEY.equals(paramName))
+				continue;
+
 			EnumTrend enumTrend = EnumTrend.getEnum(paramName);
-			if (null == enumTrend)  continue;
-			
+			if (null == enumTrend)
+				continue;
+
 			String[] values = entry.getValue();
 			if (StringUtils.isBlank(values[0])) {
 				continue;
 			}
-			
+
 			switch (enumTrend) {
 			case PARAM_COLUMN_INDUSTRY:
 				paramValues_industry = values;
@@ -475,7 +478,7 @@ public class Trend extends RootAPI {
 				break;
 			case PARAM_COLUMN_MONITOR_BRAND:
 				paramValues_monitorBrand = values;
-				break;	
+				break;
 			case PARAM_COLUMN_START_DATE:
 				paramValues_startDate = values;
 				paramValues_startDate[0] = Common.formatDate(paramValues_startDate[0], "yyyy-MM-dd");
@@ -489,11 +492,11 @@ public class Trend extends RootAPI {
 				break;
 			}
 		}
-		
+
 		String[] mainItemArr = null;
 		String[] secItemArr = null;
 		int itemCnt = 0;
-	
+
 		if (paramValues_industry != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_INDUSTRY.getParamName();
 			orderedParameterMap.put(paramName, paramValues_industry);
@@ -615,17 +618,11 @@ public class Trend extends RootAPI {
 		if (paramValues_monitorBrand != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_MONITOR_BRAND.getParamName();
 			orderedParameterMap.put(paramName, paramValues_monitorBrand);
-			if (0 == itemCnt) {
-				mainItemArr = paramValues_monitorBrand[0].split(PARAM_VALUES_SEPARATOR);
-			} else if (1 == itemCnt) {
-				secItemArr = paramValues_monitorBrand[0].split(PARAM_VALUES_SEPARATOR);
-			}
-			itemCnt++;
 		}
 		if (0 == itemCnt) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
-		
+
 		if (mainItemArr != null) {
 			for (String mainItem : mainItemArr) {
 				if (secItemArr != null) {
@@ -637,7 +634,7 @@ public class Trend extends RootAPI {
 				}
 			}
 		}
-		
+
 		if (paramValues_startDate != null) {
 			String paramName = EnumTrend.PARAM_COLUMN_START_DATE.getParamName();
 			orderedParameterMap.put(paramName, paramValues_startDate);
