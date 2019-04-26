@@ -242,8 +242,8 @@ public class ChannelRanking extends RootAPI {
 			else selectSQL.append(",?");
 		}
 		selectSQL.append(") ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY website_id, channel_id ORDER BY count ");
 		if (this.sort.equalsIgnoreCase(Common.SORT_ASC)) {
 			selectSQL.append(Common.SORT_ASC).append(" ");

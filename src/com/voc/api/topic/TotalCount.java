@@ -43,7 +43,6 @@ import com.voc.enums.topic.EnumTotalCount;
  * - SQL:
  *   ==>SELECT topic ,SUM(reputation) AS count FROM ibuzz_voc.topic_reputation 
  *      WHERE user in ('tsmc') AND project_name in ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') 
- *      AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-12-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-12-31' 
  *      GROUP BY topic ORDER BY count DESC LIMIT 10
  *      
  *   
@@ -134,7 +133,7 @@ public class TotalCount extends RootAPI {
 					if ("channel_id".equals(columnName)) {
 						columnName = "channel_name";
 					}
-					if (!"date".equals(columnName)) {
+					if (!"rep_date".equals(columnName)) {
 						String s = rs.getString(columnName);
 						if ("sentiment".equals(paramName)) {
 							s = EnumSentiment.getEnum(s).getName();
@@ -478,9 +477,9 @@ public class TotalCount extends RootAPI {
 				whereClauseSB.append("AND ");
 			}
 			if (paramName.equals("start_date")) {
-				whereClauseSB.append("DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
+				whereClauseSB.append("DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
 			} else if (paramName.equals("end_date")) {
-				whereClauseSB.append("DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+				whereClauseSB.append("DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 			} else {
 				whereClauseSB.append(columnName);
 				whereClauseSB.append(" in (");
@@ -509,7 +508,7 @@ public class TotalCount extends RootAPI {
 				continue;
 			}
 			String columnName = this.getColumnName(paramName);
-			if (!"date".equals(columnName)) {
+			if (!"rep_date".equals(columnName)) {
 				if (i == 0) {
 					columnsSB.append(columnName);
 				} else {

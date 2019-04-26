@@ -1,6 +1,7 @@
 package com.voc.api.industry;
 
 import java.sql.Connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
@@ -20,6 +21,11 @@ import com.voc.api.RootAPI;
 import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
+
+/**
+ * Ex:
+ * http://localhost:8080/voc/industry/brand-ranking.jsp?brand=MAZDA&start_date=2019-01-01&end_date=2019-03-31&limit=10
+ */
 
 public class BrandRanking extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BrandRanking.class);
@@ -201,8 +207,8 @@ public class BrandRanking extends RootAPI {
 			}
 		}
 		sql.append(") ");
-		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		sql.append("GROUP BY brand ORDER BY count ");
 		if (strSort.equalsIgnoreCase(Common.SORT_ASC)) {
 			sql.append(Common.SORT_ASC).append(" ");

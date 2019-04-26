@@ -11,8 +11,8 @@ public enum EnumTrend {
 	PARAM_COLUMN_WEBSITE("website", "website_name"),
 	PARAM_COLUMN_CHANNEL("channel", "channel_id"),
 	PARAM_COLUMN_SENTIMENT("sentiment", "sentiment"),
-	PARAM_COLUMN_START_DATE("start_date", "date"),
-	PARAM_COLUMN_END_DATE("end_date", "date");
+	PARAM_COLUMN_START_DATE("start_date", "rep_date"),
+	PARAM_COLUMN_END_DATE("end_date", "rep_date");
 
 	private final String paramName;
 	private final String columnName;

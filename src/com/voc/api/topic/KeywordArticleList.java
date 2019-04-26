@@ -107,7 +107,7 @@ public class KeywordArticleList extends RootAPI {
 
 	private String genQueryPostIdSQL() {
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT id AS post_id, reputation FROM ").append(this.tableName);
+		selectSQL.append("SELECT id AS post_id, SUM(reputation) as reputation FROM ").append(this.tableName);
 		selectSQL.append(" WHERE user = ? AND project_name = ? ");
 		if (!StringUtils.isEmpty(topic)) {
 			selectSQL.append("AND topic IN (");
@@ -150,8 +150,9 @@ public class KeywordArticleList extends RootAPI {
 			}
 			selectSQL.append(") ");
 		}
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("GROUP BY post_id");
 		// selectSQL.append("ORDER BY date DESC");
 		return selectSQL.toString();
 	}

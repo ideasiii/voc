@@ -162,7 +162,7 @@ public class Trend extends RootAPI {
 						} else if ("channel_id".equals(columnName)) {
 							columnName = "channel_name";
 						}
-						if (!"date".equals(columnName)) {
+						if (!"rep_date".equals(columnName)) {
 							String str = rs.getString(columnName);
 							if (paramName.equals("sentiment")) {
 								str = EnumSentiment.getEnum(str).getName();
@@ -305,9 +305,9 @@ public class Trend extends RootAPI {
 
 		strTableName = getTableName(paramMap);
 		if (strInterval.equals(Common.INTERVAL_DAILY)) {
-			sql.append(" ,").append("DATE_FORMAT(date, '%Y-%m-%d') AS dailyStr");
+			sql.append(" ,").append("DATE_FORMAT(rep_date, '%Y-%m-%d') AS dailyStr");
 		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-			sql.append(" ,").append("DATE_FORMAT(date, '%Y-%m') AS monthlyStr");
+			sql.append(" ,").append("DATE_FORMAT(rep_date, '%Y-%m') AS monthlyStr");
 		}
 		sql.append(" ,").append("SUM(reputation) AS count FROM ").append(strTableName).append(" ");
 
@@ -329,9 +329,9 @@ public class Trend extends RootAPI {
 			}
 
 			if (paramName.equals("start_date")) {
-				sql.append(" DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
+				sql.append(" DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
 			} else if (paramName.equals("end_date")) {
-				sql.append(" DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+				sql.append(" DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 			} else {
 				sql.append(columnName);
 				sql.append(" IN (");
@@ -368,9 +368,9 @@ public class Trend extends RootAPI {
 		}
 
 		if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
-			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m'), ").append(groupByColumns.toString());
+			sql.append(" GROUP BY DATE_FORMAT(rep_date, '%Y-%m'), ").append(groupByColumns.toString());
 		} else if (strInterval.equals(Common.INTERVAL_DAILY)) {
-			sql.append(" GROUP BY DATE_FORMAT(date, '%Y-%m-%d'), ").append(groupByColumns.toString());
+			sql.append(" GROUP BY DATE_FORMAT(rep_date, '%Y-%m-%d'), ").append(groupByColumns.toString());
 		}
 		return sql.toString();
 	}

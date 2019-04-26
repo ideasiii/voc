@@ -344,8 +344,8 @@ public class HotFeature extends RootAPI {
 		sql.append(") ");
 		nCount++;
 		}
-		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		sql.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		sql.append("GROUP BY features ORDER BY count DESC ");
 		sql.append("LIMIT ?");
 		

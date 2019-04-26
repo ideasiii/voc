@@ -217,7 +217,7 @@ public class FeatureArticleList extends RootAPI {
 	private String genQueryPostIdSQL() {
 		int conditionCnt = 0;
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT DISTINCT id AS post_id, reputation FROM ").append(TABLE_FEATURE_REPUTATION);
+		selectSQL.append("SELECT DISTINCT id AS post_id, SUM(reputation) as reputation FROM ").append(TABLE_FEATURE_REPUTATION);
 		selectSQL.append(" WHERE ");
 		if (!StringUtils.isEmpty(industry)) {
 			selectSQL.append("industry IN (");
@@ -317,9 +317,9 @@ public class FeatureArticleList extends RootAPI {
 			selectSQL.append(") ");
 			conditionCnt++;
 		}
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
-		
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("GROUP BY post_id");
 		return selectSQL.toString();
 	}
 	

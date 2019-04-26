@@ -48,8 +48,8 @@ public abstract class RootAPI {
 		PARAM_COLUMN_MAP.put("channel", "channel_id");
 		PARAM_COLUMN_MAP.put("features", "features");
 		PARAM_COLUMN_MAP.put("monitor_brand", "brand");
-		PARAM_COLUMN_MAP.put("start_date", "date");
-		PARAM_COLUMN_MAP.put("end_date", "date");
+		PARAM_COLUMN_MAP.put("start_date", "rep_date");
+		PARAM_COLUMN_MAP.put("end_date", "rep_date");
 		
 		PARAM_COLUMN_MAP.put("user", "user");
 		PARAM_COLUMN_MAP.put("project_name", "project_name");

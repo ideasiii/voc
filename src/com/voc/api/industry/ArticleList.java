@@ -140,7 +140,7 @@ public class ArticleList extends RootAPI {
 	private String genQueryPostIdSQL() {
 		int conditionCnt = 0;
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT id AS post_id, reputation FROM ").append(this.tableName);
+		selectSQL.append("SELECT id AS post_id, SUM(reputation) as reputation FROM ").append(this.tableName);
 		selectSQL.append(" WHERE ");
 		if (!StringUtils.isEmpty(brand)) {
 			selectSQL.append("brand IN (");
@@ -227,8 +227,9 @@ public class ArticleList extends RootAPI {
 			selectSQL.append(") ");
 			conditionCnt++;
 		}
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("GROUP BY post_id");
 		// selectSQL.append("ORDER BY date DESC");
 		return selectSQL.toString();
 	}

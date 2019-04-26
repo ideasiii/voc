@@ -217,8 +217,8 @@ public class HotKeyword extends RootAPI {
 			}
 			selectSQL.append(") ");
 		}
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		// selectSQL.append("ORDER BY date DESC");
 		return selectSQL.toString();
 	}

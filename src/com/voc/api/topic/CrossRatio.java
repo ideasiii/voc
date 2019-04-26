@@ -371,8 +371,8 @@ public class CrossRatio extends RootAPI {
 			else selectSQL.append(",?");
 		}
 		selectSQL.append(") ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') >= ? ");
-		selectSQL.append("AND DATE_FORMAT(date, '%Y-%m-%d') <= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
+		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY ").append(mainFilterColumn).append(", ").append(secFilterColumn).append(" ");
 		selectSQL.append("ORDER BY count DESC");
 		return selectSQL.toString();

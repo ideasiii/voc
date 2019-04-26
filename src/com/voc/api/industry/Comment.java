@@ -18,6 +18,10 @@ import com.voc.common.ApiResponse;
 import com.voc.common.Common;
 import com.voc.common.DBUtil;
 
+/**
+ * Ex:
+ * http://localhost:8080/voc/industry/comment.jsp?post_id=5b1f7e3ca85d0a01452943d4
+ */
 public class Comment extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Comment.class);
 	private Map<String, String[]> paramMap;
