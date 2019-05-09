@@ -357,7 +357,7 @@ public class Trend extends RootAPI {
 		for (Map.Entry<String, String[]> entry : paramMap.entrySet()) {
 			String paramName = entry.getKey();
 			String columnName = this.getColumnName(paramName);
-			if (!"date".equals(columnName)) {
+			if (!"rep_date".equals(columnName)) {
 				if (0 == i) {
 					groupByColumns.append(columnName);
 				} else {
