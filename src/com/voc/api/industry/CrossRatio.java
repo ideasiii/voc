@@ -60,6 +60,10 @@ import com.voc.enums.EnumSentiment;
  * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=MAZDA;BENZ;TOYOTA&sec_filter=sentiment&sec_value=1;0;-1&start_date=2019-01-01&end_date=2019-03-31&limit=10
  * http://localhost:8080/voc/industry/cross-ratio.jsp?main_filter=brand&main_value=MAZDA;BENZ;TOYOTA&sec_filter=sentiment&sec_value=1;0;-1&monitor_brand=MAZDA;BENZ&start_date=2019-01-01&end_date=2019-03-31&limit=10
  * 
+ * Requirement Change: 
+ * 1.參數:source修改為media_type(來源類型):
+ * 2.項目名稱 channel 顯示由channel_name改為channel_display_name
+ * 3.前端改用POST method.
  */
 public class CrossRatio extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CrossRatio.class);
@@ -362,11 +366,11 @@ public class CrossRatio extends RootAPI {
 		if ("website_id".equals(mainFilterColumn)) {
 			this.mainSelectCol = "website_name";
 		} else if ("channel_id".equals(mainFilterColumn)) {
-			this.mainSelectCol = "channel_name";
+			this.mainSelectCol = "channel_display_name";
 		}
 		this.secSelectCol = secFilterColumn;
 		if ("channel_id".equals(secFilterColumn)) {
-			this.secSelectCol = "channel_name";
+			this.secSelectCol = "channel_display_name";
 		}
 		selectSQL.append("SELECT ").append(this.mainSelectCol).append(", ").append(this.secSelectCol).append(", ").append("SUM(reputation) AS count ");
 		selectSQL.append("FROM ").append(tableName).append(" ");

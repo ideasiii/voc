@@ -53,7 +53,7 @@ import com.voc.common.DBUtil;
  * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
  * 
  * EX: 
- * http://localhost:8080/voc/industry/feature-article-list.jsp?industry=汽車;單車&features=E-NCAP;ADS;佔空間&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31&page_num=1&page_size=10
+ * http://localhost:8080/voc/industry/feature-article-list.jsp?industry=汽車產業&features=E-NCAP;ADS;佔空間&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31&page_num=1&page_size=10
  *
  */
 public class FeatureArticleList extends RootAPI {
@@ -64,7 +64,7 @@ public class FeatureArticleList extends RootAPI {
 	private String brand;
 	private String series;
 	private String product;
-	private String source; // 欲查詢來源類型 (尚未啟用) (facebook、forum、news、ptt)
+	private String mediaType; // 欲查詢來源類型(facebook、forum、news、ptt)
 	private String website; // website_name
 	private String channel; // channel id
 	private String features; // 必填: 
@@ -79,7 +79,7 @@ public class FeatureArticleList extends RootAPI {
 	private String[] brandValueArr;
 	private String[] seriesValueArr;
 	private String[] productValueArr;
-//	private String[] sourceValueArr; // 尚未啟用
+	private String[] mediaTypeValueArr; 
 	private String[] websiteValueArr;
 	private String[] channelValueArr;
 	private String[] featuresValueArr;
@@ -115,11 +115,11 @@ public class FeatureArticleList extends RootAPI {
 		this.brand = StringUtils.trimToEmpty(request.getParameter("brand")); 
 		this.series = StringUtils.trimToEmpty(request.getParameter("series")); 
 		this.product = StringUtils.trimToEmpty(request.getParameter("product")); 
-		this.source = StringUtils.trimToEmpty(request.getParameter("source")); // 尚未啟用
+		this.mediaType = StringUtils.trimToEmpty(request.getParameter("media_type")); 
 		this.website = StringUtils.trimToEmpty(request.getParameter("website")); 
 		this.channel = StringUtils.trimToEmpty(request.getParameter("channel")); 
 		this.features = StringUtils.trimToEmpty(request.getParameter("features"));
-		this.sentiment = StringUtils.trimToEmpty(request.getParameter("sentiment")); // 尚未啟用
+		this.sentiment = StringUtils.trimToEmpty(request.getParameter("sentiment")); 
 		this.startDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
 		this.endDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 
@@ -146,7 +146,7 @@ public class FeatureArticleList extends RootAPI {
 		this.brandValueArr = this.brand.split(PARAM_VALUES_SEPARATOR);
 		this.seriesValueArr = this.series.split(PARAM_VALUES_SEPARATOR);
 		this.productValueArr = this.product.split(PARAM_VALUES_SEPARATOR);
-//		this.sourceValueArr = this.source.split(PARAM_VALUES_SEPARATOR);
+		this.mediaTypeValueArr = this.mediaType.split(PARAM_VALUES_SEPARATOR);
 		this.websiteValueArr = this.website.split(PARAM_VALUES_SEPARATOR); // website names
 		this.channelValueArr = this.channel.split(PARAM_VALUES_SEPARATOR); // channel ids
 		this.featuresValueArr = this.features.split(PARAM_VALUES_SEPARATOR);
@@ -232,6 +232,9 @@ public class FeatureArticleList extends RootAPI {
 			if (conditionCnt > 0) {
 				selectSQL.append("AND ");
 			}
+			if (StringUtils.isEmpty(series) && StringUtils.isEmpty(product)) {
+				selectSQL.append("series = '' AND product = '' AND ");
+			}
 			selectSQL.append("brand IN (");
 			for (int i = 0; i < brandValueArr.length; i++) {
 				if (i == 0) selectSQL.append("?");
@@ -265,8 +268,17 @@ public class FeatureArticleList extends RootAPI {
 			conditionCnt++;
 		}
 		
-		if (!StringUtils.isEmpty(source)) {
-			// 尚未啟用
+		if (!StringUtils.isEmpty(mediaType)) {
+			if (conditionCnt > 0) {
+				selectSQL.append("AND ");
+			}
+			selectSQL.append("media_type IN (");
+			for (int i = 0; i < mediaTypeValueArr.length; i++) {
+				if (i == 0) selectSQL.append("?");
+				else selectSQL.append(",?");
+			}
+			selectSQL.append(") ");
+			conditionCnt++;
 		}
 		
 		if (!StringUtils.isEmpty(website)) {
@@ -354,8 +366,12 @@ public class FeatureArticleList extends RootAPI {
 			}
 		}
 		
-		if (!StringUtils.isEmpty(source)) {
-			// 尚未啟用
+		if (!StringUtils.isEmpty(mediaType)) {
+			for (String mediaTypeValue : mediaTypeValueArr) {
+				int parameterIndex = idx + 1;
+				preparedStatement.setObject(parameterIndex, mediaTypeValue);
+				idx++;
+			}
 		}
 		
 		if (!StringUtils.isEmpty(website)) {

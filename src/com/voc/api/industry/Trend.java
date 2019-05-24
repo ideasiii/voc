@@ -160,7 +160,7 @@ public class Trend extends RootAPI {
 						if ("website_id".equals(columnName)) {
 							columnName = "website_name";
 						} else if ("channel_id".equals(columnName)) {
-							columnName = "channel_name";
+							columnName = "channel_display_name";
 						}
 						if (!"rep_date".equals(columnName)) {
 							String str = rs.getString(columnName);
@@ -292,7 +292,7 @@ public class Trend extends RootAPI {
 				if ("website_id".equals(columnName)) {
 					columnName = "website_name";
 				} else if ("channel_id".equals(columnName)) {
-					columnName = "channel_name";
+					columnName = "channel_display_name";
 				}
 				if (0 == i) {
 					sql.append(columnName);
@@ -425,7 +425,7 @@ public class Trend extends RootAPI {
 		String[] paramValues_brand = null;
 		String[] paramValues_series = null;
 		String[] paramValues_product = null;
-		String[] paramValues_source = null;
+		String[] paramValues_mediaType = null;
 		String[] paramValues_website = null;
 		String[] paramValues_channel = null;
 		String[] paramValues_sentiment = null;
@@ -461,8 +461,8 @@ public class Trend extends RootAPI {
 			case PARAM_COLUMN_PRODUCT:
 				paramValues_product = values;
 				break;
-			case PARAM_COLUMN_SOURCE:
-				paramValues_source = values;
+			case PARAM_COLUMN_MEDIA_TYPE:
+				paramValues_mediaType = values;
 				break;
 			case PARAM_COLUMN_WEBSITE:
 				paramValues_website = values;
@@ -537,13 +537,13 @@ public class Trend extends RootAPI {
 			}
 			itemCnt++;
 		}
-		if (paramValues_source != null) {
-			String paramName = EnumTrend.PARAM_COLUMN_SOURCE.getParamName();
-			orderedParameterMap.put(paramName, paramValues_source);
+		if (paramValues_mediaType != null) {
+			String paramName = EnumTrend.PARAM_COLUMN_MEDIA_TYPE.getParamName();
+			orderedParameterMap.put(paramName, paramValues_mediaType);
 			if (0 == itemCnt) {
-				mainItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+				mainItemArr = paramValues_mediaType[0].split(PARAM_VALUES_SEPARATOR);
 			} else if (1 == itemCnt) {
-				secItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+				secItemArr = paramValues_mediaType[0].split(PARAM_VALUES_SEPARATOR);
 			}
 			itemCnt++;
 		}

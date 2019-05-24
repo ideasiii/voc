@@ -37,7 +37,7 @@ public class HotFeature extends RootAPI {
 	private String strBrand;
 	private String strSeries;
 	private String strProduct;
-	private String strSource;
+	private String strMediaType;
 	private String strWebsite;
 	private String strChannel;
 	private String strFeatureGroup;
@@ -49,7 +49,7 @@ public class HotFeature extends RootAPI {
 	private String[] arrBrand;
 	private String[] arrSeries;
 	private String[] arrProduct;
-//	private String[] arrSource;
+	private String[] arrMediaType;
 	private String[] arrWebsite;
 	private String[] arrChannel;
 	private String[] arrFeatureGroup;
@@ -98,7 +98,7 @@ public class HotFeature extends RootAPI {
 		strBrand = StringUtils.trimToEmpty(request.getParameter("brand"));
 		strSeries = StringUtils.trimToEmpty(request.getParameter("series"));
 		strProduct = StringUtils.trimToEmpty(request.getParameter("product"));
-		strSource = StringUtils.trimToEmpty(request.getParameter("source"));
+		strMediaType = StringUtils.trimToEmpty(request.getParameter("media_type"));
 		strWebsite = StringUtils.trimToEmpty(request.getParameter("website"));
 		strChannel = StringUtils.trimToEmpty(request.getParameter("channel"));
 		strFeatureGroup = StringUtils.trimToEmpty(request.getParameter("features"));
@@ -118,7 +118,7 @@ public class HotFeature extends RootAPI {
 		arrBrand = strBrand.split(PARAM_VALUES_SEPARATOR);
 		arrSeries = strSeries.split(PARAM_VALUES_SEPARATOR);
 		arrProduct = strProduct.split(PARAM_VALUES_SEPARATOR);
-	//	arrSource = strSource.split(PARAM_VALUES_SEPARATOR);
+		arrMediaType = strMediaType.split(PARAM_VALUES_SEPARATOR);
 		arrWebsite = strWebsite.split(PARAM_VALUES_SEPARATOR);
 		arrChannel = strChannel.split(PARAM_VALUES_SEPARATOR);
 		arrFeatureGroup = strFeatureGroup.split(PARAM_VALUES_SEPARATOR);
@@ -254,6 +254,9 @@ public class HotFeature extends RootAPI {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
+			if (StringUtils.isEmpty(strSeries) && StringUtils.isEmpty(strProduct)) {
+				sql.append("series = '' AND product = '' AND ");
+			}
 		sql.append("brand IN (");
 		for (int i = 0; i < arrBrand.length; i++) {
 			if (0 == i) sql.append(" ?");
@@ -289,8 +292,17 @@ public class HotFeature extends RootAPI {
 		nCount++;
 		}
 
-		if (!StringUtils.isBlank(strSource)) {
-			// 尚未啟用
+		if (!StringUtils.isBlank(strMediaType)) {
+			if (0 < nCount) {
+				sql.append("AND ");
+			}
+		sql.append("media_type IN (");
+		for (int i = 0; i < arrMediaType.length; i++) {
+			if (0 == i) sql.append(" ?");
+			else sql.append(", ?");
+		}
+		sql.append(") ");
+		nCount++;
 		}
 		
 		if (!StringUtils.isBlank(strWebsite)) {
@@ -389,8 +401,13 @@ public class HotFeature extends RootAPI {
 				}
 			}
 		
-		if (!StringUtils.isBlank(strSource)) {
-			// 尚未啟用
+		if (!StringUtils.isBlank(strMediaType)) {
+			for (String v : arrMediaType) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				// LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
+				}
 		}
 		
 		if (!StringUtils.isBlank(strWebsite)) {

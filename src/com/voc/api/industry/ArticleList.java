@@ -33,7 +33,7 @@ import com.voc.common.DBUtil;
  * query	brand		string	欲查詢品牌
  * query	series		string	欲查詢系列
  * query	product		string	欲查詢產品
- * query	source		string	欲查詢來源類型 (facebook、forum、news、ptt)
+ * query	media_type		string	欲查詢來源類型 (facebook、forum、news、ptt)
  * query	website		string	欲查詢來源網站
  * query	channel		string	欲查詢來源頻道
  * query	features	string	欲查詢特性
@@ -91,7 +91,7 @@ public class ArticleList extends RootAPI {
 	private String brand;   // 單個參數值 --> 改成: 多個參數值
 	private String series;  // 單個參數值 --> 改成: 多個參數值
 	private String product; // 單個參數值 --> 改成: 多個參數值
-	private String source;  // 多個參數值
+	private String mediaType;  // 多個參數值
 	private String website; // 多個參數值 (website id --> 改成website_name)
 	private String channel; // 多個參數值 (channel id)
 	private String features;
@@ -106,7 +106,7 @@ public class ArticleList extends RootAPI {
 	private String[] seriesValueArr;
 	private String[] productValueArr;
 	
-	private String[] sourceValueArr;
+	private String[] mediaTypeValueArr;
 	private String[] websiteNameValueArr;
 	private String[] channelIdValueArr;
 	private String[] sentimentValueArr;
@@ -176,12 +176,12 @@ public class ArticleList extends RootAPI {
 			conditionCnt++;
 		}
 		
-		if (!StringUtils.isEmpty(source)) {
+		if (!StringUtils.isEmpty(mediaType)) {
 			if (conditionCnt > 0) {
 				selectSQL.append("AND ");
 			}
-			selectSQL.append("source IN (");
-			for (int i = 0; i < sourceValueArr.length; i++) {
+			selectSQL.append("media_type IN (");
+			for (int i = 0; i < mediaTypeValueArr.length; i++) {
 				if (i == 0) selectSQL.append("?");
 				else selectSQL.append(",?");
 			}
@@ -258,10 +258,10 @@ public class ArticleList extends RootAPI {
 			}
 		}
 		
-		if (!StringUtils.isEmpty(source)) {
-			for (String sourceValue : sourceValueArr) {
+		if (!StringUtils.isEmpty(mediaType)) {
+			for (String mediaTypeValue : mediaTypeValueArr) {
 				int parameterIndex = idx + 1;
-				preparedStatement.setObject(parameterIndex, sourceValue);
+				preparedStatement.setObject(parameterIndex, mediaTypeValue);
 				idx++;
 			}
 		}
@@ -331,7 +331,7 @@ public class ArticleList extends RootAPI {
 		this.brand = StringUtils.trimToEmpty(request.getParameter("brand"));       // 單個參數值 --> 改成: 多個參數值
 		this.series = StringUtils.trimToEmpty(request.getParameter("series"));     // 單個參數值 --> 改成: 多個參數值
 		this.product = StringUtils.trimToEmpty(request.getParameter("product"));   // 單個參數值 --> 改成: 多個參數值
-		this.source = StringUtils.trimToEmpty(request.getParameter("source"));     // 多個參數值
+		this.mediaType = StringUtils.trimToEmpty(request.getParameter("media_type"));     // 多個參數值
 		this.website = StringUtils.trimToEmpty(request.getParameter("website"));   // 多個參數值 (website id --> 改成website_name)
 		this.channel = StringUtils.trimToEmpty(request.getParameter("channel"));   // 多個參數值 (channel id)
 		this.features = StringUtils.trimToEmpty(request.getParameter("features"));
@@ -364,7 +364,7 @@ public class ArticleList extends RootAPI {
 		this.seriesValueArr = this.series.split(PARAM_VALUES_SEPARATOR);
 		this.productValueArr = this.product.split(PARAM_VALUES_SEPARATOR);
 		
-		this.sourceValueArr = this.source.split(PARAM_VALUES_SEPARATOR);
+		this.mediaTypeValueArr = this.mediaType.split(PARAM_VALUES_SEPARATOR);
 		this.websiteNameValueArr = this.website.split(PARAM_VALUES_SEPARATOR); // website names
 		this.channelIdValueArr = this.channel.split(PARAM_VALUES_SEPARATOR); // channel ids
 		this.sentimentValueArr = this.sentiment.split(PARAM_VALUES_SEPARATOR);
@@ -372,7 +372,7 @@ public class ArticleList extends RootAPI {
 	
 	private JSONObject validateParams() {
 		if (StringUtils.isBlank(this.brand) && StringUtils.isBlank(this.series) && StringUtils.isBlank(this.product) 
-				&& StringUtils.isBlank(this.source) && StringUtils.isBlank(this.website) && StringUtils.isBlank(this.channel) 
+				&& StringUtils.isBlank(this.mediaType) && StringUtils.isBlank(this.website) && StringUtils.isBlank(this.channel) 
 				&& StringUtils.isBlank(this.features) && StringUtils.isBlank(this.sentiment)) {
 			
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);

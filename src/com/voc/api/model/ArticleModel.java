@@ -28,6 +28,9 @@ public class ArticleModel {
 		private String date; // yyyy-MM-dd HH:mm:ss (EX: 2018-06-10 19:49:47)
 		private String channel;
 		private Integer comment_count;
+		private Integer like_count;
+		private Integer share_count;
+		private Integer view_count;
 		private Integer reputation;
 		private Double sentiment_score;
 		private Integer sentiment;
@@ -79,6 +82,24 @@ public class ArticleModel {
 		}
 		public void setComment_count(Integer comment_count) {
 			this.comment_count = comment_count;
+		}
+		public Integer getLike_count() {
+			return like_count;
+		}
+		public void setLike_count(Integer like_count) {
+			this.like_count = like_count;
+		}
+		public Integer getShare_count() {
+			return share_count;
+		}
+		public void setShare_count(Integer share_count) {
+			this.share_count = share_count;
+		}
+		public Integer getView_count() {
+			return view_count;
+		}
+		public void setView_count(Integer view_count) {
+			this.view_count = view_count;
 		}
 		public Integer getReputation() {
 			return reputation;

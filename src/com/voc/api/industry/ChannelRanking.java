@@ -166,7 +166,7 @@ public class ChannelRanking extends RootAPI {
 			while (rs.next()) {
 				// website_name, channel_name, channel_id, SUM(reputation) AS count
 				String websiteName = rs.getString("website_name");
-				String channelName = rs.getString("channel_name");
+				String channelName = rs.getString("channel_display_name");
 				String channelId = rs.getString("channel_id");
 				int count = rs.getInt("count");
 				LOGGER.debug("websiteName=" + websiteName + ", channelName=" + channelName + ", channelId=" + channelId + ", count=" + count);
@@ -175,7 +175,7 @@ public class ChannelRanking extends RootAPI {
 				
 				ChannelRankingModel.Channel channel = new ChannelRankingModel().new Channel();
 				channel.setChannel_id(channelId);
-				channel.setChannel(websiteName + "_" + channelName);
+				channel.setChannel(channelName);
 				channel.setCount(count);
 				channelList.add(channel);
 			}
@@ -228,7 +228,7 @@ public class ChannelRanking extends RootAPI {
 
 	private String genSelectSQL() {
 		StringBuffer selectSQL = new StringBuffer();
-		selectSQL.append("SELECT website_name, channel_name, channel_id, SUM(reputation) AS count ");
+		selectSQL.append("SELECT website_name, channel_display_name, channel_id, SUM(reputation) AS count ");
 		selectSQL.append("FROM ").append(this.tableName).append(" ");
 		selectSQL.append("WHERE brand IN (");
 		for(int i = 0 ; i < this.brandValueArr.length ; i++ ) {
