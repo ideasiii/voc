@@ -7,7 +7,7 @@ public enum EnumTrend {
 	PARAM_COLUMN_USER("user", "user"),
 	PARAM_COLUMN_TOPIC("topic", "topic"),
 	PARAM_COLUMN_PROJECT("project_name", "project_name"),
-	PARAM_COLUMN_SOURCE("source", "source"),
+	PARAM_COLUMN_MEDIA_TYPE("media_type", "media_type"),
 	PARAM_COLUMN_WEBSITE("website", "website_name"),
 	PARAM_COLUMN_CHANNEL("channel", "channel_id"),
 	PARAM_COLUMN_SENTIMENT("sentiment", "sentiment"),

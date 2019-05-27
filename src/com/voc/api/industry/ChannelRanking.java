@@ -288,21 +288,24 @@ public class ChannelRanking extends RootAPI {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
 		ResultSet rs = null;
-		String websiteName = null;
+	//	String websiteName = null;
 		String channelName = null;
-		String selectSql = "SELECT website_name, name FROM "+ TABLE_CHANNEL_LIST +" WHERE id = ? LIMIT 1";
+		String selectSql = "SELECT name FROM "+ TABLE_CHANNEL_LIST +" WHERE id = ? LIMIT 1";
 		try {
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSql);
 			preparedStatement.setString(1, id);
 			rs = preparedStatement.executeQuery();
 			if (rs.next()) {
-				websiteName = rs.getString("website_name");
+				//websiteName = rs.getString("website_name");
 				channelName = rs.getString("name");
 			}
-			if (websiteName != null && channelName != null) {
-				return websiteName + "_" + channelName;
-			}
+		//	if (websiteName != null && channelName != null) {
+		//		return websiteName + "_" + channelName;
+		//	}
+			if (channelName != null) {
+				return channelName;
+				}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();

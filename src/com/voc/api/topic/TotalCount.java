@@ -131,7 +131,7 @@ public class TotalCount extends RootAPI {
 					}
 					String columnName = this.getColumnName(paramName);
 					if ("channel_id".equals(columnName)) {
-						columnName = "channel_name";
+						columnName = "channel_display_name";
 					}
 					if (!"rep_date".equals(columnName)) {
 						String s = rs.getString(columnName);
@@ -240,7 +240,7 @@ public class TotalCount extends RootAPI {
 		String[] paramValues_user = null;
 		String[] paramValues_projectName = null;
 		String[] paramValues_topic = null;
-		String[] paramValues_source = null;
+		String[] paramValues_mediaType = null;
 		String[] paramValues_website = null;
 		String[] paramValues_channel = null;
 		String[] paramValues_sentiment = null;
@@ -281,8 +281,8 @@ public class TotalCount extends RootAPI {
 			case PARAM_COLUMN_TOPIC:
 				paramValues_topic = trimedValues;
 				break;
-			case PARAM_COLUMN_SOURCE:
-				paramValues_source = trimedValues;
+			case PARAM_COLUMN_MEDIA_TYPE:
+				paramValues_mediaType = trimedValues;
 				break;
 			case PARAM_COLUMN_WEBSITE:
 				paramValues_website = trimedValues;
@@ -340,13 +340,13 @@ public class TotalCount extends RootAPI {
 			}
 			itemCnt++;
 		}
-		if (paramValues_source != null) {
-			String paramName = EnumTotalCount.PARAM_COLUMN_SOURCE.getParamName();
-			this.orderedParameterMap.put(paramName, paramValues_source);
+		if (paramValues_mediaType != null) {
+			String paramName = EnumTotalCount.PARAM_COLUMN_MEDIA_TYPE.getParamName();
+			this.orderedParameterMap.put(paramName, paramValues_mediaType);
 			if (itemCnt == 0) {
-				mainItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+				mainItemArr = paramValues_mediaType[0].split(PARAM_VALUES_SEPARATOR);
 			} else if (itemCnt == 1) {
-				secItemArr = paramValues_source[0].split(PARAM_VALUES_SEPARATOR);
+				secItemArr = paramValues_mediaType[0].split(PARAM_VALUES_SEPARATOR);
 			}
 			itemCnt++;
 		}
@@ -409,7 +409,7 @@ public class TotalCount extends RootAPI {
 			itemCnt++;
 		}
 		
-		// topic, source, website, channel 至少須帶其中一個參數
+		// topic, media_type, website, channel 至少須帶其中一個參數
 		if (itemCnt == 0) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
@@ -451,7 +451,7 @@ public class TotalCount extends RootAPI {
 				if ("website_id".equals(columnName)) {
 					columnName = "website_name";
 				} else if ("channel_id".equals(columnName)) {
-					columnName = "channel_name";
+					columnName = "channel_display_name";
 				}
 				if (i == 0) {
 					selectClauseSB.append(columnName);

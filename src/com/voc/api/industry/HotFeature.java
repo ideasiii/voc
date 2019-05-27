@@ -28,6 +28,10 @@ import com.voc.common.DBUtil;
  * 新增sentiment:
  * http://localhost:8080/voc/industry/hot-feature.jsp?industry=輪胎&start_date=2019-02-09&end_date=2019-02-26&limit=15&sentiment=0
  * http://localhost:8080/voc/industry/hot-feature.jsp?industry=輪胎&features=種類&start_date=2019-02-09&end_date=2019-02-26&limit=15&sentiment=1
+ *
+ * Requirement Change: 1.參數:source修改為media_type(來源類型): 2.項目名稱 channel
+ * 顯示由channel_name改為channel_display_name 3.前端改用POST method.
+ *
  */
 
 public class HotFeature extends RootAPI {
@@ -45,7 +49,7 @@ public class HotFeature extends RootAPI {
 	private String strStartDate;
 	private String strEndDate;
 	private int nLimit = 10; // default
-	
+
 	private String[] arrBrand;
 	private String[] arrSeries;
 	private String[] arrProduct;
@@ -54,13 +58,13 @@ public class HotFeature extends RootAPI {
 	private String[] arrChannel;
 	private String[] arrFeatureGroup;
 	private String[] arrSentiment;
-	
+
 	private List<String> featureList; // query from keyword list table
-	
+
 	@Override
 	public String processRequest(HttpServletRequest request) {
 		paramMap = request.getParameterMap();
-		
+
 		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER).toString();
 		}
@@ -73,12 +77,12 @@ public class HotFeature extends RootAPI {
 			featureList = queryFeatureList();
 			LOGGER.info("***featureList: " + featureList);
 		}
-		
+
 		JSONArray resArray = new JSONArray();
 		if (StringUtils.isEmpty(this.strFeatureGroup) || (null != featureList && featureList.size() > 0)) {
 			resArray = query();
 		}
-	
+
 		if (null != resArray) {
 			JSONObject jobj = ApiResponse.successTemplate();
 			jobj.put("result", resArray);
@@ -89,32 +93,66 @@ public class HotFeature extends RootAPI {
 	}
 
 	private boolean hasRequiredParameters(Map<String, String[]> paramMap) {
-		return paramMap.containsKey("industry") && paramMap.containsKey("start_date") && paramMap.containsKey("end_date");
+		return paramMap.containsKey("industry") && paramMap.containsKey("start_date")
+				&& paramMap.containsKey("end_date");
 	}
-	
+
 	private void requestParams(HttpServletRequest request) {
-
-		strIndustry = StringUtils.trimToEmpty(request.getParameter("industry"));
-		strBrand = StringUtils.trimToEmpty(request.getParameter("brand"));
-		strSeries = StringUtils.trimToEmpty(request.getParameter("series"));
-		strProduct = StringUtils.trimToEmpty(request.getParameter("product"));
-		strMediaType = StringUtils.trimToEmpty(request.getParameter("media_type"));
-		strWebsite = StringUtils.trimToEmpty(request.getParameter("website"));
-		strChannel = StringUtils.trimToEmpty(request.getParameter("channel"));
-		strFeatureGroup = StringUtils.trimToEmpty(request.getParameter("features"));
-		strSentiment = StringUtils.trimToEmpty(request.getParameter("sentiment"));
-		strStartDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
-		strEndDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
-
-		String strLimit = request.getParameter("limit");
-		if (!StringUtils.isBlank(strLimit)) {
+		String jsonStr = this.requestBody(request);
+		JSONObject requestJsonObj = new JSONObject();
+		if (StringUtils.isNotBlank(jsonStr)) {
 			try {
-				this.nLimit = Integer.parseInt(strLimit);
+				requestJsonObj = new JSONObject(jsonStr);
 			} catch (Exception e) {
-				LOGGER.error(e.getMessage());
+				e.printStackTrace();
 			}
 		}
-		
+
+		if (requestJsonObj.has("industry")) {
+			strIndustry = StringUtils.trimToEmpty(requestJsonObj.getString("industry"));
+		}
+		if (requestJsonObj.has("brand")) {
+			strBrand = StringUtils.trimToEmpty(requestJsonObj.getString("brand"));
+		}
+		if (requestJsonObj.has("series")) {
+			strSeries = StringUtils.trimToEmpty(requestJsonObj.getString("series"));
+		}
+		if (requestJsonObj.has("product")) {
+			strProduct = StringUtils.trimToEmpty(requestJsonObj.getString("product"));
+		}
+		if (requestJsonObj.has("media_type")) {
+			strMediaType = StringUtils.trimToEmpty(requestJsonObj.getString("media_type"));
+		}
+		if (requestJsonObj.has("website")) {
+			strWebsite = StringUtils.trimToEmpty(requestJsonObj.getString("website"));
+		}
+		if (requestJsonObj.has("channel")) {
+			strChannel = StringUtils.trimToEmpty(requestJsonObj.getString("channel"));
+		}
+		if (requestJsonObj.has("features")) {
+			strFeatureGroup = StringUtils.trimToEmpty(requestJsonObj.getString("features"));
+		}
+		if (requestJsonObj.has("sentiment")) {
+			strSentiment = StringUtils.trimToEmpty(requestJsonObj.getString("sentiment"));
+		}
+		if (requestJsonObj.has("start_date")) {
+			strStartDate = StringUtils.trimToEmpty(requestJsonObj.getString("start_date"));
+		}
+		if (requestJsonObj.has("end_date")) {
+			strEndDate = StringUtils.trimToEmpty(requestJsonObj.getString("end_date"));
+		}
+
+		if (requestJsonObj.has("limit")) {
+			String strLimit = requestJsonObj.getString("limit");
+			if (!StringUtils.isBlank(strLimit)) {
+				try {
+					this.nLimit = Integer.parseInt(strLimit);
+				} catch (Exception e) {
+					LOGGER.error(e.getMessage());
+				}
+			}
+		}
+
 		arrBrand = strBrand.split(PARAM_VALUES_SEPARATOR);
 		arrSeries = strSeries.split(PARAM_VALUES_SEPARATOR);
 		arrProduct = strProduct.split(PARAM_VALUES_SEPARATOR);
@@ -124,7 +162,7 @@ public class HotFeature extends RootAPI {
 		arrFeatureGroup = strFeatureGroup.split(PARAM_VALUES_SEPARATOR);
 		arrSentiment = strSentiment.split(PARAM_VALUES_SEPARATOR);
 	}
-	
+
 	private JSONObject validate() {
 		if (StringUtils.isBlank(strIndustry) || StringUtils.isBlank(strStartDate) || StringUtils.isBlank(strEndDate)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
@@ -145,14 +183,14 @@ public class HotFeature extends RootAPI {
 		}
 		return null;
 	}
-	
+
 	private List<String> queryFeatureList() {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
 		String feature;
 		List<String> featureList = new ArrayList<>();
-		
+
 		try {
 			StringBuffer sql = new StringBuffer();
 			sql.append("SELECT DISTINCT feature AS f ");
@@ -160,19 +198,21 @@ public class HotFeature extends RootAPI {
 			sql.append("WHERE industry = ? ");
 			sql.append("AND feature_group IN (");
 			for (int i = 0; i < arrFeatureGroup.length; i++) {
-				if (0 == i) sql.append(" ?");
-				else sql.append(", ?");
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
 			}
 			sql.append(") ");
-			
+
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(sql.toString());
 			int idx = 0;
-			
+
 			int industryIndex = idx + 1;
 			pst.setObject(industryIndex, strIndustry);
 			idx++;
-			
+
 			for (String fg : arrFeatureGroup) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, fg);
@@ -180,14 +220,14 @@ public class HotFeature extends RootAPI {
 				idx++;
 			}
 			LOGGER.debug("queryFeatureList SQL = " + pst.toString());
-			
+
 			rs = pst.executeQuery();
-			while(rs.next()) {
+			while (rs.next()) {
 				feature = rs.getString("f");
 				featureList.add(feature);
 			}
- 			return featureList;
-			
+			return featureList;
+
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
@@ -196,7 +236,7 @@ public class HotFeature extends RootAPI {
 		}
 		return null;
 	}
-	
+
 	private JSONArray query() {
 		Connection conn = null;
 		PreparedStatement pst = null;
@@ -206,7 +246,7 @@ public class HotFeature extends RootAPI {
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(genSelectSQL());
 			setWhereClauseValues(pst);
-			
+
 			String strPstSQL = pst.toString();
 			LOGGER.info("strPstSQL: " + strPstSQL);
 			//////////
@@ -217,7 +257,7 @@ public class HotFeature extends RootAPI {
 			while (rs.next()) {
 				feature = rs.getString("features");
 				count = rs.getInt("count");
-				
+
 				JSONObject jobj = new JSONObject();
 				jobj.put("feature", feature);
 				jobj.put("count", count);
@@ -234,14 +274,14 @@ public class HotFeature extends RootAPI {
 		}
 		return null;
 	}
-	
+
 	private String genSelectSQL() {
 		int nCount = 0;
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT features, count(DISTINCT id) AS count ");
 		sql.append("FROM ").append(TABLE_FEATURE_REPUTATION).append(" ");
 		sql.append("WHERE ");
-		
+
 		if (!StringUtils.isBlank(strIndustry)) {
 			if (0 < nCount) {
 				sql.append("AND ");
@@ -249,7 +289,7 @@ public class HotFeature extends RootAPI {
 			sql.append("industry = ? ");
 			nCount++;
 		}
-		
+
 		if (!StringUtils.isBlank(strBrand)) {
 			if (0 < nCount) {
 				sql.append("AND ");
@@ -257,114 +297,130 @@ public class HotFeature extends RootAPI {
 			if (StringUtils.isEmpty(strSeries) && StringUtils.isEmpty(strProduct)) {
 				sql.append("series = '' AND product = '' AND ");
 			}
-		sql.append("brand IN (");
-		for (int i = 0; i < arrBrand.length; i++) {
-			if (0 == i) sql.append(" ?");
-			else sql.append(", ?");
+			sql.append("brand IN (");
+			for (int i = 0; i < arrBrand.length; i++) {
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
+			}
+			sql.append(") ");
+			nCount++;
 		}
-		sql.append(") ");
-		nCount++;
-		}
-		
+
 		if (!StringUtils.isBlank(strSeries)) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
-		sql.append("series IN (");
-		for (int i = 0; i < arrSeries.length; i++) {
-			if (0 == i) sql.append(" ?");
-			else sql.append(", ?");
+			sql.append("series IN (");
+			for (int i = 0; i < arrSeries.length; i++) {
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
+			}
+			sql.append(") ");
+			nCount++;
 		}
-		sql.append(") ");
-		nCount++;
-		}
-		
+
 		if (!StringUtils.isBlank(strProduct)) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
-		sql.append("product IN (");
-		for (int i = 0; i < arrProduct.length; i++) {
-			if (0 == i) sql.append(" ?");
-			else sql.append(", ?");
-		}
-		sql.append(") ");
-		nCount++;
+			sql.append("product IN (");
+			for (int i = 0; i < arrProduct.length; i++) {
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
+			}
+			sql.append(") ");
+			nCount++;
 		}
 
 		if (!StringUtils.isBlank(strMediaType)) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
-		sql.append("media_type IN (");
-		for (int i = 0; i < arrMediaType.length; i++) {
-			if (0 == i) sql.append(" ?");
-			else sql.append(", ?");
+			sql.append("media_type IN (");
+			for (int i = 0; i < arrMediaType.length; i++) {
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
+			}
+			sql.append(") ");
+			nCount++;
 		}
-		sql.append(") ");
-		nCount++;
-		}
-		
+
 		if (!StringUtils.isBlank(strWebsite)) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
 			sql.append("website_name IN (");
 			for (int i = 0; i < arrWebsite.length; i++) {
-				if (0 == i) sql.append(" ?");
-				else sql.append(", ?");
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
 			}
 			sql.append(") ");
 			nCount++;
-			}
-		
+		}
+
 		if (!StringUtils.isBlank(strChannel)) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
-		sql.append("channel_id IN (");
-		for (int i = 0; i < arrChannel.length; i++) {
-			if (0 == i) sql.append(" ?");
-			else sql.append(", ?");
+			sql.append("channel_id IN (");
+			for (int i = 0; i < arrChannel.length; i++) {
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
+			}
+			sql.append(") ");
+			nCount++;
 		}
-		sql.append(") ");
-		nCount++;
-		}
-		
+
 		if (!StringUtils.isBlank(strFeatureGroup) && 0 < featureList.size() && null != featureList) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
 			sql.append("features IN (");
 			for (int i = 0; i < featureList.size(); i++) {
-				if (0 == i) sql.append(" ?");
-				else sql.append(", ?");
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
 			}
 			sql.append(") ");
 			nCount++;
-			}
-		
+		}
+
 		if (!StringUtils.isBlank(strSentiment)) {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
-		sql.append("sentiment IN (");
-		for (int i = 0; i < arrSentiment.length; i++) {
-			if (0 == i) sql.append(" ?");
-			else sql.append(", ?");
-		}
-		sql.append(") ");
-		nCount++;
+			sql.append("sentiment IN (");
+			for (int i = 0; i < arrSentiment.length; i++) {
+				if (0 == i)
+					sql.append(" ?");
+				else
+					sql.append(", ?");
+			}
+			sql.append(") ");
+			nCount++;
 		}
 		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
 		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		sql.append("GROUP BY features ORDER BY count DESC ");
 		sql.append("LIMIT ?");
-		
+
 		LOGGER.info("SQL : " + sql.toString());
 		return sql.toString();
 	}
-	
+
 	private void setWhereClauseValues(PreparedStatement pst) throws Exception {
 		int idx = 0;
 
@@ -373,79 +429,79 @@ public class HotFeature extends RootAPI {
 			pst.setObject(industryIndex, strIndustry);
 			idx++;
 		}
-		
+
 		if (!StringUtils.isBlank(strBrand)) {
-		for (String v : arrBrand) {
-			int parameterIndex = idx + 1;
-			pst.setObject(parameterIndex, v);
-			// LOGGER.info("***" + parameterIndex + ":" + v);
-			idx++;
+			for (String v : arrBrand) {
+				int parameterIndex = idx + 1;
+				pst.setObject(parameterIndex, v);
+				// LOGGER.info("***" + parameterIndex + ":" + v);
+				idx++;
 			}
 		}
-		
+
 		if (!StringUtils.isBlank(strSeries)) {
 			for (String v : arrSeries) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, v);
 				// LOGGER.info("***" + parameterIndex + ":" + v);
 				idx++;
-				}
 			}
-		
+		}
+
 		if (!StringUtils.isBlank(strProduct)) {
 			for (String v : arrProduct) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, v);
 				// LOGGER.info("***" + parameterIndex + ":" + v);
 				idx++;
-				}
 			}
-		
+		}
+
 		if (!StringUtils.isBlank(strMediaType)) {
 			for (String v : arrMediaType) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, v);
 				// LOGGER.info("***" + parameterIndex + ":" + v);
 				idx++;
-				}
+			}
 		}
-		
+
 		if (!StringUtils.isBlank(strWebsite)) {
 			for (String v : arrWebsite) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, v);
 				// LOGGER.info("***" + parameterIndex + ":" + v);
 				idx++;
-				}
 			}
-		
+		}
+
 		if (!StringUtils.isBlank(strChannel)) {
 			for (String v : arrChannel) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, v);
 				// LOGGER.info("***" + parameterIndex + ":" + v);
 				idx++;
-				}
 			}
-		
+		}
+
 		if (!StringUtils.isBlank(strFeatureGroup)) {
 			for (String v : featureList) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, v);
 				LOGGER.info("***" + parameterIndex + ":" + v);
 				idx++;
-				}
 			}
-		
+		}
+
 		if (!StringUtils.isBlank(strSentiment)) {
 			for (String v : arrSentiment) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, v);
 				// LOGGER.info("***" + parameterIndex + ":" + v);
 				idx++;
-				}
+			}
 		}
-		
+
 		int startDateIndex = idx + 1;
 		pst.setObject(startDateIndex, strStartDate);
 		idx++;
@@ -458,6 +514,5 @@ public class HotFeature extends RootAPI {
 		pst.setObject(limitIndex, nLimit);
 		idx++;
 	}
-	
-	
+
 }
