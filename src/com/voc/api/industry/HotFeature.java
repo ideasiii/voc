@@ -68,7 +68,7 @@ public class HotFeature extends RootAPI {
 		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER).toString();
 		}
-		requestParams(request);
+			requestParams(request);
 		JSONObject errorResponse = validate();
 		if (null != errorResponse) {
 			return errorResponse.toString();
@@ -98,52 +98,22 @@ public class HotFeature extends RootAPI {
 	}
 
 	private void requestParams(HttpServletRequest request) {
-		String jsonStr = this.requestBody(request);
-		JSONObject requestJsonObj = new JSONObject();
-		if (StringUtils.isNotBlank(jsonStr)) {
-			try {
-				requestJsonObj = new JSONObject(jsonStr);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 
-		if (requestJsonObj.has("industry")) {
-			strIndustry = StringUtils.trimToEmpty(requestJsonObj.getString("industry"));
-		}
-		if (requestJsonObj.has("brand")) {
-			strBrand = StringUtils.trimToEmpty(requestJsonObj.getString("brand"));
-		}
-		if (requestJsonObj.has("series")) {
-			strSeries = StringUtils.trimToEmpty(requestJsonObj.getString("series"));
-		}
-		if (requestJsonObj.has("product")) {
-			strProduct = StringUtils.trimToEmpty(requestJsonObj.getString("product"));
-		}
-		if (requestJsonObj.has("media_type")) {
-			strMediaType = StringUtils.trimToEmpty(requestJsonObj.getString("media_type"));
-		}
-		if (requestJsonObj.has("website")) {
-			strWebsite = StringUtils.trimToEmpty(requestJsonObj.getString("website"));
-		}
-		if (requestJsonObj.has("channel")) {
-			strChannel = StringUtils.trimToEmpty(requestJsonObj.getString("channel"));
-		}
-		if (requestJsonObj.has("features")) {
-			strFeatureGroup = StringUtils.trimToEmpty(requestJsonObj.getString("features"));
-		}
-		if (requestJsonObj.has("sentiment")) {
-			strSentiment = StringUtils.trimToEmpty(requestJsonObj.getString("sentiment"));
-		}
-		if (requestJsonObj.has("start_date")) {
-			strStartDate = StringUtils.trimToEmpty(requestJsonObj.getString("start_date"));
-		}
-		if (requestJsonObj.has("end_date")) {
-			strEndDate = StringUtils.trimToEmpty(requestJsonObj.getString("end_date"));
-		}
-
-		if (requestJsonObj.has("limit")) {
-			String strLimit = requestJsonObj.getString("limit");
+		try {
+			strIndustry = StringUtils.trimToEmpty(request.getParameter("industry"));
+			strBrand = StringUtils.trimToEmpty(request.getParameter("brand"));
+			strSeries = StringUtils.trimToEmpty(request.getParameter("series"));
+			strProduct = StringUtils.trimToEmpty(request.getParameter("product"));
+			strMediaType = StringUtils.trimToEmpty(request.getParameter("media_type"));
+			strWebsite = StringUtils.trimToEmpty(request.getParameter("website"));
+			strChannel = StringUtils.trimToEmpty(request.getParameter("channel"));
+			strFeatureGroup = StringUtils.trimToEmpty(request.getParameter("features"));
+		//	strFeatureGroup = new String(strFeatureGroup.getBytes("ISO-8859-1"),"UTF-8"); 
+			strSentiment = StringUtils.trimToEmpty(request.getParameter("sentiment"));
+			strStartDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
+			strEndDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
+		
+			String strLimit = request.getParameter("limit");
 			if (!StringUtils.isBlank(strLimit)) {
 				try {
 					this.nLimit = Integer.parseInt(strLimit);
@@ -151,8 +121,10 @@ public class HotFeature extends RootAPI {
 					LOGGER.error(e.getMessage());
 				}
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
+			
 		arrBrand = strBrand.split(PARAM_VALUES_SEPARATOR);
 		arrSeries = strSeries.split(PARAM_VALUES_SEPARATOR);
 		arrProduct = strProduct.split(PARAM_VALUES_SEPARATOR);
