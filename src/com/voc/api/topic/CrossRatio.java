@@ -51,7 +51,10 @@ import com.voc.enums.EnumSentiment;
  *   AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31' 
  *   GROUP BY topic, sentiment ORDER BY count DESC;
  * 
- * 
+ *  Requirement Change: 
+ * 1.參數:source修改為media_type(來源類型):
+ * 2.項目名稱 channel 顯示由channel_name改為channel_display_name
+ * 3.前端改用POST method.
  */
 public class CrossRatio extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CrossRatio.class);
@@ -350,11 +353,11 @@ public class CrossRatio extends RootAPI {
 		if ("website_id".equals(mainFilterColumn)) {
 			this.mainSelectCol = "website_name";
 		} else if ("channel_id".equals(mainFilterColumn)) {
-			this.mainSelectCol = "channel_name";
+			this.mainSelectCol = "channel_display_name";
 		}
 		this.secSelectCol = secFilterColumn;
 		if ("channel_id".equals(secFilterColumn)) {
-			this.secSelectCol = "channel_name";
+			this.secSelectCol = "channel_display_name";
 		}
 		selectSQL.append("SELECT ").append(this.mainSelectCol).append(", ").append(this.secSelectCol).append(", ").append("SUM(reputation) AS count ");
 		selectSQL.append("FROM ").append(tableName).append(" ");

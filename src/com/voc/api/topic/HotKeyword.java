@@ -52,6 +52,9 @@ import com.voc.tool.MyJiebaSegmenter;
  * - Step3:
  *   ==>MyJiebaSegmenter
  *   
+ *   Requirement Change: 
+ *   1.參數:source修改為media_type(來源類型)
+ *   2.前端改用POST method.
  */
 public class HotKeyword extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(HotKeyword.class);
@@ -60,7 +63,7 @@ public class HotKeyword extends RootAPI {
 	private String project_name; // 欲查詢品牌
 	
 	private String topic;
-	private String source;
+	private String mediaType; //來源類型
 	private String website;
 	private String channel;
 	private String sentiment;
@@ -72,7 +75,7 @@ public class HotKeyword extends RootAPI {
 	
 	// 多個參數值
 	private String[] topicValueArr;
-	private String[] sourceValueArr;
+	private String[] mediaTypeValueArr;
 	private String[] websiteNameValueArr;
 	private String[] channelIdValueArr;
 	private String[] sentimentValueArr;
@@ -185,9 +188,9 @@ public class HotKeyword extends RootAPI {
 			selectSQL.append(") ");
 		}
 		
-		if (!StringUtils.isEmpty(source)) {
-			selectSQL.append("AND source IN (");
-			for (int i = 0; i < sourceValueArr.length; i++) {
+		if (!StringUtils.isEmpty(mediaType)) {
+			selectSQL.append("AND media_type IN (");
+			for (int i = 0; i < mediaTypeValueArr.length; i++) {
 				if (i == 0) selectSQL.append("?");
 				else selectSQL.append(",?");
 			}
@@ -236,10 +239,10 @@ public class HotKeyword extends RootAPI {
 			}
 		}
 		
-		if (!StringUtils.isEmpty(source)) {
-			for (String sourceValue : sourceValueArr) {
+		if (!StringUtils.isEmpty(mediaType)) {
+			for (String mediaTypeValue : mediaTypeValueArr) {
 				int parameterIndex = idx + 1;
-				preparedStatement.setObject(parameterIndex, sourceValue);
+				preparedStatement.setObject(parameterIndex, mediaTypeValue);
 				idx++;
 			}
 		}
@@ -304,7 +307,7 @@ public class HotKeyword extends RootAPI {
 		this.project_name = StringUtils.trimToEmpty(request.getParameter("project_name"));
 		
 		this.topic = StringUtils.trimToEmpty(request.getParameter("topic")); 
-		this.source = StringUtils.trimToEmpty(request.getParameter("source")); 
+		this.mediaType = StringUtils.trimToEmpty(request.getParameter("media_type")); 
 		this.website = StringUtils.trimToEmpty(request.getParameter("website")); 
 		this.channel = StringUtils.trimToEmpty(request.getParameter("channel")); 
 		this.sentiment = StringUtils.trimToEmpty(request.getParameter("sentiment"));
@@ -325,7 +328,7 @@ public class HotKeyword extends RootAPI {
 		
 		// 多個參數值: 
 		this.topicValueArr = this.topic.split(PARAM_VALUES_SEPARATOR);
-		this.sourceValueArr = this.source.split(PARAM_VALUES_SEPARATOR);
+		this.mediaTypeValueArr = this.mediaType.split(PARAM_VALUES_SEPARATOR);
 		this.websiteNameValueArr = this.website.split(PARAM_VALUES_SEPARATOR); // website names
 		this.channelIdValueArr = this.channel.split(PARAM_VALUES_SEPARATOR); // channel ids
 		this.sentimentValueArr = this.sentiment.split(PARAM_VALUES_SEPARATOR);
@@ -338,7 +341,7 @@ public class HotKeyword extends RootAPI {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
 		
-		if (StringUtils.isBlank(this.topic) && StringUtils.isBlank(this.source)  
+		if (StringUtils.isBlank(this.topic) && StringUtils.isBlank(this.mediaType)  
 				&& StringUtils.isBlank(this.website) && StringUtils.isBlank(this.channel) 
 				&& StringUtils.isBlank(this.sentiment)) {
 			

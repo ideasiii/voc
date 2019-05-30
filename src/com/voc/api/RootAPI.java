@@ -327,7 +327,7 @@ public abstract class RootAPI {
 		ResultSet rs = null;
 		try {
 			StringBuffer queryArticleSQL = new StringBuffer();
-			queryArticleSQL.append("SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count, sentiment_score, sentiment ");
+			queryArticleSQL.append("SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_name, comment_count, like_count, share_count, view_count, sentiment_score, sentiment ");
 			queryArticleSQL.append("FROM ").append(TABLE_POST_LIST).append(" ");
 			queryArticleSQL.append("WHERE id in (");
 			for(int i = 0 ; i < postIdList.size(); i++ ) {
@@ -352,17 +352,35 @@ public abstract class RootAPI {
 				ArticleModel.Article article = new ArticleModel().new Article();
 				String title = rs.getString("title");
 				String content = rs.getString("content");
-				
+				Integer like = (Integer)rs.getObject("like_count");
+				Integer share = (Integer)rs.getObject("share_count");
+				Integer view = (Integer)rs.getObject("view_count");
 				// Filter by keyword: 
 				if (StringUtils.isBlank(keyword) || title.indexOf(keyword) >= 0 || content.indexOf(keyword) >= 0) {
+					
 					article.setPost_id(rs.getString("id"));
 					article.setUrl(rs.getString("url"));
 					article.setTitle(title);
 					// article.setContent(content); // TODO: Remove content after test: 
 					article.setAuthor(rs.getString("author"));
 					article.setDate(rs.getString("date"));
-					article.setChannel(rs.getString("website_name") + "_" + rs.getString("channel_name"));
+					article.setChannel(rs.getString("channel_display_name"));
 					article.setComment_count(rs.getInt("comment_count"));
+					if (null != like) {
+						article.setLike_count(like);
+					} else {
+						article.setLike_count(null);
+					}
+					if (null != share) {
+						article.setShare_count(share);
+					} else {
+						article.setShare_count(null);
+					}
+					if (null != view) {
+						article.setView_count(view);
+					} else {
+						article.setView_count(null);
+					}
 					article.setReputation(hash_postId_reputation.get(article.getPost_id()));
 					article.setSentiment_score((Double)rs.getObject("sentiment_score"));
 					article.setSentiment((Integer)rs.getObject("sentiment"));
