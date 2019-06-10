@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -146,15 +147,16 @@ public class Trend extends RootAPI {
 					+ strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
 			LOGGER.info("selectUpdateTimeSQL: " + this.selectUpdateTimeSQL);
 
-			Map<String, Map<String, Integer>> hash_itemName_dataMap = new HashMap<>();
-			Map<String, Integer> dataMap = new HashMap<String, Integer>();
+			JSONObject hash_itemName_dataMap = new JSONObject();
+			JSONArray dataMap = new JSONArray();
+
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
 				int i = 0;
 				for (Map.Entry<String, String[]> entry : orderedParameterMap.entrySet()) {
 					String paramName = entry.getKey();
-					if (!paramName.equals("monitor_brand")) { 
+					if (!paramName.equals("monitor_brand")) {
 
 						String columnName = getColumnName(paramName);
 						if ("website_id".equals(columnName)) {
@@ -182,17 +184,31 @@ public class Trend extends RootAPI {
 					date = rs.getString("dailyStr");
 				}
 				int count = rs.getInt("count");
-				LOGGER.info("item: " + item.toString() + ", date: " + date + ", count: " + count);
-
-				if (hash_itemName_dataMap.get(item.toString()) == null) {
-					hash_itemName_dataMap.put(item.toString(), new HashMap<String, Integer>());
-				}
-				dataMap = hash_itemName_dataMap.get(item.toString());
-				dataMap.put(date, count);
+				int title_count = rs.getInt("title_count");
+				int content_count = rs.getInt("content_count");
+				int comment_count = rs.getInt("comment_count");
+				LOGGER.info("item: " + item.toString() + ", date: " + date + ", count: " + count + ", title_count: " + title_count + ", content_count: " + content_count + ", comment_count: " + comment_count);
+	
+				hash_itemName_dataMap.put(item.toString(), new JSONArray());	
+				dataMap = hash_itemName_dataMap.getJSONArray(item.toString());
+		
+				JSONObject countObj = new JSONObject();
+				
+				countObj.put("date", date);
+				countObj.put("count", count);
+				countObj.put("title_count", title_count);
+				countObj.put("content_count", content_count);
+				countObj.put("comment_count", comment_count);
+				
+				dataMap.put(countObj);
+				LOGGER.info("date: " + date + ", countObj: " + countObj);
 			}
+				LOGGER.info("dataMap: " + dataMap);
 
 			for (String itemName : itemNameList) {
-				dataMap = hash_itemName_dataMap.get(itemName);
+				dataMap = hash_itemName_dataMap.getJSONArray(itemName);
+				LOGGER.info("dataMap in itemName list: " + dataMap );
+				
 				JSONArray dataArray = new JSONArray();
 				List<String> dateList = null;
 				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
@@ -200,16 +216,38 @@ public class Trend extends RootAPI {
 				} else {
 					dateList = ApiUtil.getDailyList(strStartDate, strEndDate);
 				}
+				int idx = 0;
 				for (String dataStr : dateList) {
 					Integer count = null;
+					Integer title_count = null;
+					Integer content_count = null;
+					Integer comment_count = null;
 					if (null != dataMap) {
-						count = dataMap.get(dataStr);
+						JSONObject data = dataMap.getJSONObject(idx);
+						count = data.getInt(dataStr);
+						LOGGER.info("dataStr: " + dataStr +" count: " + count);
+			
+						title_count = data.getInt("title_count");
+						content_count = data.getInt("content_count");
+						comment_count = data.getInt("comment_count");
+						LOGGER.info("title_count: " + title_count + " content_count: " + content_count + " comment_count: " + comment_count);
+						idx++;
 					}
 					if (count == null)
 						count = 0;
+					if (title_count == null)
+						title_count = 0;
+					if (content_count == null)
+						content_count = 0;
+					if (comment_count == null)
+						comment_count = 0;
+					
 					JSONObject dataObject = new JSONObject();
 					dataObject.put("date", dataStr);
 					dataObject.put("count", count);
+					dataObject.put("title_count", title_count);
+					dataObject.put("content_count", content_count);
+					dataObject.put("comment_count", comment_count);
 					dataArray.put(dataObject);
 				}
 				JSONObject resultObj = new JSONObject();
@@ -309,7 +347,9 @@ public class Trend extends RootAPI {
 		} else if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
 			sql.append(" ,").append("DATE_FORMAT(rep_date, '%Y-%m') AS monthlyStr");
 		}
-		sql.append(" ,").append("SUM(reputation) AS count FROM ").append(strTableName).append(" ");
+		sql.append(" ,").append(
+				"SUM(reputation) AS count, SUM(title_hit) AS title_count, SUM(content_hit) AS content_count, SUM(comment_hit) AS comment_count FROM ")
+				.append(strTableName).append(" ");
 
 		return sql.toString();
 	}

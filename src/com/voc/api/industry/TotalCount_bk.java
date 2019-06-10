@@ -80,8 +80,8 @@ import com.voc.enums.industry.EnumTotalCount;
  * 2.項目名稱 channel 顯示由channel_name改為channel_display_name
  * 3.前端改用POST method.
  */
-public class TotalCount extends RootAPI {
-	private static final Logger LOGGER = LoggerFactory.getLogger(TotalCount.class);
+public class TotalCount_bk extends RootAPI {
+	private static final Logger LOGGER = LoggerFactory.getLogger(TotalCount_bk.class);
 	private Map<String, String[]> orderedParameterMap = new ParameterMap<>();
 	private String selectTotalCountSQL;
 	private String selectUpdateTimeSQL;
@@ -137,9 +137,7 @@ public class TotalCount extends RootAPI {
 			LOGGER.debug("selectTotalCountSQL = " + this.selectTotalCountSQL);
 			
 			JSONArray itemArray = new JSONArray();
-			Map<String, Map<String, Integer>> hash_itemName_count = new HashMap<>();
-			Map<String, Integer> dataMap = new HashMap<String, Integer>();
-			
+			Map<String, Integer> hash_itemName_count = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
@@ -167,27 +165,12 @@ public class TotalCount extends RootAPI {
 					i++;
 				}
 				int count = rs.getInt("count");
-				int title_count = rs.getInt("title_count");
-				int content_count = rs.getInt("content_count");
-				int comment_count = rs.getInt("comment_count");
 				LOGGER.debug("item=" + item.toString() + ", count=" + count);
-				
-				if (hash_itemName_count.get(item.toString()) == null) {
-					hash_itemName_count.put(item.toString(), new HashMap<String, Integer>());
-				}
-				dataMap = hash_itemName_count.get(item.toString());
-				dataMap.put("count", count);
-				dataMap.put("title_count", title_count);
-				dataMap.put("content_count", content_count);
-				dataMap.put("comment_count", comment_count);
-				//hash_itemName_count.put(item.toString(), count);
+				hash_itemName_count.put(item.toString(), count);
 				
 				JSONObject itemObject = new JSONObject();
 				itemObject.put("item", item.toString());
 				itemObject.put("count", count);
-				itemObject.put("title_count", title_count);
-				itemObject.put("content_count", content_count);
-				itemObject.put("comment_count", comment_count);
 				itemArray.put(itemObject);
 			}
 			LOGGER.debug("hash_itemName_count=" + hash_itemName_count);
@@ -196,36 +179,16 @@ public class TotalCount extends RootAPI {
 			int desc_remainingCnt = this.limit - itemArray.length();
 			if (desc_remainingCnt > 0) {
 				for (String itemName: itemNameList) {
-					dataMap = hash_itemName_count.get(itemName);
-					Integer count = dataMap.get("count");
-					Integer title_count = dataMap.get("title_count");
-					Integer content_count = dataMap.get("content_count");
-					Integer comment_count = dataMap.get("comment_count");
-					LOGGER.debug("count=" + count + " title_count=" + title_count+ " content_count=" + content_count+ " comment_count=" + comment_count);
-					
+					Integer count = hash_itemName_count.get(itemName);
 					if (count == null) {
-						count = 0;
-					}
-					if (title_count == null) {
-						title_count = 0;
-					}
-					if (content_count == null) {
-						content_count = 0;
-					}
-					if (comment_count == null) {
-						comment_count = 0;
-					}
 						if (desc_remainingCnt > 0) {
 							JSONObject itemObject = new JSONObject();
 							itemObject.put("item", itemName);
-							itemObject.put("count", count);
-							itemObject.put("title_count", title_count);
-							itemObject.put("content_count", content_count);
-							itemObject.put("comment_count", comment_count);
+							itemObject.put("count", 0);
 							itemArray.put(itemObject);
 							desc_remainingCnt--;
 						}
-					
+					}
 				}
 			}
 			return itemArray;
@@ -541,7 +504,7 @@ public class TotalCount extends RootAPI {
 				i++;
 			}
 		}
-		selectClauseSB.append(" ,").append("SUM(reputation) AS count, SUM(title_hit) AS title_count, SUM(content_hit) AS content_count, SUM(comment_hit) AS comment_count FROM ").append(this.tableName).append(" ");
+		selectClauseSB.append(" ,").append("SUM(reputation) AS count FROM ").append(this.tableName).append(" ");
 		return selectClauseSB.toString();
 	}
 	
