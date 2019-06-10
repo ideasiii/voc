@@ -79,6 +79,11 @@ import com.voc.enums.industry.EnumTotalCount;
  * 1.參數:source修改為media_type(來源類型):
  * 2.項目名稱 channel 顯示由channel_name改為channel_display_name
  * 3.前端改用POST method.
+ * 
+ * Requirement Change: 
+ * 新增output值(title_count, content_count, comment_count)
+ * Ex:
+ * [{"key":"brand","value":"BENZ;LEXUS;TOYOTA;PORSCHE","description":""},{"key":"media_type","value":"sns;forum","description":""},{"key":"start_date","value":"2019-05-01","description":""},{"key":"end_date","value":"2019-05-05","description":""}]
  */
 public class TotalCount extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TotalCount.class);
@@ -137,9 +142,10 @@ public class TotalCount extends RootAPI {
 			LOGGER.debug("selectTotalCountSQL = " + this.selectTotalCountSQL);
 			
 			JSONArray itemArray = new JSONArray();
-			Map<String, Map<String, Integer>> hash_itemName_count = new HashMap<>();
-			Map<String, Integer> dataMap = new HashMap<String, Integer>();
-			
+			Map<String, Integer> hash_itemName_count = new HashMap<>();
+			Map<String, Integer> hash_itemName_title = new HashMap<>();
+			Map<String, Integer> hash_itemName_content = new HashMap<>();
+			Map<String, Integer> hash_itemName_comment = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
@@ -172,15 +178,10 @@ public class TotalCount extends RootAPI {
 				int comment_count = rs.getInt("comment_count");
 				LOGGER.debug("item=" + item.toString() + ", count=" + count);
 				
-				if (hash_itemName_count.get(item.toString()) == null) {
-					hash_itemName_count.put(item.toString(), new HashMap<String, Integer>());
-				}
-				dataMap = hash_itemName_count.get(item.toString());
-				dataMap.put("count", count);
-				dataMap.put("title_count", title_count);
-				dataMap.put("content_count", content_count);
-				dataMap.put("comment_count", comment_count);
-				//hash_itemName_count.put(item.toString(), count);
+				hash_itemName_count.put(item.toString(), count);
+				hash_itemName_title.put(item.toString(), title_count);
+				hash_itemName_content.put(item.toString(), content_count);
+				hash_itemName_comment.put(item.toString(), comment_count);
 				
 				JSONObject itemObject = new JSONObject();
 				itemObject.put("item", item.toString());
@@ -191,41 +192,31 @@ public class TotalCount extends RootAPI {
 				itemArray.put(itemObject);
 			}
 			LOGGER.debug("hash_itemName_count=" + hash_itemName_count);
+			LOGGER.debug("hash_itemName_title=" + hash_itemName_title);
+			LOGGER.debug("hash_itemName_content=" + hash_itemName_content);
+			LOGGER.debug("hash_itemName_comment=" + hash_itemName_comment);
 			
 
 			int desc_remainingCnt = this.limit - itemArray.length();
 			if (desc_remainingCnt > 0) {
 				for (String itemName: itemNameList) {
-					dataMap = hash_itemName_count.get(itemName);
-					Integer count = dataMap.get("count");
-					Integer title_count = dataMap.get("title_count");
-					Integer content_count = dataMap.get("content_count");
-					Integer comment_count = dataMap.get("comment_count");
-					LOGGER.debug("count=" + count + " title_count=" + title_count+ " content_count=" + content_count+ " comment_count=" + comment_count);
-					
-					if (count == null) {
-						count = 0;
-					}
-					if (title_count == null) {
-						title_count = 0;
-					}
-					if (content_count == null) {
-						content_count = 0;
-					}
-					if (comment_count == null) {
-						comment_count = 0;
-					}
-						if (desc_remainingCnt > 0) {
-							JSONObject itemObject = new JSONObject();
-							itemObject.put("item", itemName);
-							itemObject.put("count", count);
-							itemObject.put("title_count", title_count);
-							itemObject.put("content_count", content_count);
-							itemObject.put("comment_count", comment_count);
-							itemArray.put(itemObject);
-							desc_remainingCnt--;
+					Integer count = hash_itemName_count.get(itemName);
+					Integer title_count = hash_itemName_title.get(itemName);
+					Integer content_count = hash_itemName_content.get(itemName);
+					Integer comment_count = hash_itemName_comment.get(itemName);
+				
+					if (desc_remainingCnt > 0) {
+					if (count == null && title_count == null && content_count == null && comment_count == null) {
+						JSONObject itemObject = new JSONObject();
+						itemObject.put("item", itemName);
+						itemObject.put("count", 0);
+						itemObject.put("title_count", 0);
+						itemObject.put("content_count", 0);
+						itemObject.put("comment_count", 0);
+						itemArray.put(itemObject);
+						desc_remainingCnt--;
 						}
-					
+					}
 				}
 			}
 			return itemArray;
