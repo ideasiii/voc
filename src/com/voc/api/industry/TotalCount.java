@@ -195,8 +195,7 @@ public class TotalCount extends RootAPI {
 			LOGGER.debug("hash_itemName_title=" + hash_itemName_title);
 			LOGGER.debug("hash_itemName_content=" + hash_itemName_content);
 			LOGGER.debug("hash_itemName_comment=" + hash_itemName_comment);
-			
-
+		
 			int desc_remainingCnt = this.limit - itemArray.length();
 			if (desc_remainingCnt > 0) {
 				for (String itemName: itemNameList) {

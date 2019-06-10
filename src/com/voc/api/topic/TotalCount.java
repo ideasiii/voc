@@ -25,41 +25,40 @@ import com.voc.enums.EnumSentiment;
 import com.voc.enums.topic.EnumTotalCount;
 
 /**
- * 查詢自訂主題分析口碑總數: 查詢時間區間內各項目獨立分析或交叉分析的口碑總數及比例
- * /topic/total-count.jsp
+ * 查詢自訂主題分析口碑總數: 查詢時間區間內各項目獨立分析或交叉分析的口碑總數及比例 /topic/total-count.jsp
  * 
- * EX-1:
- * - URL: 
- *   ==>http://localhost:8080/voc/topic/total-count.jsp?user=tsmc&project_name=自訂汽車專案&topic=歐系汽車;日系汽車&website=台灣新浪網;PTT&start_date=2018-12-01&end_date=2018-12-31&limit=5
- * - SQL:
- *   ==>SELECT topic ,website_name ,SUM(reputation) AS count FROM ibuzz_voc.topic_reputation 
- *      WHERE user in ('tsmc') AND project_name in ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') AND website_name in ('台灣新浪網','PTT') 
- *      AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-12-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2018-12-31' 
- *      GROUP BY topic, website_name ORDER BY count DESC LIMIT 5
- *      
- * EX-2:
- * - URL: 
- *   ==>http://localhost:8080/voc/topic/total-count.jsp?user=tsmc&project_name=自訂汽車專案&topic=歐系汽車;日系汽車&start_date=2018-12-01&end_date=2018-12-31
- * - SQL:
- *   ==>SELECT topic ,SUM(reputation) AS count FROM ibuzz_voc.topic_reputation 
- *      WHERE user in ('tsmc') AND project_name in ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') 
- *      GROUP BY topic ORDER BY count DESC LIMIT 10
- *      
- *   
- * Requirement Change: 
- * 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * EX-1: - URL:
+ * ==>http://localhost:8080/voc/topic/total-count.jsp?user=tsmc&project_name=自訂汽車專案&topic=歐系汽車;日系汽車&website=台灣新浪網;PTT&start_date=2018-12-01&end_date=2018-12-31&limit=5
+ * - SQL: ==>SELECT topic ,website_name ,SUM(reputation) AS count FROM
+ * ibuzz_voc.topic_reputation WHERE user in ('tsmc') AND project_name in
+ * ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') AND website_name in ('台灣新浪網','PTT')
+ * AND DATE_FORMAT(date, '%Y-%m-%d') >= '2018-12-01' AND DATE_FORMAT(date,
+ * '%Y-%m-%d') <= '2018-12-31' GROUP BY topic, website_name ORDER BY count DESC
+ * LIMIT 5
  * 
- * EX:
- * - URL: 
- *   ==>http://localhost:8080/voc/topic/total-count.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&topic=歐系汽車;日系汽車&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31
- * - SQL:
- *   ==>SELECT topic ,sentiment ,SUM(reputation) AS count FROM ibuzz_voc.topic_reputation 
- *      WHERE user in ('5bff9b81617d854c850a0d15') AND project_name in ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') 
- *      AND sentiment in ('1','0','-1') 
- *      AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31' 
- *      GROUP BY topic, sentiment ORDER BY count DESC LIMIT 5;
+ * EX-2: - URL:
+ * ==>http://localhost:8080/voc/topic/total-count.jsp?user=tsmc&project_name=自訂汽車專案&topic=歐系汽車;日系汽車&start_date=2018-12-01&end_date=2018-12-31
+ * - SQL: ==>SELECT topic ,SUM(reputation) AS count FROM
+ * ibuzz_voc.topic_reputation WHERE user in ('tsmc') AND project_name in
+ * ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') GROUP BY topic ORDER BY count DESC
+ * LIMIT 10
  * 
  * 
+ * Requirement Change: 1.加上 sentiment(評價): 1:偏正、0:中性、-1:偏負
+ * 
+ * EX: - URL:
+ * ==>http://localhost:8080/voc/topic/total-count.jsp?user=5bff9b81617d854c850a0d15&project_name=自訂汽車專案&topic=歐系汽車;日系汽車&sentiment=1;0;-1&start_date=2019-01-01&end_date=2019-12-31
+ * - SQL: ==>SELECT topic ,sentiment ,SUM(reputation) AS count FROM
+ * ibuzz_voc.topic_reputation WHERE user in ('5bff9b81617d854c850a0d15') AND
+ * project_name in ('自訂汽車專案') AND topic in ('歐系汽車','日系汽車') AND sentiment in
+ * ('1','0','-1') AND DATE_FORMAT(date, '%Y-%m-%d') >= '2019-01-01' AND
+ * DATE_FORMAT(date, '%Y-%m-%d') <= '2019-12-31' GROUP BY topic, sentiment ORDER
+ * BY count DESC LIMIT 5;
+ * 
+ * Requirement Change: 1.參數:source修改為media_type(來源類型): 2.項目名稱 channel
+ * 顯示由channel_name改為channel_display_name 3.前端改用POST method.
+ * 
+ * Requirement Change: 新增output值(title_count, content_count, comment_count) Ex:
  * 
  */
 public class TotalCount extends RootAPI {
@@ -70,7 +69,7 @@ public class TotalCount extends RootAPI {
 	private List<String> itemNameList = new ArrayList<>();
 	private String tableName;
 	private int limit = 10; // Default: 10
-	
+
 	@Override
 	public String processRequest(HttpServletRequest request) {
 		JSONObject errorResponse = this.validateAndSetOrderedParameterMap(request);
@@ -94,7 +93,7 @@ public class TotalCount extends RootAPI {
 		}
 		return ApiResponse.unknownError().toString();
 	}
-	
+
 	private JSONArray queryData() {
 		Connection conn = null;
 		PreparedStatement preparedStatement = null;
@@ -106,20 +105,25 @@ public class TotalCount extends RootAPI {
 			selectSQL.append(this.genGroupByOrderByClause());
 			selectSQL.append("LIMIT ? ");
 			// LOGGER.debug("selectSQL=" + selectSQL.toString());
-			
+
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
 			this.setWhereClauseValues(preparedStatement);
-			
+
 			String psSQLStr = preparedStatement.toString();
 			LOGGER.debug("psSQLStr = " + psSQLStr);
-			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
+			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME
+					+ psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
-			this.selectTotalCountSQL = "SELECT SUM(reputation) AS " + TOTAL_COUNT + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
+			this.selectTotalCountSQL = "SELECT SUM(reputation) AS " + TOTAL_COUNT
+					+ psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			LOGGER.debug("selectTotalCountSQL = " + this.selectTotalCountSQL);
 
 			JSONArray itemArray = new JSONArray();
 			Map<String, Integer> hash_itemName_count = new HashMap<>();
+			Map<String, Integer> hash_itemName_title = new HashMap<>();
+			Map<String, Integer> hash_itemName_content = new HashMap<>();
+			Map<String, Integer> hash_itemName_comment = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
@@ -147,26 +151,45 @@ public class TotalCount extends RootAPI {
 					i++;
 				}
 				int count = rs.getInt("count");
+				int title_count = rs.getInt("title_count");
+				int content_count = rs.getInt("content_count");
+				int comment_count = rs.getInt("comment_count");
 				LOGGER.debug("item=" + item.toString() + ", count=" + count);
+
 				hash_itemName_count.put(item.toString(), count);
-				
+				hash_itemName_title.put(item.toString(), title_count);
+				hash_itemName_content.put(item.toString(), content_count);
+				hash_itemName_comment.put(item.toString(), comment_count);
+
 				JSONObject itemObject = new JSONObject();
 				itemObject.put("item", item.toString());
 				itemObject.put("count", count);
+				itemObject.put("title_count", title_count);
+				itemObject.put("content_count", content_count);
+				itemObject.put("comment_count", comment_count);
 				itemArray.put(itemObject);
 			}
 			LOGGER.debug("hash_itemName_count=" + hash_itemName_count);
-			
+			LOGGER.debug("hash_itemName_title=" + hash_itemName_title);
+			LOGGER.debug("hash_itemName_content=" + hash_itemName_content);
+			LOGGER.debug("hash_itemName_comment=" + hash_itemName_comment);
 
 			int desc_remainingCnt = this.limit - itemArray.length();
 			if (desc_remainingCnt > 0) {
-				for (String itemName: itemNameList) {
+				for (String itemName : itemNameList) {
 					Integer count = hash_itemName_count.get(itemName);
-					if (count == null) {
-						if (desc_remainingCnt > 0) {
+					Integer title_count = hash_itemName_title.get(itemName);
+					Integer content_count = hash_itemName_content.get(itemName);
+					Integer comment_count = hash_itemName_comment.get(itemName);
+
+					if (desc_remainingCnt > 0) {
+						if (count == null && title_count == null && content_count == null && comment_count == null) {
 							JSONObject itemObject = new JSONObject();
 							itemObject.put("item", itemName);
 							itemObject.put("count", 0);
+							itemObject.put("title_count", 0);
+							itemObject.put("content_count", 0);
+							itemObject.put("comment_count", 0);
 							itemArray.put(itemObject);
 							desc_remainingCnt--;
 						}
@@ -195,20 +218,18 @@ public class TotalCount extends RootAPI {
 			}
 			i++;
 		}
-		
-		String[] trimedValues = new String[] {
-				trimedValuesSB.toString()
-		};
+
+		String[] trimedValues = new String[] { trimedValuesSB.toString() };
 		return trimedValues;
 	}
-	
+
 	private JSONObject checkDateParameters(Map<String, String[]> parameterMap) {
 		String param_startDate = EnumTotalCount.PARAM_COLUMN_START_DATE.getParamName(); // start_date
 		String param_endDate = EnumTotalCount.PARAM_COLUMN_END_DATE.getParamName(); // end_date
 		if (!parameterMap.containsKey(param_startDate) || !parameterMap.containsKey(param_endDate)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
-		
+
 		String value_startDate = StringUtils.trimToEmpty(parameterMap.get(param_startDate)[0]);
 		String value_endDate = StringUtils.trimToEmpty(parameterMap.get(param_endDate)[0]);
 		if (!Common.isValidDate(value_startDate, "yyyy-MM-dd")) {
@@ -222,21 +243,21 @@ public class TotalCount extends RootAPI {
 		}
 		return null;
 	}
-	
+
 	private JSONObject validateAndSetOrderedParameterMap(HttpServletRequest request) {
 		String user = request.getParameter("user");
 		String project_name = request.getParameter("project_name");
 		if (StringUtils.isBlank(user) || StringUtils.isBlank(project_name)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
-		
+
 		Map<String, String[]> parameterMap = request.getParameterMap();
 		JSONObject errorResponse = this.checkDateParameters(parameterMap);
 		if (errorResponse != null) {
 			return errorResponse;
 		}
 		this.tableName = TABLE_TOPIC_REPUTATION;
-		
+
 		String[] paramValues_user = null;
 		String[] paramValues_projectName = null;
 		String[] paramValues_topic = null;
@@ -246,7 +267,7 @@ public class TotalCount extends RootAPI {
 		String[] paramValues_sentiment = null;
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
-		
+
 		String limitStr = StringUtils.trimToEmpty(request.getParameter("limit"));
 		if (!StringUtils.isEmpty(limitStr)) {
 			try {
@@ -255,22 +276,23 @@ public class TotalCount extends RootAPI {
 				LOGGER.error(e.getMessage());
 			}
 		}
-		
+
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
-			if (API_KEY.equals(paramName)) continue;
-			
+			if (API_KEY.equals(paramName))
+				continue;
+
 			EnumTotalCount enumTotalCount = EnumTotalCount.getEnum(paramName);
 			if (enumTotalCount == null) {
 				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Unknown parameter: param=" + paramName);
 			}
-			
+
 			String[] values = entry.getValue();
 			if (StringUtils.isBlank(values[0])) {
 				continue;
 			}
 			String[] trimedValues = this.trimValues(values);
-			
+
 			switch (enumTotalCount) {
 			case PARAM_COLUMN_USER:
 				paramValues_user = trimedValues;
@@ -306,7 +328,7 @@ public class TotalCount extends RootAPI {
 				break;
 			}
 		}
-		
+
 		String[] mainItemArr = null;
 		String[] secItemArr = null;
 		int itemCnt = 0;
@@ -408,12 +430,12 @@ public class TotalCount extends RootAPI {
 			}
 			itemCnt++;
 		}
-		
+
 		// topic, media_type, website, channel 至少須帶其中一個參數
 		if (itemCnt == 0) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
-		
+
 		if (mainItemArr != null) {
 			for (String mainItem : mainItemArr) {
 				if (secItemArr != null) {
@@ -425,7 +447,7 @@ public class TotalCount extends RootAPI {
 				}
 			}
 		}
-		
+
 		if (paramValues_startDate != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_START_DATE.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_startDate);
@@ -436,7 +458,7 @@ public class TotalCount extends RootAPI {
 		}
 		return null;
 	}
-	
+
 	private String genSelectClause() {
 		StringBuffer selectClauseSB = new StringBuffer();
 		selectClauseSB.append("SELECT ");
@@ -461,15 +483,17 @@ public class TotalCount extends RootAPI {
 				i++;
 			}
 		}
-		selectClauseSB.append(" ,").append("SUM(reputation) AS count FROM ").append(this.tableName).append(" ");
+		selectClauseSB.append(" ,").append(
+				"SUM(reputation) AS count, SUM(title_hit) AS title_count, SUM(content_hit) AS content_count, SUM(comment_hit) AS comment_count FROM ")
+				.append(this.tableName).append(" ");
 		return selectClauseSB.toString();
 	}
-	
+
 	private String genWhereClause() {
 		StringBuffer whereClauseSB = new StringBuffer();
 		int i = 0;
 		for (Map.Entry<String, String[]> entry : this.orderedParameterMap.entrySet()) {
-			String paramName = entry.getKey();			
+			String paramName = entry.getKey();
 			String columnName = this.getColumnName(paramName);
 			if (i == 0) {
 				whereClauseSB.append("WHERE ");
@@ -497,7 +521,7 @@ public class TotalCount extends RootAPI {
 		}
 		return whereClauseSB.toString();
 	}
-	
+
 	private String genGroupByOrderByClause() {
 		StringBuffer groupByOrderByClauseSB = new StringBuffer();
 		StringBuffer columnsSB = new StringBuffer();
