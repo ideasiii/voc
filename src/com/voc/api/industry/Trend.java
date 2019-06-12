@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -147,9 +146,15 @@ public class Trend extends RootAPI {
 					+ strPstSQL.substring(strPstSQL.indexOf(" FROM "), strPstSQL.indexOf(" GROUP BY "));
 			LOGGER.info("selectUpdateTimeSQL: " + this.selectUpdateTimeSQL);
 
-			JSONObject hash_itemName_dataMap = new JSONObject();
-			JSONArray dataMap = new JSONArray();
-
+			Map<String, Map<String, Integer>> hash_itemName_countMap = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_itemName_titleMap = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_itemName_contentMap = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_itemName_commentMap = new HashMap<>();
+			Map<String, Integer> hash_itemName_count = new HashMap<String, Integer>();
+			Map<String, Integer> hash_itemName_title = new HashMap<String, Integer>();
+			Map<String, Integer> hash_itemName_content = new HashMap<String, Integer>();
+			Map<String, Integer> hash_itemName_comment = new HashMap<String, Integer>();
+			
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				StringBuffer item = new StringBuffer();
@@ -188,27 +193,35 @@ public class Trend extends RootAPI {
 				int content_count = rs.getInt("content_count");
 				int comment_count = rs.getInt("comment_count");
 				LOGGER.info("item: " + item.toString() + ", date: " + date + ", count: " + count + ", title_count: " + title_count + ", content_count: " + content_count + ", comment_count: " + comment_count);
-	
-				hash_itemName_dataMap.put(item.toString(), new JSONArray());	
-				dataMap = hash_itemName_dataMap.getJSONArray(item.toString());
-		
-				JSONObject countObj = new JSONObject();
-				
-				countObj.put("date", date);
-				countObj.put("count", count);
-				countObj.put("title_count", title_count);
-				countObj.put("content_count", content_count);
-				countObj.put("comment_count", comment_count);
-				
-				dataMap.put(countObj);
-				LOGGER.info("date: " + date + ", countObj: " + countObj);
+
+				if (hash_itemName_countMap.get(item.toString()) == null) {
+					hash_itemName_countMap.put(item.toString(), new HashMap<String, Integer>());
+				}
+				if (hash_itemName_titleMap.get(item.toString()) == null) {
+					hash_itemName_titleMap.put(item.toString(), new HashMap<String, Integer>());
+				}
+				if (hash_itemName_contentMap.get(item.toString()) == null) {
+					hash_itemName_contentMap.put(item.toString(), new HashMap<String, Integer>());
+				}
+				if (hash_itemName_commentMap.get(item.toString()) == null) {
+					hash_itemName_commentMap.put(item.toString(), new HashMap<String, Integer>());
+				}
+				hash_itemName_count = hash_itemName_countMap.get(item.toString());
+				hash_itemName_count.put(date, count);
+				hash_itemName_title = hash_itemName_titleMap.get(item.toString());
+				hash_itemName_title.put(date, title_count);
+				hash_itemName_content = hash_itemName_contentMap.get(item.toString());
+				hash_itemName_content.put(date, content_count);
+				hash_itemName_comment = hash_itemName_commentMap.get(item.toString());
+				hash_itemName_comment.put(date, comment_count);
 			}
-				LOGGER.info("dataMap: " + dataMap);
 
 			for (String itemName : itemNameList) {
-				dataMap = hash_itemName_dataMap.getJSONArray(itemName);
-				LOGGER.info("dataMap in itemName list: " + dataMap );
-				
+				hash_itemName_count = hash_itemName_countMap.get(itemName);
+				hash_itemName_title = hash_itemName_titleMap.get(itemName);
+				hash_itemName_content = hash_itemName_contentMap.get(itemName);
+				hash_itemName_comment = hash_itemName_commentMap.get(itemName);
+			
 				JSONArray dataArray = new JSONArray();
 				List<String> dateList = null;
 				if (strInterval.equals(Common.INTERVAL_MONTHLY)) {
@@ -216,29 +229,29 @@ public class Trend extends RootAPI {
 				} else {
 					dateList = ApiUtil.getDailyList(strStartDate, strEndDate);
 				}
-				int idx = 0;
 				for (String dataStr : dateList) {
 					Integer count = null;
 					Integer title_count = null;
 					Integer content_count = null;
 					Integer comment_count = null;
-					if (null != dataMap) {
-						JSONObject data = dataMap.getJSONObject(idx);
-						count = data.getInt(dataStr);
-						LOGGER.info("dataStr: " + dataStr +" count: " + count);
-			
-						title_count = data.getInt("title_count");
-						content_count = data.getInt("content_count");
-						comment_count = data.getInt("comment_count");
-						LOGGER.info("title_count: " + title_count + " content_count: " + content_count + " comment_count: " + comment_count);
-						idx++;
+					if (null != hash_itemName_count) {
+						count = hash_itemName_count.get(dataStr);
 					}
 					if (count == null)
 						count = 0;
+					if (null != hash_itemName_title) {
+						title_count = hash_itemName_title.get(dataStr);
+					}
 					if (title_count == null)
 						title_count = 0;
+					if (null != hash_itemName_content) {
+						content_count = hash_itemName_content.get(dataStr);
+					}
 					if (content_count == null)
 						content_count = 0;
+					if (null != hash_itemName_comment) {
+						comment_count = hash_itemName_comment.get(dataStr);
+					}
 					if (comment_count == null)
 						comment_count = 0;
 					
