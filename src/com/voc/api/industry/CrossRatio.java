@@ -64,6 +64,12 @@ import com.voc.enums.EnumSentiment;
  * 1.參數:source修改為media_type(來源類型):
  * 2.項目名稱 channel 顯示由channel_name改為channel_display_name
  * 3.前端改用POST method.
+ * 
+ * Requirement Change: 
+ * 新增output值(title_count, content_count, comment_count)
+ * Ex:
+ * [{"key":"main_filter","value":"brand","description":""},{"key":"main_value","value":"BENZ;TOYOTA;PORSCHE","description":""},{"key":"sec_filter","value":"media_type","description":""},{"key":"sec_value","value":"forum;sns","description":""},{"key":"start_date","value":"2019-05-01","description":""},{"key":"end_date","value":"2019-05-05","description":""}]
+
  */
 public class CrossRatio extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CrossRatio.class);
@@ -205,6 +211,9 @@ public class CrossRatio extends RootAPI {
 			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			
 			Map<String, Map<String, Integer>> hash_mainItem_secItem = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_mainItem_secItem_title = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_mainItem_secItem_content = new HashMap<>();
+			Map<String, Map<String, Integer>> hash_mainItem_secItem_comment = new HashMap<>();
 			rs = preparedStatement.executeQuery();
 			while (rs.next()) {
 				String main_item = rs.getString(this.mainSelectCol);
@@ -216,14 +225,35 @@ public class CrossRatio extends RootAPI {
 					sec_item = EnumSentiment.getEnum(sec_item).getName();
 				}
 				int count = rs.getInt("count");
-				LOGGER.debug("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count);
+				int title_count = rs.getInt("title_count");
+				int content_count = rs.getInt("content_count");
+				int comment_count = rs.getInt("comment_count");
+				LOGGER.debug("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count + ", title_count: " + title_count + ", content_count: " + content_count + ", comment_count: " + comment_count);
 				
 				if (hash_mainItem_secItem.get(main_item) == null) {
 					hash_mainItem_secItem.put(main_item, new HashMap<String, Integer>());
 				}
-				Map<String, Integer> secItemHM = hash_mainItem_secItem.get(main_item);
-				secItemHM.put(sec_item, count);
-				hash_mainItem_secItem.put(main_item, secItemHM);
+				if (hash_mainItem_secItem_title.get(main_item) == null) {
+					hash_mainItem_secItem_title.put(main_item, new HashMap<String, Integer>());
+				}
+				if (hash_mainItem_secItem_content.get(main_item) == null) {
+					hash_mainItem_secItem_content.put(main_item, new HashMap<String, Integer>());
+				}
+				if (hash_mainItem_secItem_comment.get(main_item) == null) {
+					hash_mainItem_secItem_comment.put(main_item, new HashMap<String, Integer>());
+				}
+				Map<String, Integer> secItemHM_count = hash_mainItem_secItem.get(main_item);
+				Map<String, Integer> secItemHM_title = hash_mainItem_secItem_title.get(main_item);
+				Map<String, Integer> secItemHM_content = hash_mainItem_secItem_content.get(main_item);
+				Map<String, Integer> secItemHM_comment = hash_mainItem_secItem_comment.get(main_item);
+				secItemHM_count.put(sec_item, count);
+				hash_mainItem_secItem.put(main_item, secItemHM_count);
+				secItemHM_title.put(sec_item, title_count);
+				hash_mainItem_secItem_title.put(main_item, secItemHM_title);
+				secItemHM_content.put(sec_item, content_count);
+				hash_mainItem_secItem_content.put(main_item, secItemHM_content);
+				secItemHM_comment.put(sec_item, comment_count);
+				hash_mainItem_secItem_comment.put(main_item, secItemHM_comment);
 			}
 			LOGGER.debug("hash_mainItem_secItem=" + hash_mainItem_secItem);
 			
@@ -232,17 +262,42 @@ public class CrossRatio extends RootAPI {
 			
 			JSONArray resultArray = new JSONArray();
 			for (String mainValue : mainValueArr) {
-				Map<String, Integer> secItemHM = hash_mainItem_secItem.get(mainValue);
+				Map<String, Integer> secItemHM_count = hash_mainItem_secItem.get(mainValue);
+				Map<String, Integer> secItemHM_title = hash_mainItem_secItem_title.get(mainValue);
+				Map<String, Integer> secItemHM_content = hash_mainItem_secItem_content.get(mainValue);
+				Map<String, Integer> secItemHM_comment = hash_mainItem_secItem_comment.get(mainValue);
 				JSONArray secItemArr = new JSONArray();
 				for (String secValue : secValueArr) {
 					Integer count = null;
-					if (secItemHM != null) {
-						count = secItemHM.get(secValue);
+					Integer title_count = null;
+					Integer content_count = null;
+					Integer comment_count = null;
+					if (secItemHM_count != null) {
+						count = secItemHM_count.get(secValue);
 					}
 					if (count == null) count = 0;
+					
+					if (secItemHM_title != null) {
+						title_count = secItemHM_title.get(secValue);
+					}
+					if (title_count == null) title_count = 0;
+					
+					if (secItemHM_content != null) {
+					content_count = secItemHM_content.get(secValue);
+					}
+					if (content_count == null) content_count = 0;
+					
+					if (secItemHM_comment != null) {
+						comment_count = secItemHM_comment.get(secValue);
+					}
+					if (comment_count == null) comment_count = 0;
+					
 					JSONObject secItemObj = new JSONObject();
 					secItemObj.put("sec_item", secValue);
 					secItemObj.put("count", count);
+					secItemObj.put("title_count", title_count);
+					secItemObj.put("content_count", content_count);
+					secItemObj.put("comment_count", comment_count);
 					secItemArr.put(secItemObj);
 				}
 				JSONObject resultObj = new JSONObject();
@@ -372,7 +427,7 @@ public class CrossRatio extends RootAPI {
 		if ("channel_id".equals(secFilterColumn)) {
 			this.secSelectCol = "channel_display_name";
 		}
-		selectSQL.append("SELECT ").append(this.mainSelectCol).append(", ").append(this.secSelectCol).append(", ").append("SUM(reputation) AS count ");
+		selectSQL.append("SELECT ").append(this.mainSelectCol).append(", ").append(this.secSelectCol).append(", ").append("SUM(reputation) AS count, SUM(title_hit) AS title_count, SUM(content_hit) AS content_count, SUM(comment_hit) AS comment_count ");
 		selectSQL.append("FROM ").append(tableName).append(" ");
 		selectSQL.append("WHERE ").append(mainFilterColumn).append(" IN (");
 		for(int i = 0 ; i < mainValueArr.length ; i++ ) {
