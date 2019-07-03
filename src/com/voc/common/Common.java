@@ -9,8 +9,9 @@ public class Common {
 	public final static int ERR_EXCEPTION = -1;
 	
 	//private static final String DB_IP = "127.0.0.1";
-	private static final String RDS_IP = "ggininder-1-cluster.cluster-cgcqh1oe3kxf.ap-northeast-1.rds.amazonaws.com";
-	public static final String DB_URL_VOC = "jdbc:mysql://" + RDS_IP
+	//private static final String RDS_IP = "ggininder-1-cluster.cluster-cgcqh1oe3kxf.ap-northeast-1.rds.amazonaws.com";
+	private static final String IP = "10.0.20.101";
+	public static final String DB_URL_VOC = "jdbc:mysql://" + IP
 			+ ":3306/ibuzz_voc?useUnicode=true&characterEncoding=UTF-8&useSSL=false&verifyServerCertificate=false";
 	public static final String DB_USER_RDS = "ibuzz_voc";
 	public static final String DB_PASS_RDS = "ibuzz_voc123!";
