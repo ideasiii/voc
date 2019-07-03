@@ -25,7 +25,7 @@ import com.voc.service.impl.HttpServiceImpl;
 public class ApiFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApiFilter.class);
 	private static final HttpService HTTP_SERVICE = new HttpServiceImpl();
-	private String api_url_token_validation; // https://ser.kong.srm.pw/dashboard/token/validation
+	private String api_url_token_validation = "https://ser.kong.srm.pw/dashboard/token/validation";
 	
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
@@ -54,6 +54,7 @@ public class ApiFilter implements Filter {
 			
 			// Validate the token:
 			String token = servletRequest.getParameter(RootAPI.API_KEY);
+			LOGGER.info("token=" + token);
 			if (!this.checkToken(token)) {
 				LOGGER.error("Invalide token=" + token);
 				String jsonStr = ApiResponse.unauthorizedError().toString();
@@ -76,13 +77,15 @@ public class ApiFilter implements Filter {
 	// -------------------------------------------------------------------
 	
 	private boolean checkToken(String token) {
-//		if (StringUtils.isBlank(token)) {
-//			return false;
-//		}
-//		String params = "?token=" + token;
-//		int statusCode = HTTP_SERVICE.sendGet(true, this.api_url_token_validation + params);
-//		return HttpURLConnection.HTTP_OK == statusCode;
-		return true; // TODO: 暫時不檢查Token
+		if (StringUtils.isBlank(token)) {
+			return false;
+		}
+		String params = "?token=" + token;
+		int statusCode = HTTP_SERVICE.sendGet(true, this.api_url_token_validation + params);
+		if (HttpURLConnection.HTTP_OK != statusCode) {
+			return false;
+		}
+		return true;
 	}
 
 }
