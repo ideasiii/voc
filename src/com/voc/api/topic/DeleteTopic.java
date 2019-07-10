@@ -54,18 +54,8 @@ public class DeleteTopic extends RootAPI {
 	}
 	
 	private void requestAndTrimParams(HttpServletRequest request) {
-		String requestJsonStr = this.requestBody(request);
-		JSONObject requestJsonObj = new JSONObject();
-		if (StringUtils.isNotBlank(requestJsonStr)) {
-			try {
-				requestJsonObj = new JSONObject(requestJsonStr);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		if (requestJsonObj.has("id")) {
-			this.id = StringUtils.trimToEmpty(requestJsonObj.getString("id"));
-		}
+
+		this.id = StringUtils.trimToEmpty(request.getParameter("id"));
 	}
 	
 	private JSONObject validateParams() {

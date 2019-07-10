@@ -3,7 +3,11 @@ package com.voc.api.topic;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -63,33 +67,18 @@ public class AddTopic extends RootAPI {
 	}
 	
 	private void requestAndTrimParams(HttpServletRequest request) {
-		String jsonStr = this.requestBody(request);
-		JSONObject requestJsonObj = new JSONObject();
-		if (StringUtils.isNotBlank(jsonStr)) {
+		
 			try {
-				requestJsonObj = new JSONObject(jsonStr);
+				this.user = StringUtils.trimToEmpty(request.getParameter("user"));
+				this.project_name = StringUtils.trimToEmpty(request.getParameter("project_name"));
+				this.topic = StringUtils.trimToEmpty(request.getParameter("topic"));
+				this.keyword = StringUtils.trimToEmpty(request.getParameter("keyword"));
+				this.start_date = StringUtils.trimToEmpty(request.getParameter("start_date"));
+				this.end_date = StringUtils.trimToEmpty(request.getParameter("end_date"));
 			} catch (Exception e) {
 				e.printStackTrace();
-			}
 		}
-		if (requestJsonObj.has("user")) {
-			this.user = StringUtils.trimToEmpty(requestJsonObj.getString("user"));
-		}
-		if (requestJsonObj.has("project_name")) {
-			this.project_name = StringUtils.trimToEmpty(requestJsonObj.getString("project_name"));
-		}
-		if (requestJsonObj.has("topic")) {
-			this.topic = StringUtils.trimToEmpty(requestJsonObj.getString("topic"));
-		}
-		if (requestJsonObj.has("keyword")) {
-			this.keyword = StringUtils.trimToEmpty(requestJsonObj.getString("keyword"));
-		}
-		if (requestJsonObj.has("start_date")) {
-			this.start_date = StringUtils.trimToEmpty(requestJsonObj.getString("start_date"));
-		}
-		if (requestJsonObj.has("end_date")) {
-			this.end_date = StringUtils.trimToEmpty(requestJsonObj.getString("end_date"));
-		}
+	
 	}
 	
 	private JSONObject validateParams() {
@@ -152,8 +141,21 @@ public class AddTopic extends RootAPI {
 	private boolean insertTopicKeywordJobList(String user, String project_name, String topic, String keyword, String start_date, String end_date) {
 		Connection conn = null;
 		PreparedStatement pStmt = null;
-		String sqlStr="INSERT INTO " + TABLE_TOPIC_KEYWORD_JOB_LIST + " (user, project_name, topic, keyword, start_date, end_date, create_time, state) values (?, ?, ?, ?, ?, ?, ?, ?)";
-        try {
+		String sqlStr="INSERT INTO " + TABLE_TOPIC_KEYWORD_JOB_LIST + " (user, project_name, topic, keyword, start_date, end_date, article_start_date, article_end_date, create_time, state) values (?, ?, ?, ?, ?, ?, ?, ?, ? ,?)";
+		String article_start = null;
+		
+		try {
+		Calendar article_start_gc = new GregorianCalendar();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		Date ed = sdf.parse(end_date);
+		article_start_gc.setTime(ed);
+		article_start_gc.add(Calendar.DAY_OF_YEAR, -7);
+		article_start = sdf.format(article_start_gc.getTime());
+		} catch (ParseException e1) {
+			e1.printStackTrace();
+		}
+		
+		try {
 			conn = DBUtil.getConn();
 			conn.setAutoCommit(false);
 			
@@ -164,8 +166,10 @@ public class AddTopic extends RootAPI {
             pStmt.setObject(4, keyword);
             pStmt.setObject(5, start_date);
             pStmt.setObject(6, end_date);
-            pStmt.setObject(7, new Date()); // create_time: 預設寫現在時間
-            pStmt.setObject(8, "尚未分析"); // state: 預設寫 "尚未分析"
+            pStmt.setObject(7, article_start); // article_start_date: end_date -7
+            pStmt.setObject(8, end_date);
+            pStmt.setObject(9, new Date()); // create_time: 預設寫現在時間
+            pStmt.setObject(10, "尚未分析"); // state: 預設寫 "尚未分析"
             pStmt.executeUpdate();
             
 			ResultSet generatedKeys = pStmt.getGeneratedKeys();

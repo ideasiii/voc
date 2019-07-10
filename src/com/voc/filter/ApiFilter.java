@@ -25,7 +25,7 @@ import com.voc.service.impl.HttpServiceImpl;
 public class ApiFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ApiFilter.class);
 	private static final HttpService HTTP_SERVICE = new HttpServiceImpl();
-	private String api_url_token_validation = "https://ser.kong.srm.pw/dashboard/token/validation";
+	private String api_url_token_validation; //https://ser.kong.srm.pw/dashboard/token/validation
 	
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
@@ -40,6 +40,7 @@ public class ApiFilter implements Filter {
 		// LOGGER.debug(" ******* Before doFilter ******* ");
 		servletResponse.setContentType("application/json");
 		servletResponse.setCharacterEncoding("UTF-8");
+		servletRequest.setCharacterEncoding("UTF-8");
 		PrintWriter out = servletResponse.getWriter();
 		try {
 			if (servletRequest instanceof HttpServletRequest) {
