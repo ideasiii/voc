@@ -204,7 +204,7 @@ public class UpdateTopic extends RootAPI {
             pStmt.setObject(4, this.keyword);
             pStmt.setObject(5, this.start_date);
             pStmt.setObject(6, this.end_date);
-            pStmt.setObject(7, article_start_date);  // article_start_date: end_date -7
+            pStmt.setObject(7, start_date);  // article_start_date: end_date -7
             pStmt.setObject(8, this.end_date);
             pStmt.setObject(9, "尚未分析"); // state
             pStmt.setObject(10, 0);       // progress

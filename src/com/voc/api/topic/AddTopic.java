@@ -166,7 +166,7 @@ public class AddTopic extends RootAPI {
             pStmt.setObject(4, keyword);
             pStmt.setObject(5, start_date);
             pStmt.setObject(6, end_date);
-            pStmt.setObject(7, article_start); // article_start_date: end_date -7
+            pStmt.setObject(7, start_date); // article_start: end_date -7
             pStmt.setObject(8, end_date);
             pStmt.setObject(9, new Date()); // create_time: 預設寫現在時間
             pStmt.setObject(10, "尚未分析"); // state: 預設寫 "尚未分析"
