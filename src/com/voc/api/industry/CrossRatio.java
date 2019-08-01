@@ -109,7 +109,7 @@ public class CrossRatio extends RootAPI {
 			JSONObject successObject = ApiResponse.successTemplate();
 			successObject.put("update_time", update_time);
 			successObject.put("result", resultArray);
-			// LOGGER.info("responseJsonStr=" + successObject.toString());
+			LOGGER.info("responseJsonStr=" + successObject.toString());
 			return successObject.toString();
 		}
 		return ApiResponse.unknownError().toString();
@@ -208,7 +208,7 @@ public class CrossRatio extends RootAPI {
 			String psSQLStr = preparedStatement.toString();
 			LOGGER.debug("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
-			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
+		//	LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			
 			Map<String, Map<String, Integer>> hash_mainItem_secItem = new HashMap<>();
 			Map<String, Map<String, Integer>> hash_mainItem_secItem_title = new HashMap<>();
@@ -228,7 +228,7 @@ public class CrossRatio extends RootAPI {
 				int title_count = rs.getInt("title_count");
 				int content_count = rs.getInt("content_count");
 				int comment_count = rs.getInt("comment_count");
-				LOGGER.debug("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count + ", title_count: " + title_count + ", content_count: " + content_count + ", comment_count: " + comment_count);
+			//	LOGGER.debug("main_item=" + main_item + ", sec_item=" + sec_item + ", count=" + count + ", title_count: " + title_count + ", content_count: " + content_count + ", comment_count: " + comment_count);
 				
 				if (hash_mainItem_secItem.get(main_item) == null) {
 					hash_mainItem_secItem.put(main_item, new HashMap<String, Integer>());
@@ -255,7 +255,7 @@ public class CrossRatio extends RootAPI {
 				secItemHM_comment.put(sec_item, comment_count);
 				hash_mainItem_secItem_comment.put(main_item, secItemHM_comment);
 			}
-			LOGGER.debug("hash_mainItem_secItem=" + hash_mainItem_secItem);
+			//LOGGER.debug("hash_mainItem_secItem=" + hash_mainItem_secItem);
 			
 			// Convert channel_id to channel_name; website_id to website_name:
 			this.convertIdToName(this.mainValueArr, this.secValueArr);

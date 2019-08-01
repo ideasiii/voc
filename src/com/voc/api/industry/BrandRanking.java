@@ -30,6 +30,7 @@ import com.voc.common.DBUtil;
 public class BrandRanking extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BrandRanking.class);
 	private Map<String, String[]> paramMap;
+	private String strIndustry;
 	private String strBrand;
 	private String strStartDate;
 	private String strEndDate;
@@ -69,6 +70,7 @@ public class BrandRanking extends RootAPI {
 
 	private void requestParams(HttpServletRequest request) {
 
+		strIndustry = request.getParameter("industry");
 		strBrand = request.getParameter("brand");
 		strStartDate = request.getParameter("start_date");
 		strEndDate = request.getParameter("end_date");
@@ -146,7 +148,7 @@ public class BrandRanking extends RootAPI {
 				brandList.add(jobj);
 				hash_brandMap.put(brand, count);
 
-				LOGGER.info("brandList: " + brandList);
+			//	LOGGER.info("brandList: " + brandList);
 			}
 
 			int desc_zeroCount = nLimit - brandList.size();
@@ -207,6 +209,11 @@ public class BrandRanking extends RootAPI {
 			}
 		}
 		sql.append(") ");
+		
+		if (!StringUtils.isBlank(strIndustry)) {
+			sql.append("AND industry = ? ");
+		}
+		
 		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
 		sql.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		sql.append("GROUP BY brand ORDER BY count ");
@@ -216,7 +223,7 @@ public class BrandRanking extends RootAPI {
 			sql.append(Common.SORT_DESC).append(" ");
 		}
 		sql.append("LIMIT ?");
-		LOGGER.info("SQL : " + sql.toString());
+		//LOGGER.info("SQL : " + sql.toString());
 		return sql.toString();
 	}
 
@@ -229,7 +236,13 @@ public class BrandRanking extends RootAPI {
 			// LOGGER.info("***" + parameterIndex + ":" + v);
 			idx++;
 		}
-
+		
+		if (!StringUtils.isBlank(strIndustry)) {
+		int industryIndex = idx + 1;
+		pst.setObject(industryIndex, strIndustry);
+		idx++;
+		}
+		
 		int startDateIndex = idx + 1;
 		pst.setObject(startDateIndex, strStartDate);
 		idx++;

@@ -188,7 +188,7 @@ public class HotFeature extends RootAPI {
 			for (String fg : arrFeatureGroup) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, fg);
-				LOGGER.info("***" + parameterIndex + ":" + fg);
+				//LOGGER.info("***" + parameterIndex + ":" + fg);
 				idx++;
 			}
 			LOGGER.debug("queryFeatureList SQL = " + pst.toString());
@@ -389,7 +389,7 @@ public class HotFeature extends RootAPI {
 		sql.append("GROUP BY features ORDER BY count DESC ");
 		sql.append("LIMIT ?");
 
-		LOGGER.info("SQL : " + sql.toString());
+		//LOGGER.info("SQL : " + sql.toString());
 		return sql.toString();
 	}
 

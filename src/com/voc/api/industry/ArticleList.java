@@ -88,6 +88,7 @@ public class ArticleList extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ArticleList.class);
 	private static final Gson GSON = new Gson();
 	private Map<String, String[]> parameterMap;
+	private String industry;
 	private String brand;   // 單個參數值 --> 改成: 多個參數值
 	private String series;  // 單個參數值 --> 改成: 多個參數值
 	private String product; // 單個參數值 --> 改成: 多個參數值
@@ -227,6 +228,9 @@ public class ArticleList extends RootAPI {
 			selectSQL.append(") ");
 			conditionCnt++;
 		}
+		if (!StringUtils.isBlank(industry)) {
+			selectSQL.append("AND industry = ? ");
+		}
 		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY post_id");
@@ -290,6 +294,12 @@ public class ArticleList extends RootAPI {
 			}
 		}
 		
+		if (!StringUtils.isEmpty(industry)) {
+			int industryIndex = idx + 1;
+			preparedStatement.setObject(industryIndex, this.industry);
+			idx++;
+			}
+		
 		int startDateIndex = idx + 1;
 		preparedStatement.setObject(startDateIndex, this.startDate);
 		idx++;
@@ -328,6 +338,7 @@ public class ArticleList extends RootAPI {
 
 	private void requestAndTrimParams(HttpServletRequest request) {
 		this.parameterMap = request.getParameterMap();
+		this.industry = StringUtils.trimToEmpty(request.getParameter("industry")); 
 		this.brand = StringUtils.trimToEmpty(request.getParameter("brand"));       // 單個參數值 --> 改成: 多個參數值
 		this.series = StringUtils.trimToEmpty(request.getParameter("series"));     // 單個參數值 --> 改成: 多個參數值
 		this.product = StringUtils.trimToEmpty(request.getParameter("product"));   // 單個參數值 --> 改成: 多個參數值

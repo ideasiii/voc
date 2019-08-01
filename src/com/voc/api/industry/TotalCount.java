@@ -137,7 +137,7 @@ public class TotalCount extends RootAPI {
 			String psSQLStr = preparedStatement.toString();
 			LOGGER.debug("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
-			LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
+			//LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 			this.selectTotalCountSQL = "SELECT SUM(reputation) AS " + TOTAL_COUNT + psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			LOGGER.debug("selectTotalCountSQL = " + this.selectTotalCountSQL);
 			
@@ -153,6 +153,9 @@ public class TotalCount extends RootAPI {
 				for (Map.Entry<String, String[]> entry : this.orderedParameterMap.entrySet()) {
 					String paramName = entry.getKey();
 					if ("monitor_brand".equals(paramName)) {
+						continue;
+					}
+					if ("industry".equals(paramName)) {
 						continue;
 					}
 					String columnName = this.getColumnName(paramName);
@@ -176,7 +179,7 @@ public class TotalCount extends RootAPI {
 				int title_count = rs.getInt("title_count");
 				int content_count = rs.getInt("content_count");
 				int comment_count = rs.getInt("comment_count");
-				LOGGER.debug("item=" + item.toString() + ", count=" + count);
+			//	LOGGER.debug("item=" + item.toString() + ", count=" + count);
 				
 				hash_itemName_count.put(item.toString(), count);
 				hash_itemName_title.put(item.toString(), title_count);
@@ -191,10 +194,6 @@ public class TotalCount extends RootAPI {
 				itemObject.put("comment_count", comment_count);
 				itemArray.put(itemObject);
 			}
-			LOGGER.debug("hash_itemName_count=" + hash_itemName_count);
-			LOGGER.debug("hash_itemName_title=" + hash_itemName_title);
-			LOGGER.debug("hash_itemName_content=" + hash_itemName_content);
-			LOGGER.debug("hash_itemName_comment=" + hash_itemName_comment);
 		
 			int desc_remainingCnt = this.limit - itemArray.length();
 			if (desc_remainingCnt > 0) {
@@ -203,7 +202,8 @@ public class TotalCount extends RootAPI {
 					Integer title_count = hash_itemName_title.get(itemName);
 					Integer content_count = hash_itemName_content.get(itemName);
 					Integer comment_count = hash_itemName_comment.get(itemName);
-				
+				//	LOGGER.debug("itemName=" + itemName);
+					
 					if (desc_remainingCnt > 0) {
 					if (count == null && title_count == null && content_count == null && comment_count == null) {
 						JSONObject itemObject = new JSONObject();
@@ -364,12 +364,12 @@ public class TotalCount extends RootAPI {
 		if (paramValues_industry != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_INDUSTRY.getParamName();
 			this.orderedParameterMap.put(paramName, paramValues_industry);
-			if (itemCnt == 0) {
+		/**	if (itemCnt == 0) {
 				mainItemArr = paramValues_industry[0].split(PARAM_VALUES_SEPARATOR);
 			} else if (itemCnt == 1) {
 				secItemArr = paramValues_industry[0].split(PARAM_VALUES_SEPARATOR);
 			}
-			itemCnt++;
+			itemCnt++;**/
 		}
 		if (paramValues_brand != null) {
 			String paramName = EnumTotalCount.PARAM_COLUMN_BRAND.getParamName();

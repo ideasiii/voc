@@ -54,6 +54,7 @@ public class ChannelRanking extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ChannelRanking.class);
 	private static final Gson GSON = new Gson();
 	private Map<String, String[]> parameterMap;
+	private String industry;
 	private String brand;
 	private String channel;
 	private String start_date;
@@ -87,6 +88,7 @@ public class ChannelRanking extends RootAPI {
 
 	private void requestAndTrimParams(HttpServletRequest request) {
 		this.parameterMap = request.getParameterMap();
+		this.industry = StringUtils.trimToEmpty(request.getParameter("industry"));
 		this.brand = StringUtils.trimToEmpty(request.getParameter("brand"));
 		this.channel = StringUtils.trimToEmpty(request.getParameter("channel"));
 		this.start_date = StringUtils.trimToEmpty(request.getParameter("start_date"));
@@ -169,7 +171,7 @@ public class ChannelRanking extends RootAPI {
 				String channelName = rs.getString("channel_display_name");
 				String channelId = rs.getString("channel_id");
 				int count = rs.getInt("count");
-				LOGGER.debug("websiteName=" + websiteName + ", channelName=" + channelName + ", channelId=" + channelId + ", count=" + count);
+			//	LOGGER.debug("websiteName=" + websiteName + ", channelName=" + channelName + ", channelId=" + channelId + ", count=" + count);
 				
 				channelIdList.add(channelId);
 				
@@ -179,7 +181,7 @@ public class ChannelRanking extends RootAPI {
 				channel.setCount(count);
 				channelList.add(channel);
 			}
-			LOGGER.debug("channelList_before=" + GSON.toJson(channelList));
+		//	LOGGER.debug("channelList_before=" + GSON.toJson(channelList));
 
 			// TODO:==>TBD: need to think and test: ... 
 			int desc_remainingCnt = this.limit - channelList.size();
@@ -215,7 +217,7 @@ public class ChannelRanking extends RootAPI {
 				channelList = channelList.subList(0, recordSize);
 			}
 
-			LOGGER.debug("channelList_after=" + GSON.toJson(channelList));
+		//	LOGGER.debug("channelList_after=" + GSON.toJson(channelList));
 			return channelList;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
@@ -242,6 +244,9 @@ public class ChannelRanking extends RootAPI {
 			else selectSQL.append(",?");
 		}
 		selectSQL.append(") ");
+		if (!StringUtils.isBlank(industry)) {
+		selectSQL.append("AND industry = ? ");
+		}
 		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY website_id, channel_id ORDER BY count ");
@@ -269,6 +274,12 @@ public class ChannelRanking extends RootAPI {
 			idx++;
 		}
 		
+		if (!StringUtils.isBlank(industry)) {
+			int industryIndex = idx + 1;
+			preparedStatement.setObject(industryIndex, industry);
+			idx++;
+			}
+		
 		int startDateIndex = idx + 1;
 		preparedStatement.setObject(startDateIndex, this.start_date);
 		// LOGGER.debug(startDateIndex + ":" + startDate);
@@ -290,7 +301,7 @@ public class ChannelRanking extends RootAPI {
 		ResultSet rs = null;
 	//	String websiteName = null;
 		String channelName = null;
-		String selectSql = "SELECT name FROM "+ TABLE_CHANNEL_LIST +" WHERE id = ? LIMIT 1";
+		String selectSql = "SELECT display_name FROM "+ TABLE_CHANNEL_LIST +" WHERE id = ? LIMIT 1";
 		try {
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSql);
@@ -298,7 +309,7 @@ public class ChannelRanking extends RootAPI {
 			rs = preparedStatement.executeQuery();
 			if (rs.next()) {
 				//websiteName = rs.getString("website_name");
-				channelName = rs.getString("name");
+				channelName = rs.getString("display_name");
 			}
 		//	if (websiteName != null && channelName != null) {
 		//		return websiteName + "_" + channelName;
