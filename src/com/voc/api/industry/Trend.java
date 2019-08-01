@@ -155,6 +155,9 @@ public class Trend extends RootAPI {
 					if ("monitor_brand".equals(paramName)) {
 						continue;
 					}
+					if ("industry".equals(paramName)) {
+						continue;
+					}
 					String columnName = getColumnName(paramName);
 					if ("channel_id".equals(columnName)) {
 						columnName = "channel_display_name";
@@ -187,7 +190,7 @@ public class Trend extends RootAPI {
 				// + ", comment_count: " + comment_count);
 				
 				
-				//LOGGER.debug("item=" + item.toString() + ", count=" + count);
+				LOGGER.debug("item=" + item.toString() + ", count=" + count);
 
 				if (hash_itemName_countMap.get(item.toString()) == null) {
 					hash_itemName_countMap.put(item.toString(), new HashMap<String, Integer>());
@@ -217,7 +220,7 @@ public class Trend extends RootAPI {
 				hash_itemName_title = hash_itemName_titleMap.get(itemName);
 				hash_itemName_content = hash_itemName_contentMap.get(itemName);
 				hash_itemName_comment = hash_itemName_commentMap.get(itemName);
-				//LOGGER.debug("itemName=" + itemName);
+				LOGGER.debug("itemName=" + itemName);
 
 				JSONArray dataArray = new JSONArray();
 				List<String> dateList = null;
