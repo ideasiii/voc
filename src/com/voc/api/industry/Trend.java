@@ -123,7 +123,7 @@ public class Trend extends RootAPI {
 			querySQL.append(genSelectClause());
 			querySQL.append(genWhereClause());
 			querySQL.append(genGroupByClause());
-			querySQL.append(" LIMIT ? ");
+		//	querySQL.append(" LIMIT ? ");
 			// LOGGER.info("querySQL: " + querySQL.toString());
 
 			conn = DBUtil.getConn();
@@ -190,7 +190,7 @@ public class Trend extends RootAPI {
 				// + ", comment_count: " + comment_count);
 				
 				
-				LOGGER.debug("item=" + item.toString() + ", count=" + count);
+			//	LOGGER.debug("item=" + item.toString() + ", count=" + count);
 
 				if (hash_itemName_countMap.get(item.toString()) == null) {
 					hash_itemName_countMap.put(item.toString(), new HashMap<String, Integer>());
@@ -220,7 +220,7 @@ public class Trend extends RootAPI {
 				hash_itemName_title = hash_itemName_titleMap.get(itemName);
 				hash_itemName_content = hash_itemName_contentMap.get(itemName);
 				hash_itemName_comment = hash_itemName_commentMap.get(itemName);
-				LOGGER.debug("itemName=" + itemName);
+			//	LOGGER.debug("itemName=" + itemName);
 
 				JSONArray dataArray = new JSONArray();
 				List<String> dateList = null;
@@ -454,8 +454,8 @@ public class Trend extends RootAPI {
 				}
 			}
 		}
-		int parameterIndex = i + 1;
-		pst.setObject(parameterIndex, this.limit);
+	//	int parameterIndex = i + 1;
+	//	pst.setObject(parameterIndex, this.limit);
 	}
 
 	private boolean hasRequiredParameters(Map<String, String[]> paramMap) {
@@ -506,7 +506,7 @@ public class Trend extends RootAPI {
 
 			EnumTrend enumTrend = EnumTrend.getEnum(paramName);
 			if (null == enumTrend) {
-				return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Unknown parameter: param=" + paramName);
+				continue;
 			}
 
 			String[] values = entry.getValue();
