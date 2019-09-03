@@ -81,9 +81,12 @@ import com.voc.enums.industry.EnumTotalCount;
  * 3.前端改用POST method.
  * 
  * Requirement Change: 
- * 新增output值(title_count, content_count, comment_count)
+ * 1.新增output值(title_count, content_count, comment_count)
  * Ex:
  * [{"key":"brand","value":"BENZ;LEXUS;TOYOTA;PORSCHE","description":""},{"key":"media_type","value":"sns;forum","description":""},{"key":"start_date","value":"2019-05-01","description":""},{"key":"end_date","value":"2019-05-05","description":""}]
+ 
+ * Requirement Change: 
+ * 1.新增參數:sorting (reputation、title、content、comment) 
  */
 public class TotalCount extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TotalCount.class);
@@ -93,6 +96,7 @@ public class TotalCount extends RootAPI {
 	private List<String> itemNameList = new ArrayList<>();
 	private String tableName;
 	private int limit = 10; // Default: 10
+	private String sorting = "count"; // Default: reputation
 	
 	@Override
 	public String processRequest(HttpServletRequest request) {
@@ -295,6 +299,24 @@ public class TotalCount extends RootAPI {
 				this.limit = Integer.parseInt(limitStr);
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage());
+			}
+		}
+		
+		String sortingStr = StringUtils.trimToEmpty(request.getParameter("sorting"));
+		if (!StringUtils.isEmpty(sortingStr)) {
+			switch (sortingStr) {
+			case "reputation":
+				this.sorting = "count";
+				break;
+			case "title":
+				this.sorting = "title_count";
+				break;
+			case "content":
+				this.sorting = "content_count";	
+				break;
+			case "comment":
+				this.sorting = "comment_count";	
+				break;
 			}
 		}
 		
@@ -588,7 +610,7 @@ public class TotalCount extends RootAPI {
 			i++;
 		}
 		groupByOrderByClauseSB.append("GROUP BY ").append(columnsSB.toString()).append(" ");
-		groupByOrderByClauseSB.append("ORDER BY count DESC ");
+		groupByOrderByClauseSB.append("ORDER BY ").append(this.sorting).append(" ").append("DESC ");
 		return groupByOrderByClauseSB.toString();
 	}
 

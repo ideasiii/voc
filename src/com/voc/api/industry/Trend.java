@@ -47,6 +47,7 @@ public class Trend extends RootAPI {
 	private String strTableName;
 	private String strInterval = Common.INTERVAL_DAILY;
 	private int limit = 10; // Default: 10
+	private String sorting = "count"; // Default: reputation
 	private JSONArray sortedJsonArray;
 
 	@Override
@@ -323,11 +324,12 @@ public class Trend extends RootAPI {
 		return sortedJsonArray;
 	}
 
-	private Integer getTotalCount(JSONArray dataArray) {
+	//for sorting
+	private Integer getTotalCount(JSONArray dataArray) { 
 		Integer totalCount = 0;
 		for (int i = 0; i < dataArray.length(); i++) {
 			JSONObject dataObject = dataArray.getJSONObject(i);
-			totalCount += dataObject.getInt("count");
+			totalCount += dataObject.getInt(this.sorting);
 		}
 		return totalCount;
 	}
@@ -496,6 +498,24 @@ public class Trend extends RootAPI {
 				this.limit = Integer.parseInt(limitStr);
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage());
+			}
+		}
+		
+		String sortingStr = StringUtils.trimToEmpty(request.getParameter("sorting"));
+		if (!StringUtils.isEmpty(sortingStr)) {
+			switch (sortingStr) {
+			case "reputation":
+				this.sorting = "count";
+				break;
+			case "title":
+				this.sorting = "title_count";
+				break;
+			case "content":
+				this.sorting = "content_count";	
+				break;
+			case "comment":
+				this.sorting = "comment_count";	
+				break;
 			}
 		}
 

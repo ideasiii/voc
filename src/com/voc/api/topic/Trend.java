@@ -38,11 +38,12 @@ public class Trend extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Trend.class);
 	Map<String, String[]> orderedParameterMap = new ParameterMap<>();
 	private List<String> itemNameList = new ArrayList<>();
-	private JSONArray sortedJsonArray;
 	private String selectUpdateTimeSQL;
 	private String strTableName = TABLE_TOPIC_REPUTATION;
 	private String strInterval = Common.INTERVAL_DAILY;
 	private int limit = 10; // Default: 10
+	private String sorting = "count"; // Default: reputation
+	private JSONArray sortedJsonArray;
 	private String strStartDate;
 	private String strEndDate;
 
@@ -410,11 +411,12 @@ public class Trend extends RootAPI {
 
 	}
 
+	//for sorting
 	private Integer getTotalCount(JSONArray dataArray) {
 		Integer totalCount = 0;
 		for (int i = 0; i < dataArray.length(); i++) {
 			JSONObject dataObject = dataArray.getJSONObject(i);
-			totalCount += dataObject.getInt("count");
+			totalCount += dataObject.getInt(this.sorting);
 		}
 		return totalCount;
 	}
@@ -488,6 +490,24 @@ public class Trend extends RootAPI {
 		String[] paramValues_startDate = null;
 		String[] paramValues_endDate = null;
 
+		String sortingStr = StringUtils.trimToEmpty(request.getParameter("sorting"));
+		if (!StringUtils.isEmpty(sortingStr)) {
+			switch (sortingStr) {
+			case "reputation":
+				this.sorting = "count";
+				break;
+			case "title":
+				this.sorting = "title_count";
+				break;
+			case "content":
+				this.sorting = "content_count";	
+				break;
+			case "comment":
+				this.sorting = "comment_count";	
+				break;
+			}
+		}
+		
 		for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 			String paramName = entry.getKey();
 			if (API_KEY.equals(paramName))

@@ -56,9 +56,12 @@ import com.voc.enums.topic.EnumTotalCount;
  * BY count DESC LIMIT 5;
  * 
  * Requirement Change: 1.參數:source修改為media_type(來源類型): 2.項目名稱 channel
- * 顯示由channel_name改為channel_display_name 3.前端改用POST method.
+ * 2. 顯示由channel_name改為channel_display_name 3.前端改用POST method.
  * 
- * Requirement Change: 新增output值(title_count, content_count, comment_count) Ex:
+ * Requirement Change: 新增output值(title_count, content_count, comment_count)
+ * 
+ * Requirement Change: 
+ * 1.新增參數:sorting (reputation、title、content、comment) 
  * 
  */
 public class TotalCount extends RootAPI {
@@ -69,7 +72,8 @@ public class TotalCount extends RootAPI {
 	private List<String> itemNameList = new ArrayList<>();
 	private String tableName;
 	private int limit = 10; // Default: 10
-
+	private String sorting = "count"; // Default: reputation
+	
 	@Override
 	public String processRequest(HttpServletRequest request) {
 		JSONObject errorResponse = this.validateAndSetOrderedParameterMap(request);
@@ -274,6 +278,24 @@ public class TotalCount extends RootAPI {
 				this.limit = Integer.parseInt(limitStr);
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage());
+			}
+		}
+		
+		String sortingStr = StringUtils.trimToEmpty(request.getParameter("sorting"));
+		if (!StringUtils.isEmpty(sortingStr)) {
+			switch (sortingStr) {
+			case "reputation":
+				this.sorting = "count";
+				break;
+			case "title":
+				this.sorting = "title_count";
+				break;
+			case "content":
+				this.sorting = "content_count";	
+				break;
+			case "comment":
+				this.sorting = "comment_count";	
+				break;
 			}
 		}
 
@@ -542,7 +564,7 @@ public class TotalCount extends RootAPI {
 			i++;
 		}
 		groupByOrderByClauseSB.append("GROUP BY ").append(columnsSB.toString()).append(" ");
-		groupByOrderByClauseSB.append("ORDER BY count DESC ");
+		groupByOrderByClauseSB.append("ORDER BY ").append(this.sorting).append(" ").append("DESC ");
 		return groupByOrderByClauseSB.toString();
 	}
 

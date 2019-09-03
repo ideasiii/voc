@@ -13,7 +13,8 @@ public enum EnumTotalCount {
 	PARAM_COLUMN_SENTIMENT("sentiment", "sentiment"), 
 	PARAM_COLUMN_START_DATE("start_date", "rep_date"),
 	PARAM_COLUMN_END_DATE("end_date", "rep_date"),
-	PARAM_COLUMN_LIMIT("limit", "limit");
+	PARAM_COLUMN_LIMIT("limit", "limit"),
+	PARAM_COLUMN_SORTING("sorting", "sorting");
 
 	private final String paramName;
 	private final String columnName;
