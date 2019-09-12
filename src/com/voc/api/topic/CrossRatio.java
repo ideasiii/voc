@@ -60,6 +60,9 @@ import com.voc.enums.EnumSentiment;
  * 新增output值(title_count, content_count, comment_count)
  * Ex:
  * [{"key":"main_filter","value":"topic","description":""},{"key":"main_value","value":"京都;大阪;北海道","description":""},{"key":"sec_filter","value":"media_type","description":""},{"key":"sec_value","value":"blog;sns","description":""},{"key":"start_date","value":"2019-05-01","description":""},{"key":"end_date","value":"2019-05-05","description":""},{"key":"project_name","value":"日本自由行","description":""},{"key":"user","value":"5bff9b81617d854c850a0d15","description":""}]
+ *
+ * Requirement Change: 
+ * 1.新增參數:sorting (reputation、title、content、comment) 
  */
 public class CrossRatio extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CrossRatio.class);
@@ -72,6 +75,7 @@ public class CrossRatio extends RootAPI {
 	private String startDate = null;
 	private String endDate = null;
 	private int limit = 10; // Default: 10
+	private String sorting = "count"; // Default: reputation
 	
 	private String[] mainValueArr = null;
 	private String[] secValueArr = null;
@@ -121,6 +125,24 @@ public class CrossRatio extends RootAPI {
 				this.limit = Integer.parseInt(limitStr);
 			} catch (Exception e) {
 				LOGGER.error(e.getMessage());
+			}
+		}
+		
+		String sortingStr = StringUtils.trimToEmpty(request.getParameter("sorting"));
+		if (!StringUtils.isEmpty(sortingStr)) {
+			switch (sortingStr) {
+			case "reputation":
+				this.sorting = "count";
+				break;
+			case "title":
+				this.sorting = "title_count";
+				break;
+			case "content":
+				this.sorting = "content_count";	
+				break;
+			case "comment":
+				this.sorting = "comment_count";	
+				break;
 			}
 		}
 		
@@ -353,7 +375,7 @@ public class CrossRatio extends RootAPI {
 		Integer totalCount = 0;
 		for (int i = 0; i < secItemArr.length(); i++) {
 			JSONObject secItem = secItemArr.getJSONObject(i);
-			totalCount += secItem.getInt("count");
+			totalCount += secItem.getInt(this.sorting);
 		}
 		return totalCount;
 	}
@@ -431,7 +453,7 @@ public class CrossRatio extends RootAPI {
 		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') >= ? ");
 		selectSQL.append("AND DATE_FORMAT(rep_date, '%Y-%m-%d') <= ? ");
 		selectSQL.append("GROUP BY ").append(mainFilterColumn).append(", ").append(secFilterColumn).append(" ");
-		selectSQL.append("ORDER BY count DESC");
+		selectSQL.append("ORDER BY ").append(this.sorting).append(" ").append("DESC ");
 		return selectSQL.toString();
 	}
 	
