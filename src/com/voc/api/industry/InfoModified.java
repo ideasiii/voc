@@ -58,19 +58,27 @@ public class InfoModified extends RootAPI {
 				&& StringUtils.isBlank(this.name_new) && StringUtils.isBlank(this.name_old)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
-
+		
+		if (!this.type.equals("brand") || !this.type.equals("product")) {
+			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid Type.");
+		}
 		return null;
 	}
 
-	private int selectNewName() {
+	private int checkBrandNotExist(String table_name) {
 		int recordCnt = 0;
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
-		String sql = "SELECT * FROM " + TABLE_TOPIC_KEYWORD_JOB_LIST + " WHERE _id = ?";
+		String sql = "SELECT count(1) as count FROM " + table_name + " WHERE industry = ? AND brand = ?";
+		
 		try {
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(sql);
+			pst.setObject(1, this.industry);
+			pst.setObject(2, this.brand);
+			rs = pst.executeQuery();
+			
 			
 			
 			
