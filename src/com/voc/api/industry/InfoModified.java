@@ -3,6 +3,7 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -72,16 +73,24 @@ public class InfoModified extends RootAPI {
 		this.type = StringUtils.trimToEmpty(request.getParameter("type"));
 		this.name_new = StringUtils.trimToEmpty(request.getParameter("name_new"));
 		this.name_old = StringUtils.trimToEmpty(request.getParameter("name_old"));
-
-		if (StringUtils.isBlank(this.industry) && StringUtils.isBlank(this.brand) && StringUtils.isBlank(this.type)
-				&& StringUtils.isBlank(this.name_new) && StringUtils.isBlank(this.name_old)) {
+		LOGGER.info(type);
+		
+		if (!hasRequiredParameters(request)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
-
-		if (!this.type.equals("brand") || !this.type.equals("product")) {
+		if (!checkValidType(this.type)) {
 			return ApiResponse.error(ApiResponse.STATUS_INVALID_PARAMETER, "Invalid Type.");
 		}
 		return null;
+	}
+	
+	public boolean hasRequiredParameters(final HttpServletRequest request) {
+		Map paramMap = request.getParameterMap();
+		return paramMap.containsKey("industry") && paramMap.containsKey("brand") && paramMap.containsKey("type") && paramMap.containsKey("name_new") && paramMap.containsKey("name_old");
+		}
+	
+	public boolean checkValidType(final String t) {
+		return t.equals("brand") || t.equals("product");
 	}
 
 	private int checkBrandNotExist(String table_name) {
@@ -95,11 +104,11 @@ public class InfoModified extends RootAPI {
 			conn = DBUtil.getConn();
 			pst = conn.prepareStatement(sql);
 			pst.setObject(1, this.industry);
-			pst.setObject(2, this.brand);
+			pst.setObject(2, this.name_new);
 			rs = pst.executeQuery();
-
+			while (rs.next()) {
 			recordCnt = rs.getInt("count");
-
+			}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
@@ -124,9 +133,9 @@ public class InfoModified extends RootAPI {
 			pst.setObject(2, this.brand);
 			pst.setObject(3, this.name_new);
 			rs = pst.executeQuery();
-
+			while (rs.next()) {
 			recordCnt = rs.getInt("count");
-
+			}
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
@@ -148,7 +157,7 @@ public class InfoModified extends RootAPI {
 			pst.setObject(2, this.industry);
 			pst.setObject(3, this.brand);
             pst.execute();
-            LOGGER.info("UPDATE OK!!!");
+            LOGGER.info("Table: " + table_name + " UPDATE OK!!!");
 			return true;
 			
 		} catch (Exception e) {
@@ -174,7 +183,7 @@ public class InfoModified extends RootAPI {
 			pst.setObject(3, this.brand);
 			pst.setObject(4, this.name_old);
             pst.execute();
-            LOGGER.info("UPDATE OK!!!");
+            LOGGER.info("Table: " + table_name + " UPDATE OK!!!");
 			return true;
 			
 		} catch (Exception e) {
