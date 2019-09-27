@@ -68,6 +68,9 @@ public class InfoModified extends RootAPI {
 
 	private JSONObject requestAndInitValidateParams(HttpServletRequest request) {
 
+		if (!hasRequiredParameters(request)) {
+			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
+		}
 		this.industry = StringUtils.trimToEmpty(request.getParameter("industry"));
 		this.brand = StringUtils.trimToEmpty(request.getParameter("brand"));
 		this.type = StringUtils.trimToEmpty(request.getParameter("type"));
@@ -75,7 +78,8 @@ public class InfoModified extends RootAPI {
 		this.name_old = StringUtils.trimToEmpty(request.getParameter("name_old"));
 		LOGGER.info(type);
 		
-		if (!hasRequiredParameters(request)) {
+		if (StringUtils.isBlank(this.industry) || StringUtils.isBlank(this.brand) || StringUtils.isBlank(this.type)
+				|| StringUtils.isBlank(this.name_new) || StringUtils.isBlank(this.name_old)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER);
 		}
 		if (!checkValidType(this.type)) {
