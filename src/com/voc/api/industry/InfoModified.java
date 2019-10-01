@@ -3,6 +3,7 @@ package com.voc.api.industry;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Timestamp;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,7 +48,10 @@ public class InfoModified extends RootAPI {
 			}
 			boolean isSuccess = this.updateBrandName(table_br) && this.updateBrandName(table_pr) && this.updateBrandName(table_fr);
 			if (isSuccess) {
+				boolean insertLog = insertChangeLog(this.industry, this.brand, this.name_new, this.name_old, this.type);
+				if (insertLog) {
 				return ApiResponse.successTemplate().toString();
+				}
 			}
 //UPDATE PRODUCT			
 		} else if (this.type.equals("product")) {
@@ -60,7 +64,10 @@ public class InfoModified extends RootAPI {
 			}
 			boolean isSuccess = this.updateProductName(table_pr) && this.updateProductName(table_fr);
 			if (isSuccess) {
+				boolean insertLog = insertChangeLog(this.industry, this.brand, this.name_new, this.name_old, this.type);
+				if (insertLog) {
 				return ApiResponse.successTemplate().toString();
+				}
 			}
 		}
 		return ApiResponse.unknownError().toString();
@@ -188,6 +195,36 @@ public class InfoModified extends RootAPI {
 			pst.setObject(4, this.name_old);
             pst.execute();
             LOGGER.info("Table: " + table_name + " UPDATE OK!!!");
+			return true;
+			
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			DBUtil.closePreparedStatement(pst);
+			DBUtil.closeConn(conn);
+		}
+		return false;
+	}
+	
+	private boolean insertChangeLog(String strIndustry, String strBrand, String strNameNew, String strNameOld, String strType) {
+		Connection conn = null;
+		PreparedStatement pst = null;
+		Timestamp ts = new Timestamp(System.currentTimeMillis());  
+		String sql="INSERT INTO " + TABLE_INDUSTRY_NAME_CHANGE_LOG + " (industry, brand, name_new, name_old, type, update_time) values (?, ?, ?, ?, ?, ?)";
+		
+		try {
+			conn = DBUtil.getConn();
+			pst = conn.prepareStatement(sql);
+			pst.setObject(1, strIndustry);
+			pst.setObject(2, strBrand);
+			pst.setObject(3, strNameNew);
+			pst.setObject(4, strNameOld);
+			pst.setObject(5, strType);
+			pst.setObject(6, ts);
+			pst.executeUpdate();
+			
+			LOGGER.info("INSERT LOG OK!!!");
 			return true;
 			
 		} catch (Exception e) {

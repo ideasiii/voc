@@ -35,8 +35,10 @@ public abstract class RootAPI {
 	protected static final String TABLE_COMMENT_LIST = "ibuzz_voc.comment_list";
 	protected static final String TABLE_INDUSTRY_FEATURE_KEYWORD_LIST = "ibuzz_voc.industry_feature_keyword_list";
 	protected static final String TABLE_FEATURE_REPUTATION = "ibuzz_voc.feature_reputation";
+	protected static final String TABLE_INDUSTRY_JOB_LIST = "ibuzz_voc.industry_job_list";
 	protected static final String TABLE_TOPIC_KEYWORD_JOB_LIST = "ibuzz_voc.topic_keyword_job_list";
 	protected static final String TABLE_TOPIC_REPUTATION = "ibuzz_voc.topic_reputation";
+	protected static final String TABLE_INDUSTRY_NAME_CHANGE_LOG = "ibuzz_voc.industry_name_change_log";
 	private static final Map<String, String> PARAM_COLUMN_MAP = new HashMap<String, String>();
 	static {
 		PARAM_COLUMN_MAP.put("industry", "industry");
@@ -176,6 +178,30 @@ public abstract class RootAPI {
 				websiteName = rs.getString("name");
 			}
 			return websiteName;
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
+		} finally {
+			DBUtil.close(rs, preparedStatement, conn);
+		}
+		return null;
+	}
+	
+	protected String getIndustryIbk2Name(String industry) {
+		Connection conn = null;
+		PreparedStatement preparedStatement = null;
+		ResultSet rs = null;
+		String ibk2Name = null;
+		String selectSql = "SELECT ibk2_name FROM " + TABLE_INDUSTRY_JOB_LIST + " WHERE industry = ? LIMIT 1";
+		try {
+			conn = DBUtil.getConn();
+			preparedStatement = conn.prepareStatement(selectSql);
+			preparedStatement.setString(1, industry);
+			rs = preparedStatement.executeQuery();
+			if (rs.next()) {
+				ibk2Name = rs.getString("ibk2_name");
+			}
+			return ibk2Name;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();

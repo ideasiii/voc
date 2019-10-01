@@ -31,6 +31,8 @@ import com.voc.common.DBUtil;
  *
  * Requirement Change: 1.參數:source修改為media_type(來源類型): 2.項目名稱 channel
  * 顯示由channel_name改為channel_display_name 3.前端改用POST method.
+ * 
+ * Requirement Change: 1.查詢featureList的industry改由industry_job_list table內的ibk2_name來做查詢
  *
  */
 
@@ -49,6 +51,7 @@ public class HotFeature extends RootAPI {
 	private String strStartDate;
 	private String strEndDate;
 	private int nLimit = 10; // default
+	private String strIbk2Name;
 
 	private String[] arrBrand;
 	private String[] arrSeries;
@@ -112,6 +115,7 @@ public class HotFeature extends RootAPI {
 			strSentiment = StringUtils.trimToEmpty(request.getParameter("sentiment"));
 			strStartDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
 			strEndDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
+			strIbk2Name = getIndustryIbk2Name(this.strIndustry);
 		
 			String strLimit = request.getParameter("limit");
 			if (!StringUtils.isBlank(strLimit)) {
@@ -182,7 +186,7 @@ public class HotFeature extends RootAPI {
 			int idx = 0;
 
 			int industryIndex = idx + 1;
-			pst.setObject(industryIndex, strIndustry);
+			pst.setObject(industryIndex, strIbk2Name);
 			idx++;
 
 			for (String fg : arrFeatureGroup) {
