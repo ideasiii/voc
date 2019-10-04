@@ -72,9 +72,13 @@ import com.voc.enums.EnumSentiment;
  * 
  * Requirement Change: 
  * 1.新增參數:sorting (reputation、title、content、comment) 
+ * 
+ * Requirement Change: 
+ * 1.新增參數: industry(單一值&必要)
  */
 public class CrossRatio extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(CrossRatio.class);
+	private String industry = null;
 	private String mainFilter = null;
 	private String mainValue = null;
 	private String secFilter = null;
@@ -119,6 +123,7 @@ public class CrossRatio extends RootAPI {
 	}
 	
 	private void requestAndTrimParams(HttpServletRequest request) {
+		this.industry = StringUtils.trimToEmpty(request.getParameter("industry"));
 		this.mainFilter = StringUtils.trimToEmpty(request.getParameter("main_filter"));
 		this.mainValue = StringUtils.trimToEmpty(request.getParameter("main_value"));
 		this.secFilter = StringUtils.trimToEmpty(request.getParameter("sec_filter"));
@@ -179,7 +184,7 @@ public class CrossRatio extends RootAPI {
 	}
 	
 	private JSONObject validateParams() {
-		if (StringUtils.isBlank(this.mainFilter) || StringUtils.isBlank(this.mainValue)
+		if (StringUtils.isBlank(this.industry) || StringUtils.isBlank(this.mainFilter) || StringUtils.isBlank(this.mainValue)
 				|| StringUtils.isBlank(this.secFilter) || StringUtils.isBlank(this.secValue)
 				|| StringUtils.isBlank(this.startDate) || StringUtils.isBlank(this.endDate)) {
 
@@ -224,7 +229,7 @@ public class CrossRatio extends RootAPI {
 			
 			conn = DBUtil.getConn();
 			preparedStatement = conn.prepareStatement(selectSQL.toString());
-			this.setWhereClauseValues(preparedStatement, mainValueArr, secValueArr, monitorBrandArr, startDate, endDate);
+			this.setWhereClauseValues(preparedStatement, industry, mainValueArr, secValueArr, monitorBrandArr, startDate, endDate);
 			
 			String psSQLStr = preparedStatement.toString();
 			LOGGER.debug("psSQLStr = " + psSQLStr);
@@ -450,7 +455,8 @@ public class CrossRatio extends RootAPI {
 		}
 		selectSQL.append("SELECT ").append(this.mainSelectCol).append(", ").append(this.secSelectCol).append(", ").append("SUM(reputation) AS count, SUM(title_hit) AS title_count, SUM(content_hit) AS content_count, SUM(comment_hit) AS comment_count ");
 		selectSQL.append("FROM ").append(tableName).append(" ");
-		selectSQL.append("WHERE ").append(mainFilterColumn).append(" IN (");
+		selectSQL.append("WHERE ").append("industry = ? ").append("AND ");
+		selectSQL.append(mainFilterColumn).append(" IN (");
 		for(int i = 0 ; i < mainValueArr.length ; i++ ) {
 			if (i == 0) selectSQL.append("?");
 			else selectSQL.append(",?");
@@ -479,10 +485,15 @@ public class CrossRatio extends RootAPI {
 		return selectSQL.toString();
 	}
 	
-	private void setWhereClauseValues(PreparedStatement preparedStatement, String[] mainValueArr, String[] secValueArr, 
+	private void setWhereClauseValues(PreparedStatement preparedStatement, String industry, String[] mainValueArr, String[] secValueArr, 
 			String[] monitorBrandArr, String startDate, String endDate) throws Exception {
 		
 		int idx = 0;
+		int industryIndex = idx + 1;
+		preparedStatement.setObject(industryIndex, industry);
+		// LOGGER.debug(industryIndex + ":" + industry);
+		idx++;
+		
 		for(String v : mainValueArr) {
 			int parameterIndex = idx + 1;
 			preparedStatement.setObject(parameterIndex, v);
