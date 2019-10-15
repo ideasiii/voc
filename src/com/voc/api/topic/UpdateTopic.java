@@ -275,7 +275,7 @@ public class UpdateTopic extends RootAPI {
 	private boolean updateTopicReputation() {
 		Connection conn = null;
 		PreparedStatement pStmt = null;
-		String sqlStr = "UPDATE " + "ibuzz_voc.topic_reputation_dev"
+		String sqlStr = "UPDATE " + TABLE_TOPIC_REPUTATION
 				+ " SET user=?, project_name=?, topic=? WHERE user=? AND project_name=? AND topic=?";
 
 		try {
@@ -288,7 +288,7 @@ public class UpdateTopic extends RootAPI {
 			pStmt.setObject(5, this.origProjectName);
 			pStmt.setObject(6, this.origTopic);
 			pStmt.execute();
-			LOGGER.info("Table: " + "ibuzz_voc.topic_reputation_dev" + " UPDATE OK!!!");
+			LOGGER.info("Table: " + TABLE_TOPIC_REPUTATION + " UPDATE OK!!!");
 			return true;
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
