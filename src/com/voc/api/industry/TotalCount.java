@@ -87,6 +87,9 @@ import com.voc.enums.industry.EnumTotalCount;
  
  * Requirement Change: 
  * 1.新增參數:sorting (reputation、title、content、comment) 
+ * 
+ * Requirement Change: 
+ * 1.新增參數:features (只要有帶features參數就只查詢feature_reputation) 
  */
 public class TotalCount extends RootAPI {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TotalCount.class);

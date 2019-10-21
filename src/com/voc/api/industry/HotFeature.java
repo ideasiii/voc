@@ -4,6 +4,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +36,8 @@ import com.voc.common.DBUtil;
  * Requirement Change: 1.參數:source修改為media_type(來源類型): 2.項目名稱 channel
  * 顯示由channel_name改為channel_display_name 3.前端改用POST method.
  * 
- * Requirement Change: 1.查詢featureList的industry改由industry_job_list table內的ibk2_name來做查詢
+ * Requirement Change: 1.查詢featureList的industry改由industry_job_list
+ * table內的ibk2_name來做查詢
  *
  */
 
@@ -63,6 +68,7 @@ public class HotFeature extends RootAPI {
 	private String[] arrSentiment;
 
 	private List<String> featureList; // query from keyword list table
+	private JSONArray sortedJsonArray;
 
 	@Override
 	public String processRequest(HttpServletRequest request) {
@@ -71,7 +77,7 @@ public class HotFeature extends RootAPI {
 		if (!hasRequiredParameters(paramMap)) {
 			return ApiResponse.error(ApiResponse.STATUS_MISSING_PARAMETER).toString();
 		}
-			requestParams(request);
+		requestParams(request);
 		JSONObject errorResponse = validate();
 		if (null != errorResponse) {
 			return errorResponse.toString();
@@ -81,14 +87,31 @@ public class HotFeature extends RootAPI {
 			LOGGER.info("***featureList: " + featureList);
 		}
 
-		JSONArray resArray = new JSONArray();
+		JSONObject featureJobj = new JSONObject();
+		JSONObject commentJobj = new JSONObject();
 		if (StringUtils.isEmpty(this.strFeatureGroup) || (null != featureList && featureList.size() > 0)) {
-			resArray = query();
+			featureJobj = query(TABLE_FEATURE_REPUTATION);
+			commentJobj = query(TABLE_FEATURE_REPUTATION_COMMENT);
 		}
 
+		JSONObject mergedJSON = mergeJSONObjects(featureJobj, commentJobj);
+		JSONArray resArray = new JSONArray();
+		LOGGER.info("mergedJSON: " + mergedJSON);
+		
+		Iterator<String> iterKeys = mergedJSON.keys();
+		while(iterKeys.hasNext()) {
+			String key = iterKeys.next();
+		JSONObject resJobj = new JSONObject();
+		
+		resJobj.put("feature", key);
+		resJobj.put("count", mergedJSON.get(key));
+		resArray.put(resJobj);
+		}
+		
 		if (null != resArray) {
+			this.sortedJsonArray = this.getSortedResultArray(resArray, nLimit);
 			JSONObject jobj = ApiResponse.successTemplate();
-			jobj.put("result", resArray);
+			jobj.put("result", this.sortedJsonArray);
 			LOGGER.info("response: " + jobj.toString());
 			return jobj.toString();
 		}
@@ -111,12 +134,12 @@ public class HotFeature extends RootAPI {
 			strWebsite = StringUtils.trimToEmpty(request.getParameter("website"));
 			strChannel = StringUtils.trimToEmpty(request.getParameter("channel"));
 			strFeatureGroup = StringUtils.trimToEmpty(request.getParameter("features"));
-		//	strFeatureGroup = new String(strFeatureGroup.getBytes("ISO-8859-1"),"UTF-8"); 
+			// strFeatureGroup = new String(strFeatureGroup.getBytes("ISO-8859-1"),"UTF-8");
 			strSentiment = StringUtils.trimToEmpty(request.getParameter("sentiment"));
 			strStartDate = StringUtils.trimToEmpty(request.getParameter("start_date"));
 			strEndDate = StringUtils.trimToEmpty(request.getParameter("end_date"));
 			strIbk2Name = getIndustryIbk2Name(this.strIndustry);
-		
+
 			String strLimit = request.getParameter("limit");
 			if (!StringUtils.isBlank(strLimit)) {
 				try {
@@ -128,7 +151,7 @@ public class HotFeature extends RootAPI {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-			
+
 		arrBrand = strBrand.split(PARAM_VALUES_SEPARATOR);
 		arrSeries = strSeries.split(PARAM_VALUES_SEPARATOR);
 		arrProduct = strProduct.split(PARAM_VALUES_SEPARATOR);
@@ -192,7 +215,7 @@ public class HotFeature extends RootAPI {
 			for (String fg : arrFeatureGroup) {
 				int parameterIndex = idx + 1;
 				pst.setObject(parameterIndex, fg);
-				//LOGGER.info("***" + parameterIndex + ":" + fg);
+				// LOGGER.info("***" + parameterIndex + ":" + fg);
 				idx++;
 			}
 			LOGGER.debug("queryFeatureList SQL = " + pst.toString());
@@ -213,34 +236,32 @@ public class HotFeature extends RootAPI {
 		return null;
 	}
 
-	private JSONArray query() {
+	private JSONObject query(String table_name) {
 		Connection conn = null;
 		PreparedStatement pst = null;
 		ResultSet rs = null;
 
 		try {
+			int count;
+			String feature;
+			JSONObject jobj = new JSONObject();
+
 			conn = DBUtil.getConn();
-			pst = conn.prepareStatement(genSelectSQL());
+			pst = conn.prepareStatement(genSelectSQL(table_name));
 			setWhereClauseValues(pst);
 
 			String strPstSQL = pst.toString();
 			LOGGER.info("strPstSQL: " + strPstSQL);
-			//////////
-			int count;
-			String feature;
-			JSONArray out = new JSONArray();
+
 			rs = pst.executeQuery();
 			while (rs.next()) {
 				feature = rs.getString("features");
 				count = rs.getInt("count");
-
-				JSONObject jobj = new JSONObject();
-				jobj.put("feature", feature);
-				jobj.put("count", count);
-				out.put(jobj);
+				jobj.put(feature, count);
 			}
-			LOGGER.info("Out array: " + out);
-			return out;
+
+			LOGGER.info("Out jobj: " + jobj);
+			return jobj;
 
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
@@ -251,11 +272,11 @@ public class HotFeature extends RootAPI {
 		return null;
 	}
 
-	private String genSelectSQL() {
+	private String genSelectSQL(String table_name) {
 		int nCount = 0;
 		StringBuffer sql = new StringBuffer();
 		sql.append("SELECT features, count(DISTINCT id) AS count ");
-		sql.append("FROM ").append(TABLE_FEATURE_REPUTATION).append(" ");
+		sql.append("FROM ").append(table_name).append(" ");
 		sql.append("WHERE ");
 
 		if (!StringUtils.isBlank(strIndustry)) {
@@ -393,7 +414,7 @@ public class HotFeature extends RootAPI {
 		sql.append("GROUP BY features ORDER BY count DESC ");
 		sql.append("LIMIT ?");
 
-		//LOGGER.info("SQL : " + sql.toString());
+		// LOGGER.info("SQL : " + sql.toString());
 		return sql.toString();
 	}
 
@@ -491,4 +512,63 @@ public class HotFeature extends RootAPI {
 		idx++;
 	}
 
+	private JSONObject mergeJSONObjects(JSONObject json1, JSONObject json2) {
+		JSONObject mergedJSON = new JSONObject();
+		try {
+			mergedJSON = new JSONObject(json1, JSONObject.getNames(json1));
+			if (json2.length() > 0) {
+				for (String featureKey : JSONObject.getNames(json2)) {
+					mergedJSON.put(featureKey, json2.get(featureKey));
+					mergedJSON.accumulate(featureKey, mergedJSON.get(featureKey));
+					//
+				}
+			}
+			LOGGER.info("mergedJSON: " + mergedJSON);
+		} catch (JSONException e) {
+			throw new RuntimeException("JSON Exception" + e);
+		}
+		return mergedJSON;
+	}
+
+	private JSONArray getSortedResultArray(JSONArray resultArray, int limit) {
+		JSONArray sortedJsonArray = new JSONArray();
+
+		// Step_1: parse your array in a list
+		List<JSONObject> jsonList = new ArrayList<JSONObject>();
+		for (int i = 0; i < resultArray.length(); i++) {
+			jsonList.add(resultArray.getJSONObject(i));
+		}
+
+		// Step_2: then use collection.sort to sort the newly created list
+		Collections.sort(jsonList, new Comparator<JSONObject>() {
+			public int compare(JSONObject a, JSONObject b) {
+				Integer valA = 0;
+				Integer valB = 0;
+				try {
+					valA = (Integer) a.get("count");
+					valB = (Integer) b.get("count");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return valA.compareTo(valB) * -1;
+			}
+		});
+
+		// Handle for limit:
+		int listSize = jsonList.size();
+		int recordSize = limit;
+		if (limit > listSize) {
+			recordSize = listSize;
+		}
+		jsonList = jsonList.subList(0, recordSize);
+
+		// Step_3: Insert the sorted values in your array
+		for (int i = 0; i < jsonList.size(); i++) {
+			JSONObject jsonObject = jsonList.get(i);
+			sortedJsonArray.put(jsonObject);
+		}
+
+		return sortedJsonArray;
+	}
+	
 }
