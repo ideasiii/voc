@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,28 +88,21 @@ public class HotFeature extends RootAPI {
 
 		JSONObject featureJobj = new JSONObject();
 		JSONObject commentJobj = new JSONObject();
-		if (StringUtils.isEmpty(this.strFeatureGroup) || (null != featureList && featureList.size() > 0)) {
-			featureJobj = query(TABLE_FEATURE_REPUTATION);
-			commentJobj = query(TABLE_FEATURE_REPUTATION_COMMENT);
+		JSONObject jobj = new JSONObject();
+		featureJobj = query(TABLE_FEATURE_REPUTATION);
+		commentJobj = query(TABLE_FEATURE_REPUTATION_COMMENT);
+
+		if (featureJobj.length() <= 0 && commentJobj.length() <= 0) {
+			jobj = ApiResponse.successTemplate();
+			jobj.put("result", "{}");
+			return jobj.toString();
 		}
 
-		JSONObject mergedJSON = mergeJSONObjects(featureJobj, commentJobj);
 		JSONArray resArray = new JSONArray();
-		LOGGER.info("mergedJSON: " + mergedJSON);
-		
-		Iterator<String> iterKeys = mergedJSON.keys();
-		while(iterKeys.hasNext()) {
-			String key = iterKeys.next();
-		JSONObject resJobj = new JSONObject();
-		
-		resJobj.put("feature", key);
-		resJobj.put("count", mergedJSON.get(key));
-		resArray.put(resJobj);
-		}
-		
-		if (null != resArray) {
-			this.sortedJsonArray = this.getSortedResultArray(resArray, nLimit);
-			JSONObject jobj = ApiResponse.successTemplate();
+		boolean querySuccess = mergeJSONObjects(featureJobj, commentJobj, resArray);
+
+		if (querySuccess) {
+			jobj = ApiResponse.successTemplate();
 			jobj.put("result", this.sortedJsonArray);
 			LOGGER.info("response: " + jobj.toString());
 			return jobj.toString();
@@ -512,22 +504,37 @@ public class HotFeature extends RootAPI {
 		idx++;
 	}
 
-	private JSONObject mergeJSONObjects(JSONObject json1, JSONObject json2) {
+	private boolean mergeJSONObjects(JSONObject json1, JSONObject json2, JSONArray resArray) {
 		JSONObject mergedJSON = new JSONObject();
 		try {
 			mergedJSON = new JSONObject(json1, JSONObject.getNames(json1));
 			if (json2.length() > 0) {
 				for (String featureKey : JSONObject.getNames(json2)) {
-					mergedJSON.put(featureKey, json2.get(featureKey));
-					mergedJSON.accumulate(featureKey, mergedJSON.get(featureKey));
-					//
+					if (mergedJSON.has(featureKey)) {
+						mergedJSON.put(featureKey, (Integer) json2.get(featureKey) + (Integer) json1.get(featureKey));
+					} else {
+						mergedJSON.put(featureKey, json2.get(featureKey));
+					}
 				}
 			}
 			LOGGER.info("mergedJSON: " + mergedJSON);
-		} catch (JSONException e) {
-			throw new RuntimeException("JSON Exception" + e);
+
+			Iterator<String> iterKeys = mergedJSON.keys();
+			while (iterKeys.hasNext()) {
+				String key = iterKeys.next();
+				JSONObject resJobj = new JSONObject();
+
+				resJobj.put("feature", key);
+				resJobj.put("count", mergedJSON.get(key));
+				resArray.put(resJobj);
+			}
+			this.sortedJsonArray = this.getSortedResultArray(resArray, nLimit);
+			return true;
+		} catch (Exception e) {
+			LOGGER.error(e.getMessage());
+			e.printStackTrace();
 		}
-		return mergedJSON;
+		return false;
 	}
 
 	private JSONArray getSortedResultArray(JSONArray resultArray, int limit) {
@@ -570,5 +577,5 @@ public class HotFeature extends RootAPI {
 
 		return sortedJsonArray;
 	}
-	
+
 }
