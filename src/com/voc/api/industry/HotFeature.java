@@ -38,6 +38,8 @@ import com.voc.common.DBUtil;
  * Requirement Change: 1.查詢featureList的industry改由industry_job_list
  * table內的ibk2_name來做查詢
  *
+ * Requirement Change: 1.Output Result中的count改為feature_reputation中的文章數+相同搜尋條件feature_reputation_comment中的文章數
+ * 
  */
 
 public class HotFeature extends RootAPI {
@@ -283,9 +285,6 @@ public class HotFeature extends RootAPI {
 			if (0 < nCount) {
 				sql.append("AND ");
 			}
-			if (StringUtils.isEmpty(strSeries) && StringUtils.isEmpty(strProduct)) {
-				sql.append("series = '' AND product = '' AND ");
-			}
 			sql.append("brand IN (");
 			for (int i = 0; i < arrBrand.length; i++) {
 				if (0 == i)
@@ -294,6 +293,9 @@ public class HotFeature extends RootAPI {
 					sql.append(", ?");
 			}
 			sql.append(") ");
+			if (StringUtils.isEmpty(strSeries) && StringUtils.isEmpty(strProduct)) {
+				sql.append(" AND series = '' AND product = '' ");
+			}
 			nCount++;
 		}
 

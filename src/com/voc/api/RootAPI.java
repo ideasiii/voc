@@ -272,10 +272,10 @@ public abstract class RootAPI {
 		ResultSet rs = null;
 		try {
 			StringBuffer queryArticleSQL = new StringBuffer();
-			queryArticleSQL.append("SELECT id, url, title, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, channel_display_name, comment_count, like_count, share_count, view_count, sentiment_score, sentiment ");
+			queryArticleSQL.append("SELECT id, url, title, SUBSTRING(content, 1, 50) as content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, channel_display_name, comment_count, like_count, share_count, view_count, sentiment_score, sentiment ");
 			queryArticleSQL.append("FROM ").append(TABLE_POST_LIST).append(" ");
 			queryArticleSQL.append("WHERE id in (");
-			for(int i = 0 ; i < postIdList.size(); i++ ) {
+			for(int i = 0 ; i < postIdList.size(); i++ ) { 
 				if (i == 0) queryArticleSQL.append("?");
 				else queryArticleSQL.append(",?");
 			}
@@ -312,6 +312,7 @@ public abstract class RootAPI {
 				article.setPost_id(rs.getString("id"));
 				article.setUrl(rs.getString("url"));
 				article.setTitle(rs.getString("title"));
+				article.setContent(rs.getString("content"));
 				article.setAuthor(rs.getString("author"));
 				article.setDate(rs.getString("date"));
 				article.setChannel(rs.getString("channel_display_name"));
@@ -356,7 +357,7 @@ public abstract class RootAPI {
 		ResultSet rs = null;
 		try {
 			StringBuffer queryArticleSQL = new StringBuffer();
-			queryArticleSQL.append("SELECT id, url, title, content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_display_name, comment_count, like_count, share_count, view_count, sentiment_score, sentiment ");
+			queryArticleSQL.append("SELECT id, url, title, SUBSTRING(content, 1, 50) as content, author, DATE_FORMAT(date, '%Y-%m-%d %H:%i:%s') AS date, website_name, channel_display_name, comment_count, like_count, share_count, view_count, sentiment_score, sentiment ");
 			queryArticleSQL.append("FROM ").append(TABLE_POST_LIST).append(" ");
 			queryArticleSQL.append("WHERE id in (");
 			for(int i = 0 ; i < postIdList.size(); i++ ) {
@@ -390,7 +391,7 @@ public abstract class RootAPI {
 					article.setPost_id(rs.getString("id"));
 					article.setUrl(rs.getString("url"));
 					article.setTitle(title);
-					// article.setContent(content); // TODO: Remove content after test: 
+					article.setContent(content);
 					article.setAuthor(rs.getString("author"));
 					article.setDate(rs.getString("date"));
 					article.setChannel(rs.getString("channel_display_name"));
