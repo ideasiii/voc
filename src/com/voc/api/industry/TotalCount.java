@@ -178,6 +178,12 @@ public class TotalCount extends RootAPI {
 		} //
 
 		if (hasSentiment(request)) {
+			JSONObject brandOrProductJobj = new JSONObject();
+			JSONObject commentJobj = new JSONObject();
+			JSONObject jobj = new JSONObject();
+			brandOrProductJobj = this.queryForFeatures(TABLE_FEATURE_REPUTATION);
+			commentJobj = this.queryForFeatures(TABLE_FEATURE_REPUTATION_COMMENT);
+			
 			// itemArray = this.queryForSentiment();
 			if (itemArray != null) {
 				if (itemArray.length() > 0) {
@@ -877,7 +883,9 @@ public class TotalCount extends RootAPI {
 	private boolean mergeJSONObjects(JSONObject json1, JSONObject json2, JSONArray resArray) {
 		JSONObject mergedJSON = new JSONObject();
 		try {
+			if (json1.length() > 0) {
 			mergedJSON = new JSONObject(json1, JSONObject.getNames(json1));
+			}
 			if (json2.length() > 0) {
 				for (String featureKey : JSONObject.getNames(json2)) {
 					if (mergedJSON.has(featureKey)) {
