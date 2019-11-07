@@ -120,7 +120,7 @@ public class TotalCount extends RootAPI {
 	private int limit = 10; // Default: 10
 	private String sorting = "count"; // Default: reputation
 	private JSONArray sortedJsonArray;
-	
+
 	@Override
 	public String processRequest(HttpServletRequest request) {
 		JSONObject errorResponse = this.validateAndSetOrderedParameterMap(request);
@@ -132,7 +132,7 @@ public class TotalCount extends RootAPI {
 		int total_count = 0;
 		String update_time = "";
 
-		if (hasFeatures(request)) {
+		if (hasFeatures(orderedParameterMap)) {
 			JSONObject featureJobj = new JSONObject();
 			JSONObject commentJobj = new JSONObject();
 			JSONObject jobj = new JSONObject();
@@ -162,7 +162,7 @@ public class TotalCount extends RootAPI {
 								itemObject.put("item", itemName);
 								itemObject.put("count", 0);
 								itemArray.put(itemObject);
-								//LOGGER.info("itemObject to be add: " + itemObject);
+								// LOGGER.info("itemObject to be add: " + itemObject);
 								desc_remainingCnt--;
 							}
 						}
@@ -177,23 +177,50 @@ public class TotalCount extends RootAPI {
 			}
 		} //
 
-		if (hasSentiment(request)) {
+		if (hasSentiment(orderedParameterMap)) {
 			JSONObject brandOrProductJobj = new JSONObject();
 			JSONObject commentJobj = new JSONObject();
 			JSONObject jobj = new JSONObject();
-			brandOrProductJobj = this.queryForFeatures(TABLE_FEATURE_REPUTATION);
-			commentJobj = this.queryForFeatures(TABLE_FEATURE_REPUTATION_COMMENT);
+			String table =  getTableName(orderedParameterMap);
+			String table_comment = table + "_comment";
+			brandOrProductJobj = this.queryForSentiment(table);
+			commentJobj = this.queryForSentiment(table_comment);
+
+			if (brandOrProductJobj.length() <= 0 && commentJobj.length() <= 0) {
+				jobj = ApiResponse.successTemplate();
+				jobj.put("result", "{}");
+				return jobj.toString();
+			}
 			
-			// itemArray = this.queryForSentiment();
-			if (itemArray != null) {
+			boolean querySuccess = mergeJSONObjects(brandOrProductJobj, commentJobj, itemArray);
+			if (querySuccess && itemArray != null) {
 				if (itemArray.length() > 0) {
-					total_count = this.queryToltalCount(this.selectTotalCountSQL);
+					total_count = this.getTotalCount(itemArray);
 					update_time = this.queryUpdateTime(this.selectUpdateTimeSQL);
 				}
+
+				int desc_remainingCnt = this.limit - itemArray.length();
+				if (desc_remainingCnt > 0) {
+					for (String itemName : itemNameList) {
+						Integer count = hash_itemName_count.get(itemName);
+
+						if (desc_remainingCnt > 0) {
+							if (count == null) {
+								JSONObject itemObject = new JSONObject();
+								itemObject.put("item", itemName);
+								itemObject.put("count", 0);
+								itemArray.put(itemObject);
+								// LOGGER.info("itemObject to be add: " + itemObject);
+								desc_remainingCnt--;
+							}
+						}
+					}
+				}
+				this.sortedJsonArray = this.getSortedResultArray(itemArray, this.limit);
 				JSONObject successObject = ApiResponse.successTemplate();
 				successObject.put("total_count", total_count);
 				successObject.put("update_time", update_time);
-				successObject.put("result", itemArray);
+				successObject.put("result", this.sortedJsonArray);
 				return successObject.toString();
 			}
 		} //
@@ -216,13 +243,11 @@ public class TotalCount extends RootAPI {
 		return ApiResponse.unknownError().toString();
 	}
 
-	private boolean hasFeatures(final HttpServletRequest request) {
-		Map paramMap = request.getParameterMap();
+	private boolean hasFeatures(Map<String, String[]> paramMap) {
 		return paramMap.containsKey("features");
 	}
 
-	private boolean hasSentiment(final HttpServletRequest request) {
-		Map paramMap = request.getParameterMap();
+	private boolean hasSentiment(Map<String, String[]> paramMap) {
 		return paramMap.containsKey("sentiment");
 	}
 
@@ -245,7 +270,7 @@ public class TotalCount extends RootAPI {
 			LOGGER.debug("psSQLStr = " + psSQLStr);
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME
 					+ psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
-			//LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
+			// LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
 
 			JSONObject jobj = new JSONObject();
 			rs = preparedStatement.executeQuery();
@@ -312,6 +337,43 @@ public class TotalCount extends RootAPI {
 			this.selectUpdateTimeSQL = "SELECT MAX(DATE_FORMAT(update_time, '%Y-%m-%d %H:%i:%s')) AS " + UPDATE_TIME
 					+ psSQLStr.substring(psSQLStr.indexOf(" FROM "), psSQLStr.indexOf(" GROUP BY "));
 			// LOGGER.debug("selectUpdateTimeSQL = " + this.selectUpdateTimeSQL);
+
+			JSONObject jobj = new JSONObject();
+			rs = preparedStatement.executeQuery();
+			while (rs.next()) {
+				StringBuffer item = new StringBuffer();
+				int i = 0;
+				for (Map.Entry<String, String[]> entry : this.orderedParameterMap.entrySet()) {
+					String paramName = entry.getKey();
+					if ("monitor_brand".equals(paramName)) {
+						continue;
+					}
+					if ("industry".equals(paramName)) {
+						continue;
+					}
+					String columnName = this.getColumnName(paramName);
+					if ("channel_id".equals(columnName)) {
+						columnName = "channel_display_name";
+					}
+					if (!"rep_date".equals(columnName)) {
+						String s = rs.getString(columnName);
+						if ("sentiment".equals(paramName)) {
+							s = EnumSentiment.getEnum(s).getName();
+						}
+						if (i == 0) {
+							item.append(s);
+						} else {
+							item.append("-").append(s);
+						}
+					}
+					i++;
+				}
+				int count = rs.getInt("count");
+				jobj.put(item.toString(), count);
+			}
+			LOGGER.info("Out jobj: " + jobj);
+			return jobj;
+
 		} catch (Exception e) {
 			LOGGER.error(e.getMessage());
 			e.printStackTrace();
@@ -786,9 +848,13 @@ public class TotalCount extends RootAPI {
 			}
 		}
 		if (table_name.equals(TABLE_BRAND_REPUTATION) || table_name.equals(TABLE_PRODUCT_REPUTATION)) {
-			selectClauseSB.append(" ,").append(
-					"SUM(reputation) AS count, SUM(title_hit) AS title_count, SUM(content_hit) AS content_count, SUM(comment_hit) AS comment_count FROM ")
-					.append(table_name).append(" ");
+			if (this.hasSentiment(orderedParameterMap)) {
+				selectClauseSB.append(" ,").append("count(DISTINCT id) AS count FROM ").append(table_name).append(" ");
+			} else {
+				selectClauseSB.append(" ,").append(
+						"SUM(reputation) AS count, SUM(title_hit) AS title_count, SUM(content_hit) AS content_count, SUM(comment_hit) AS comment_count FROM ")
+						.append(table_name).append(" ");
+			}
 		} else {
 			selectClauseSB.append(" ,").append("count(DISTINCT id) AS count FROM ").append(table_name).append(" ");
 		}
@@ -884,7 +950,7 @@ public class TotalCount extends RootAPI {
 		JSONObject mergedJSON = new JSONObject();
 		try {
 			if (json1.length() > 0) {
-			mergedJSON = new JSONObject(json1, JSONObject.getNames(json1));
+				mergedJSON = new JSONObject(json1, JSONObject.getNames(json1));
 			}
 			if (json2.length() > 0) {
 				for (String featureKey : JSONObject.getNames(json2)) {
@@ -956,9 +1022,9 @@ public class TotalCount extends RootAPI {
 
 		return sortedJsonArray;
 	}
-	
-	//for sorting
-	private Integer getTotalCount(JSONArray dataArray) { 
+
+	// for sorting
+	private Integer getTotalCount(JSONArray dataArray) {
 		Integer totalCount = 0;
 		for (int i = 0; i < dataArray.length(); i++) {
 			JSONObject dataObject = dataArray.getJSONObject(i);
